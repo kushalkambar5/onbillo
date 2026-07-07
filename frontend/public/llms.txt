@@ -1,0 +1,6 @@
+# Onbillo
+
+Onbillo is a modern billing & POS system built for Indian retail shops — from kirana stores to restaurants and wholesale dealers.
+
+## Details & Docs
+- [Home Page](/index.md): The main landing page copy including product description, core capabilities (barcode scanning, printing, offline resilience), interactive setup steps, and FAQs.

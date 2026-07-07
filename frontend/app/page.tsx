@@ -354,10 +354,6 @@ export default function Home() {
             
             {/* Section Header */}
             <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-brand-primary/10 text-brand-primary">
-                <HelpCircle className="w-5 h-5" />
-              </div>
-              <span className="text-xs font-mono text-brand-primary uppercase tracking-widest block">Got Questions?</span>
               <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground font-sans">
                 Frequently Asked Questions.
               </h2>
