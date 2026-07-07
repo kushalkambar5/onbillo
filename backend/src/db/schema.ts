@@ -18,6 +18,9 @@ export const currencyEnum = pgEnum('currency', ['rupees']);
 export const taxTypeEnum = pgEnum('tax_type', ['gst_inclusive', 'gst_exclusive', 'no_tax']);
 export const invoiceTempletEnum = pgEnum('invoice_templet', ['1', '2', '3', '4', '5']);
 export const shopMemberRoleEnum = pgEnum('shop_member_role', ['owner', 'shop_worker']);
+export const productStatusEnum = pgEnum('product_status', ['pending', 'approved', 'rejected']);
+export const billStatusEnum = pgEnum('bill_status', ['active', 'cancelled']);
+export const staffRequestStatusEnum = pgEnum('request_status', ['pending', 'accepted', 'rejected']);
 
 // --- TABLES ---
 
@@ -36,7 +39,7 @@ export const users = pgTable('users', {
 
 export const shops = pgTable('shops', {
   id: serial('id').primaryKey(),
-  createdBy: integer('created_by').references(() => users.id).notNull(),
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   name: varchar('name', { length: 255 }).notNull(),
   gstNumber: varchar('gst_number', { length: 50 }),
   addressLine1: text('address_line_1').notNull(),
@@ -76,8 +79,9 @@ export const products = pgTable('products', {
   imageUrl: text('image_url'),
   // Stored in paise/cents to avoid floating-point math errors
   mrp: integer('mrp').notNull(), 
-  isVerified: boolean('is_verified').default(false).notNull(),
-  createdBy: integer('created_by').references(() => users.id).notNull(),
+  status: productStatusEnum('status').default('pending').notNull(),
+  rejectionReason: text('rejection_reason'),
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
@@ -101,18 +105,18 @@ export const bills = pgTable('bills', {
   id: serial('id').primaryKey(),
   shopId: integer('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
   billNumber: varchar('bill_number', { length: 100 }).notNull(),
-  createdBy: integer('created_by').references(() => users.id).notNull(),
-  // Stored in paise/cents
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   totalPrice: integer('total_price').notNull(), 
   notes: text('notes'),
   templetUsed: invoiceTempletEnum('templet_used').default('1').notNull(),
-  localId: varchar('local_id', { length: 50 }).notNull(),
+  status: billStatusEnum('status').default('active').notNull(),
+  // localId is completely removed
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
   createdAtIndex: index('created_at_idx').on(table.createdAt),
   shopIdIndex: index('bills_shop_id_idx').on(table.shopId),
+  // The offline dedup unique constraint is removed, keeping only the invoice integrity one:
   uniqueInvoice: unique('unique_invoice').on(table.shopId, table.billNumber),
-  uniqueOfflineDedup: unique('unique_offline_dedup').on(table.shopId, table.localId),
 }));
 
 export const billItems = pgTable('bill_items', {
@@ -123,3 +127,18 @@ export const billItems = pgTable('bill_items', {
   unitPrice: integer('unit_price').notNull(), 
   quantity: integer('quantity').notNull(),
 });
+
+export const staffRequests = pgTable('staff_requests', {
+  id: serial('id').primaryKey(),
+  shopId: integer('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+  requestedBy: integer('requested_by').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  requestedTo: integer('requested_to').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  role: shopMemberRoleEnum('role').default('shop_worker').notNull(),
+  status: staffRequestStatusEnum('status').default('pending').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  // Optional: Index to quickly find pending requests for a specific user
+  requestedToIndex: index('requested_to_idx').on(table.requestedTo),
+  uniqueShopRequestedTo: unique('unique_shop_requested_to').on(table.shopId, table.requestedTo),
+}));
