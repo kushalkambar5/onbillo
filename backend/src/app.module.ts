@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -12,10 +13,29 @@ import { AdminModule } from './admin/admin.module';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 import { DbModule } from './db/db.module';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 @Module({
-  imports: [DbModule, AuthModule, WebhooksModule, ShopsModule, ProductsModule, BillsModule, StaffModule, AnalyticsModule, AdminModule, UploadModule, UsersModule],
+  imports: [
+    DbModule,
+    AuthModule,
+    WebhooksModule,
+    ShopsModule,
+    ProductsModule,
+    BillsModule,
+    StaffModule,
+    AnalyticsModule,
+    AdminModule,
+    UploadModule,
+    UsersModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
 })
 export class AppModule {}

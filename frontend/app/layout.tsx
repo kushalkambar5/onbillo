@@ -4,6 +4,7 @@ import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import PhonePromptModal from "./components/PhonePromptModal";
 import "./globals.css";
+import "./bones/registry";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

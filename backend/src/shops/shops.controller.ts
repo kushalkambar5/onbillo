@@ -1,8 +1,23 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { ShopsService } from './shops.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { ShopRolesGuard, ShopRoles } from '../auth/shop-roles.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import {
+  CreateShopSchema,
+  UpdateShopSchema,
+  IdParamSchema,
+} from '../common/validation/schemas';
 
 @Controller('api/shops')
 @UseGuards(AuthGuard)
@@ -10,7 +25,10 @@ export class ShopsController {
   constructor(private shopsService: ShopsService) {}
 
   @Post()
-  createShop(@Body() body: any, @CurrentUser() user: any) {
+  createShop(
+    @Body(new ZodValidationPipe(CreateShopSchema)) body: any,
+    @CurrentUser() user: any,
+  ) {
     return this.shopsService.createShop(body, user.id);
   }
 
@@ -22,21 +40,24 @@ export class ShopsController {
   @Get(':id')
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner', 'shop_worker')
-  getShop(@Param('id') id: string) {
-    return this.shopsService.getShop(parseInt(id, 10));
+  getShop(@Param('id', new ZodValidationPipe(IdParamSchema)) id: number) {
+    return this.shopsService.getShop(id);
   }
 
   @Put(':id')
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner')
-  updateShop(@Param('id') id: string, @Body() body: any) {
-    return this.shopsService.updateShop(parseInt(id, 10), body);
+  updateShop(
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Body(new ZodValidationPipe(UpdateShopSchema)) body: any,
+  ) {
+    return this.shopsService.updateShop(id, body);
   }
 
   @Delete(':id')
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner')
-  deleteShop(@Param('id') id: string) {
-    return this.shopsService.deleteShop(parseInt(id, 10));
+  deleteShop(@Param('id', new ZodValidationPipe(IdParamSchema)) id: number) {
+    return this.shopsService.deleteShop(id);
   }
 }

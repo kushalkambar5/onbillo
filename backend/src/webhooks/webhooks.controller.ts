@@ -1,4 +1,10 @@
-import { Controller, Post, Req, Headers, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Req,
+  Headers,
+  BadRequestException,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { WebhooksService } from './webhooks.service';
 import { Webhook } from 'svix';
@@ -8,7 +14,10 @@ export class WebhooksController {
   constructor(private readonly webhooksService: WebhooksService) {}
 
   @Post()
-  async handleClerkWebhook(@Req() req: Request, @Headers() headers: Record<string, string>) {
+  async handleClerkWebhook(
+    @Req() req: Request,
+    @Headers() headers: Record<string, string>,
+  ) {
     const payload = JSON.stringify(req.body);
     const svix_id = headers['svix-id'];
     const svix_timestamp = headers['svix-timestamp'];
@@ -23,9 +32,9 @@ export class WebhooksController {
 
     try {
       evt = wh.verify(payload, {
-        'svix-id': svix_id as string,
-        'svix-timestamp': svix_timestamp as string,
-        'svix-signature': svix_signature as string,
+        'svix-id': svix_id,
+        'svix-timestamp': svix_timestamp,
+        'svix-signature': svix_signature,
       });
     } catch (err) {
       console.error('Error verifying webhook:', err);
@@ -35,7 +44,7 @@ export class WebhooksController {
     const { id } = evt.data;
     const eventType = evt.type;
     console.log(`Webhook with and ID of ${id} and type of ${eventType}`);
-    
+
     await this.webhooksService.handleEvent(eventType, evt.data);
 
     return { success: true };

@@ -3,6 +3,8 @@
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { shopsApi, Shop } from "../../../utils/api";
+import { mockShops } from "../../../utils/api/mockData";
+import { Skeleton } from "boneyard-js/react";
 import DevMockModeIndicator from "../../../components/DevMockModeIndicator";
 
 export default function ShopSettings({
@@ -37,6 +39,31 @@ export default function ShopSettings({
   useEffect(() => {
     async function loadShopDetails() {
       try {
+        const isBoneyard = typeof window !== "undefined" && 
+          ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+        
+        if (isBoneyard) {
+          const shop = mockShops[0];
+          setFormData({
+            name: shop.name,
+            phone: shop.phone || "",
+            email: shop.email || "",
+            gstNumber: shop.gstNumber || "",
+            addressLine1: shop.addressLine1,
+            addressLine2: shop.addressLine2 || "",
+            city: shop.city,
+            state: shop.state,
+            pincode: shop.pincode,
+            taxType: shop.taxType,
+            taxRate: shop.taxRate,
+            invoicePrefix: shop.invoicePrefix,
+            invoiceTemplet: shop.invoiceTemplet,
+            footerText: shop.footerText || ""
+          });
+          setLoading(false);
+          return;
+        }
+
         const token = await getToken();
         const shop = await shopsApi.getShop(token, shopId);
         setFormData({
@@ -92,19 +119,9 @@ export default function ShopSettings({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <svg className="animate-spin h-8 w-8 text-brand-primary" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-4xl space-y-8 select-none">
+    <Skeleton name="shop-settings" loading={loading}>
+      <div className="max-w-4xl space-y-8 select-none">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground font-sans">Shop Settings</h1>
@@ -376,5 +393,6 @@ export default function ShopSettings({
         </div>
       </form>
     </div>
+    </Skeleton>
   );
 }

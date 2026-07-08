@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 
 @Injectable()
 export class UploadService {
@@ -20,19 +24,23 @@ export class UploadService {
 
   async uploadImage(file: any) {
     const key = `${Date.now()}-${file.originalname}`;
-    await this.s3.send(new PutObjectCommand({
-      Bucket: this.bucketName,
-      Key: key,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-    }));
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      }),
+    );
     return `${this.publicUrl}/${key}`;
   }
 
   async deleteImage(key: string) {
-    await this.s3.send(new DeleteObjectCommand({
-      Bucket: this.bucketName,
-      Key: key,
-    }));
+    await this.s3.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      }),
+    );
   }
 }

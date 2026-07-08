@@ -2,6 +2,13 @@ import { Controller, Get, Put, Param, Body, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard, Roles } from '../auth/roles.guard';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import {
+  TogglePremiumSchema,
+  ToggleBanSchema,
+  RejectProductSchema,
+  IdParamSchema,
+} from '../common/validation/schemas';
 
 @Controller('api/admin')
 @UseGuards(AuthGuard, RolesGuard)
@@ -20,13 +27,19 @@ export class AdminController {
   }
 
   @Put('users/:id/premium')
-  togglePremium(@Param('id') id: string, @Body() body: any) {
-    return this.adminService.togglePremium(parseInt(id, 10), body.isPremium);
+  togglePremium(
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Body(new ZodValidationPipe(TogglePremiumSchema)) body: any,
+  ) {
+    return this.adminService.togglePremium(id, body.isPremium);
   }
 
   @Put('users/:id/ban')
-  toggleBan(@Param('id') id: string, @Body() body: any) {
-    return this.adminService.toggleBan(parseInt(id, 10), body.isBanned);
+  toggleBan(
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Body(new ZodValidationPipe(ToggleBanSchema)) body: any,
+  ) {
+    return this.adminService.toggleBan(id, body.isBanned);
   }
 
   @Get('shops')
@@ -40,12 +53,17 @@ export class AdminController {
   }
 
   @Put('products/:id/approve')
-  approveProduct(@Param('id') id: string) {
-    return this.adminService.approveProduct(parseInt(id, 10));
+  approveProduct(
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+  ) {
+    return this.adminService.approveProduct(id);
   }
 
   @Put('products/:id/reject')
-  rejectProduct(@Param('id') id: string, @Body() body: any) {
-    return this.adminService.rejectProduct(parseInt(id, 10), body.reason);
+  rejectProduct(
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Body(new ZodValidationPipe(RejectProductSchema)) body: any,
+  ) {
+    return this.adminService.rejectProduct(id, body.reason);
   }
 }

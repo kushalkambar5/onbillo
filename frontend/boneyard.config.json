@@ -1,0 +1,19 @@
+{
+  "breakpoints": [375, 768, 1280],
+  "out": "./app/bones",
+  "wait": 1200,
+  "routes": [
+    "/admin/dashboard?boneyard=true",
+    "/admin/users?boneyard=true",
+    "/admin/shops?boneyard=true",
+    "/admin/products/pending?boneyard=true",
+    "/shop/1/dashboard?boneyard=true",
+    "/shop/1/inventory?boneyard=true",
+    "/shop/1/pos?boneyard=true",
+    "/shop/1/bills?boneyard=true",
+    "/shop/1/settings?boneyard=true",
+    "/shop/1/staff?boneyard=true",
+    "/invites?boneyard=true",
+    "/profile?boneyard=true"
+  ]
+}

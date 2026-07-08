@@ -8,10 +8,14 @@ export class UsersService {
   constructor(private dbService: DbService) {}
 
   async updatePhone(userId: number, phone: string) {
-    const [user] = await this.dbService.db.update(users).set({
-      phone,
-      updatedAt: new Date(),
-    }).where(eq(users.id, userId)).returning();
+    const [user] = await this.dbService.db
+      .update(users)
+      .set({
+        phone,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
     if (!user) throw new NotFoundException('User not found');
     return user;
   }

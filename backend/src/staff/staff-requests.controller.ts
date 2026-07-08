@@ -2,6 +2,11 @@ import { Controller, Get, Put, Body, Param, UseGuards } from '@nestjs/common';
 import { StaffService } from './staff.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import {
+  RespondToInviteSchema,
+  IdParamSchema,
+} from '../common/validation/schemas';
 
 @Controller('api/staff/invites')
 @UseGuards(AuthGuard)
@@ -14,11 +19,11 @@ export class StaffRequestsController {
   }
 
   @Put(':id')
-  respondToInvite(@Param('id') id: string, @Body() body: any, @CurrentUser() user: any) {
-    const status = body.status;
-    if (status !== 'accepted' && status !== 'rejected') {
-      throw new Error('Invalid invitation status');
-    }
-    return this.staffService.respondToInvite(parseInt(id, 10), user.id, status);
+  respondToInvite(
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Body(new ZodValidationPipe(RespondToInviteSchema)) body: any,
+    @CurrentUser() user: any,
+  ) {
+    return this.staffService.respondToInvite(id, user.id, body.status);
   }
 }

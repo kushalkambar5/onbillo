@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useRef, use } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { productsApi, billsApi, shopsApi, ShopProduct, Shop, Bill } from "../../../utils/api";
+import { billsApi, productsApi, Bill, ShopProduct, shopsApi, Shop } from "../../../utils/api";
+import { mockShops, mockShopProducts } from "../../../utils/api/mockData";
+import { Skeleton } from "boneyard-js/react";
 import { 
   Search, 
   Trash2, 
@@ -52,13 +54,21 @@ export default function ShopPosRegister({
   useEffect(() => {
     async function loadPosData() {
       try {
-        const token = await getToken();
-        const [shopDetail, productsList] = await Promise.all([
-          shopsApi.getShop(token, shopId),
-          productsApi.getShopProducts(token, shopId)
-        ]);
-        setShop(shopDetail);
-        setProducts(productsList.filter(p => p.isActive));
+        const isBoneyard = typeof window !== "undefined" && 
+          ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+        
+        if (isBoneyard) {
+          setShop(mockShops[0]);
+          setProducts((mockShopProducts[shopId] || mockShopProducts[1] || []).filter(p => p.isActive));
+        } else {
+          const token = await getToken();
+          const [shopDetail, productsList] = await Promise.all([
+            shopsApi.getShop(token, shopId),
+            productsApi.getShopProducts(token, shopId)
+          ]);
+          setShop(shopDetail);
+          setProducts(productsList.filter(p => p.isActive));
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -201,19 +211,9 @@ export default function ShopPosRegister({
     window.print();
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <svg className="animate-spin h-8 w-8 text-brand-primary" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-140px)] select-none">
+    <Skeleton name="shop-pos" loading={loading}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-140px)] select-none">
       {/* 1. Catalog / Search panel (Left side) */}
       <div className="lg:col-span-7 flex flex-col bg-canvas border border-hairline rounded-2xl p-5 overflow-hidden">
         {/* Search header */}
@@ -506,5 +506,6 @@ export default function ShopPosRegister({
         title="Scan Billing Barcode"
       />
     </div>
+    </Skeleton>
   );
 }

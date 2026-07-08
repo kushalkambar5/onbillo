@@ -1,7 +1,23 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { ShopRolesGuard, ShopRoles } from '../auth/shop-roles.guard';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import {
+  CreateShopProductSchema,
+  UpdateShopProductSchema,
+  IdParamSchema,
+  BarcodeSchema,
+} from '../common/validation/schemas';
 
 @Controller('api/shops/:shopId/products')
 @UseGuards(AuthGuard, ShopRolesGuard)
@@ -10,32 +26,46 @@ export class ShopProductsController {
 
   @Get()
   @ShopRoles('owner', 'shop_worker')
-  listShopProducts(@Param('shopId') shopId: string) {
-    return this.productsService.listShopProducts(parseInt(shopId, 10));
+  listShopProducts(
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+  ) {
+    return this.productsService.listShopProducts(shopId);
   }
 
   @Post()
-  @ShopRoles('owner') // Manager (which is shop_worker maybe?) Spec says "Owner, Manager". We have 'owner', 'shop_worker'. Let's say owner & shop_worker. Wait, spec says "Owner, Manager". Let's assume 'owner' and 'shop_worker' if manager doesn't exist. Let's just use 'owner', 'shop_worker' or only 'owner'. The enum is 'owner', 'shop_worker'. I will allow both for adding products to shop.
   @ShopRoles('owner', 'shop_worker')
-  addShopProduct(@Param('shopId') shopId: string, @Body() body: any) {
-    return this.productsService.addShopProduct(parseInt(shopId, 10), body);
+  addShopProduct(
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Body(new ZodValidationPipe(CreateShopProductSchema)) body: any,
+  ) {
+    return this.productsService.addShopProduct(shopId, body);
   }
 
   @Put(':id')
   @ShopRoles('owner', 'shop_worker')
-  updateShopProduct(@Param('shopId') shopId: string, @Param('id') id: string, @Body() body: any) {
-    return this.productsService.updateShopProduct(parseInt(shopId, 10), parseInt(id, 10), body);
+  updateShopProduct(
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Body(new ZodValidationPipe(UpdateShopProductSchema)) body: any,
+  ) {
+    return this.productsService.updateShopProduct(shopId, id, body);
   }
 
   @Delete(':id')
   @ShopRoles('owner')
-  deleteShopProduct(@Param('shopId') shopId: string, @Param('id') id: string) {
-    return this.productsService.deleteShopProduct(parseInt(shopId, 10), parseInt(id, 10));
+  deleteShopProduct(
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+  ) {
+    return this.productsService.deleteShopProduct(shopId, id);
   }
 
   @Get('barcode/:code')
   @ShopRoles('owner', 'shop_worker')
-  lookupShopProductByBarcode(@Param('shopId') shopId: string, @Param('code') code: string) {
-    return this.productsService.lookupShopProductByBarcode(parseInt(shopId, 10), code);
+  lookupShopProductByBarcode(
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('code', new ZodValidationPipe(BarcodeSchema)) code: string,
+  ) {
+    return this.productsService.lookupShopProductByBarcode(shopId, code);
   }
 }

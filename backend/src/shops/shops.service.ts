@@ -9,19 +9,22 @@ export class ShopsService {
 
   async createShop(data: any, userId: number) {
     return await this.dbService.db.transaction(async (tx) => {
-      const [shop] = await tx.insert(shops).values({
-        name: data.name,
-        gstNumber: data.gstNumber,
-        addressLine1: data.addressLine1,
-        addressLine2: data.addressLine2,
-        city: data.city,
-        state: data.state,
-        pincode: data.pincode,
-        phone: data.phone,
-        email: data.email,
-        logoUrl: data.logoUrl,
-        createdBy: userId,
-      }).returning();
+      const [shop] = await tx
+        .insert(shops)
+        .values({
+          name: data.name,
+          gstNumber: data.gstNumber,
+          addressLine1: data.addressLine1,
+          addressLine2: data.addressLine2,
+          city: data.city,
+          state: data.state,
+          pincode: data.pincode,
+          phone: data.phone,
+          email: data.email,
+          logoUrl: data.logoUrl,
+          createdBy: userId,
+        })
+        .returning();
 
       await tx.insert(shopMembers).values({
         shopId: shop.id,
@@ -42,7 +45,11 @@ export class ShopsService {
   }
 
   async getShop(id: number) {
-    const [shop] = await this.dbService.db.select().from(shops).where(eq(shops.id, id)).limit(1);
+    const [shop] = await this.dbService.db
+      .select()
+      .from(shops)
+      .where(eq(shops.id, id))
+      .limit(1);
     if (!shop) {
       throw new NotFoundException('Shop not found');
     }
@@ -50,13 +57,17 @@ export class ShopsService {
   }
 
   async updateShop(id: number, data: any) {
-    const [shop] = await this.dbService.db.update(shops).set({ 
-      ...data, 
-      updatedAt: new Date() 
-    }).where(eq(shops.id, id)).returning();
-    
+    const [shop] = await this.dbService.db
+      .update(shops)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(shops.id, id))
+      .returning();
+
     if (!shop) {
-        throw new NotFoundException('Shop not found');
+      throw new NotFoundException('Shop not found');
     }
     return shop;
   }

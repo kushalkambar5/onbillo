@@ -3,6 +3,8 @@
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { billsApi, productsApi, Bill, ShopProduct } from "../../../utils/api";
+import { mockBills, mockShopProducts } from "../../../utils/api/mockData";
+import { Skeleton } from "boneyard-js/react";
 import { 
   TrendingUp, 
   ShoppingBag, 
@@ -28,6 +30,16 @@ export default function ShopDashboard({
   useEffect(() => {
     async function loadDashboardData() {
       try {
+        const isBoneyard = typeof window !== "undefined" && 
+          ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+        
+        if (isBoneyard) {
+          setBills(mockBills[shopId] || mockBills[1] || []);
+          setProducts(mockShopProducts[shopId] || mockShopProducts[1] || []);
+          setLoading(false);
+          return;
+        }
+
         const token = await getToken();
         const [billsList, productsList] = await Promise.all([
           billsApi.getShopBills(token, shopId),
@@ -153,19 +165,9 @@ export default function ShopDashboard({
     .sort((a, b) => b.percentage - a.percentage)
     .slice(0, 4);
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <svg className="animate-spin h-8 w-8 text-brand-primary" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
+    <Skeleton name="shop-dashboard" loading={loading}>
+      <div className="space-y-8">
       {/* 1. Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground font-sans">Business Analytics</h1>
@@ -355,5 +357,6 @@ export default function ShopDashboard({
         </div>
       </div>
     </div>
+    </Skeleton>
   );
 }

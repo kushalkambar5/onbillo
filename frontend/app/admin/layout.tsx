@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usersApi, User } from "../utils/api";
+import { mockUser } from "../utils/api/mockData";
 import DevMockModeIndicator from "../components/DevMockModeIndicator";
 import ThemeToggle from "../components/ThemeToggle";
 import { 
@@ -32,6 +33,16 @@ export default function AdminWorkspaceLayout({
   useEffect(() => {
     async function checkAdminAuth() {
       try {
+        const isBoneyard = typeof window !== "undefined" && 
+          ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+        
+        if (isBoneyard) {
+          setCurrentUser(mockUser);
+          setIsAuthorized(true);
+          setLoading(false);
+          return;
+        }
+
         const token = await getToken();
         const profile = await usersApi.getMe(token);
         setCurrentUser(profile);
@@ -77,16 +88,7 @@ export default function AdminWorkspaceLayout({
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-zinc-950 text-zinc-100">
-        <svg className="animate-spin h-8 w-8 text-brand-primary" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      </div>
-    );
-  }
+
 
   if (!isAuthorized) {
     return (

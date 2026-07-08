@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { adminApi } from "../../utils/api";
+import { Skeleton } from "boneyard-js/react";
 import { 
   Users, 
   Store, 
@@ -21,6 +22,22 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function loadStats() {
       try {
+        const isBoneyard = typeof window !== "undefined" && 
+          ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+        
+        if (isBoneyard) {
+          setStats({
+            totalUsers: 4,
+            totalShops: 2,
+            totalProducts: 11,
+            pendingProducts: 1,
+            monthlyRevenue: 60800,
+            serverUptime: "14 days, 3 hours"
+          });
+          setLoading(false);
+          return;
+        }
+
         const token = await getToken();
         const data = await adminApi.getStats(token);
         setStats(data);
@@ -33,18 +50,8 @@ export default function AdminDashboard() {
     loadStats();
   }, [getToken]);
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <svg className="animate-spin h-6 w-6 text-brand-primary" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      </div>
-    );
-  }
-
   return (
+    <Skeleton name="admin-dashboard" loading={loading}>
     <div className="space-y-8 select-none">
       {/* Header */}
       <div>
@@ -120,7 +127,7 @@ export default function AdminDashboard() {
           </div>
           <div className="mt-3.5">
             <h3 className="text-2xl font-bold text-white tracking-tight">
-              ₹{(stats?.monthlyRevenue / 100).toLocaleString("en-IN")}
+              ₹{((stats?.monthlyRevenue || 0) / 100).toLocaleString("en-IN")}
             </h3>
             <p className="text-[9px] text-zinc-500 font-bold mt-1">
               Processed in latest 30 days
@@ -167,6 +174,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-    </div>
+    </Skeleton>
   );
 }

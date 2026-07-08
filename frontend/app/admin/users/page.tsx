@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { adminApi, User } from "../../utils/api";
+import { mockAdminUsers } from "../../utils/api/mockData";
+import { Skeleton } from "boneyard-js/react";
 import { 
   Users, 
   Search, 
@@ -24,6 +26,15 @@ export default function AdminUsers() {
 
   async function loadUsers() {
     try {
+      const isBoneyard = typeof window !== "undefined" && 
+        ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+      
+      if (isBoneyard) {
+        setUsers(mockAdminUsers);
+        setLoading(false);
+        return;
+      }
+
       const token = await getToken();
       const list = await adminApi.listUsers(token);
       setUsers(list);
@@ -74,19 +85,9 @@ export default function AdminUsers() {
     return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
   });
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <svg className="animate-spin h-6 w-6 text-brand-primary" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8 select-none">
+    <Skeleton name="admin-users" loading={loading}>
+      <div className="space-y-8 select-none">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -210,5 +211,6 @@ export default function AdminUsers() {
         )}
       </div>
     </div>
+    </Skeleton>
   );
 }

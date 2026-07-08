@@ -13,7 +13,12 @@ import {
   FolderOpen,
   Camera
 } from "lucide-react";
-import BarcodeScanner from "../../../../components/BarcodeScanner";
+import dynamic from "next/dynamic";
+
+const BarcodeScanner = dynamic(
+  () => import("../../../../components/BarcodeScanner"),
+  { ssr: false }
+);
 
 export default function AddProducts({
   params: paramsPromise,

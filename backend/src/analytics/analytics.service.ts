@@ -15,7 +15,7 @@ export class AnalyticsService {
       FROM bills
       WHERE shop_id = ${shopId} AND status = 'active'
     `);
-    
+
     return result[0] || { todays_sales: 0, weekly_sales: 0, total_bills: 0 };
   }
 
@@ -33,7 +33,7 @@ export class AnalyticsService {
       ORDER BY total_quantity DESC
       LIMIT 5
     `);
-    
+
     return result;
   }
 
@@ -47,7 +47,7 @@ export class AnalyticsService {
       GROUP BY DATE(created_at)
       ORDER BY DATE(created_at) ASC
     `);
-    
+
     return result;
   }
 }

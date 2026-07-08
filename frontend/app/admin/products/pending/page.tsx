@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { adminApi, Product } from "../../../utils/api";
+import { Skeleton } from "boneyard-js/react";
 import { 
   FileCheck2, 
   Check, 
@@ -29,6 +30,17 @@ export default function AdminPendingProducts() {
 
   async function loadPending() {
     try {
+      const isBoneyard = typeof window !== "undefined" && 
+        ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+      
+      if (isBoneyard) {
+        setPendingProducts([
+          { id: 11, barcode: "8901030818279", name: "Red Label Tea 500g", brand: "Brooke Bond", category: "Beverages", mrp: 19500, status: "pending", rejectionReason: null, createdBy: 99, createdAt: new Date().toISOString() }
+        ]);
+        setLoading(false);
+        return;
+      }
+
       const token = await getToken();
       const list = await adminApi.listPendingProducts(token);
       setPendingProducts(list);
@@ -93,19 +105,9 @@ export default function AdminPendingProducts() {
     return p.name.toLowerCase().includes(q) || (p.brand && p.brand.toLowerCase().includes(q)) || (p.barcode && p.barcode.includes(q));
   });
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <svg className="animate-spin h-6 w-6 text-brand-primary" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8 select-none">
+    <Skeleton name="admin-pending-products" loading={loading}>
+      <div className="space-y-8 select-none">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -253,5 +255,6 @@ export default function AdminPendingProducts() {
         </div>
       )}
     </div>
+    </Skeleton>
   );
 }

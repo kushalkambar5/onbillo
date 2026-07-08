@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { shopsApi, usersApi, Shop } from "../../utils/api";
+import { mockShops } from "../../utils/api/mockData";
 import DevMockModeIndicator from "../../components/DevMockModeIndicator";
 import ThemeToggle from "../../components/ThemeToggle";
 import { 
@@ -43,6 +44,21 @@ export default function ShopWorkspaceLayout({
   useEffect(() => {
     async function initWorkspace() {
       try {
+        const isBoneyard = typeof window !== "undefined" && 
+          ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+        
+        if (isBoneyard) {
+          const mockList = [
+            { shop: mockShops[0], role: "owner" as const }
+          ];
+          setShopsList(mockList);
+          setCurrentShop(mockShops[0]);
+          setUserRole("owner");
+          setIsAuthorized(true);
+          setLoading(false);
+          return;
+        }
+
         const token = await getToken();
         const list = await shopsApi.getUserShops(token);
         setShopsList(list);
@@ -137,16 +153,7 @@ export default function ShopWorkspaceLayout({
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-background">
-        <svg className="animate-spin h-8 w-8 text-brand-primary" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      </div>
-    );
-  }
+
 
   if (!isAuthorized) {
     return (
@@ -183,7 +190,7 @@ export default function ShopWorkspaceLayout({
                 <Store className="w-3.5 h-3.5 text-brand-primary" />
               </div>
               <span className="text-xs font-bold text-foreground truncate">
-                {currentShop?.name}
+                {currentShop ? currentShop.name : <span className="inline-block w-24 h-4 bg-foreground/10 animate-pulse rounded" />}
               </span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-mute shrink-0" />
@@ -273,7 +280,7 @@ export default function ShopWorkspaceLayout({
         <header className="h-14 border-b border-hairline bg-canvas/40 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-40">
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold text-foreground md:hidden truncate">
-              {currentShop?.name}
+              {currentShop ? currentShop.name : <span className="inline-block w-16 h-3 bg-foreground/10 animate-pulse rounded" />}
             </span>
             <span className="hidden md:inline text-xs font-bold text-foreground font-mono">
               Onbillo POS / Shop #{shopId}
