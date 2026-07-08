@@ -11,8 +11,10 @@ import {
   Printer, 
   Check, 
   AlertCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Camera
 } from "lucide-react";
+import BarcodeScanner from "../../../components/BarcodeScanner";
 
 interface CartItem {
   shopProduct: ShopProduct;
@@ -40,6 +42,10 @@ export default function ShopPosRegister({
   const [generatedBill, setGeneratedBill] = useState<Bill | null>(null);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [error, setError] = useState("");
+
+  // Barcode Scanner State
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerError, setScannerError] = useState("");
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,6 +90,27 @@ export default function ShopPosRegister({
       );
     } else {
       setCart([...cart, { shopProduct: product, quantity: 1 }]);
+    }
+  };
+
+  const handleBarcodeScan = (barcode: string) => {
+    const cleanBarcode = barcode.trim();
+    if (!cleanBarcode) return;
+
+    const foundProduct = products.find(
+      (sp) => sp.product.barcode === cleanBarcode
+    );
+
+    if (foundProduct) {
+      addToCart(foundProduct);
+      setScannerError("");
+    } else {
+      setScannerError(`Product with barcode "${cleanBarcode}" not found in inventory.`);
+      setTimeout(() => {
+        setScannerError((prev) =>
+          prev === `Product with barcode "${cleanBarcode}" not found in inventory.` ? "" : prev
+        );
+      }, 4000);
     }
   };
 
@@ -190,16 +217,26 @@ export default function ShopPosRegister({
       {/* 1. Catalog / Search panel (Left side) */}
       <div className="lg:col-span-7 flex flex-col bg-canvas border border-hairline rounded-2xl p-5 overflow-hidden">
         {/* Search header */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mute" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search by product name, brand, or scan barcode (Press '/' to focus)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-xl text-xs transition-all duration-200 h-10 text-foreground"
-          />
+        <div className="flex gap-2.5 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mute" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search by product name, brand, or scan barcode (Press '/' to focus)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-xl text-xs transition-all duration-200 h-10 text-foreground"
+            />
+          </div>
+          <button
+            onClick={() => setScannerOpen(true)}
+            className="h-10 px-4 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-xl transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm shadow-brand-primary/10"
+            title="Scan barcode with camera"
+          >
+            <Camera className="w-4 h-4" />
+            <span>Scan Barcode</span>
+          </button>
         </div>
 
         {/* Catalog grid */}
@@ -455,6 +492,19 @@ export default function ShopPosRegister({
           </div>
         </div>
       )}
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScanner
+        isOpen={scannerOpen}
+        onClose={() => {
+          setScannerOpen(false);
+          setScannerError("");
+        }}
+        onScan={handleBarcodeScan}
+        continuous={true}
+        scanError={scannerError}
+        title="Scan Billing Barcode"
+      />
     </div>
   );
 }

@@ -10,8 +10,10 @@ import {
   Check, 
   HelpCircle,
   FileCheck2,
-  FolderOpen
+  FolderOpen,
+  Camera
 } from "lucide-react";
+import BarcodeScanner from "../../../../components/BarcodeScanner";
 
 export default function AddProducts({
   params: paramsPromise,
@@ -42,6 +44,38 @@ export default function AddProducts({
     mrp: ""
   });
   const [requestLoading, setRequestLoading] = useState(false);
+
+  // Barcode Scanner State
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerMode, setScannerMode] = useState<"search" | "request">("search");
+
+  const handleBarcodeScan = async (barcode: string) => {
+    const cleanBarcode = barcode.trim();
+    if (!cleanBarcode) return;
+
+    if (scannerMode === "search") {
+      setSearchQuery(cleanBarcode);
+      setScannerOpen(false);
+
+      setLoading(true);
+      setMessage({ text: "", type: "" });
+      try {
+        const token = await getToken();
+        const list = await productsApi.searchGlobalProducts(token, cleanBarcode);
+        setGlobalProducts(list);
+      } catch (err: any) {
+        setMessage({ text: err.message || "Failed to search global database.", type: "error" });
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setRequestForm((prev) => ({
+        ...prev,
+        barcode: cleanBarcode,
+      }));
+      setScannerOpen(false);
+    }
+  };
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -204,7 +238,7 @@ export default function AddProducts({
       {/* TAB 1: Search Global DB */}
       {activeTab === "search" && (
         <div className="space-y-6">
-          <form onSubmit={handleSearch} className="flex gap-3 max-w-xl">
+          <form onSubmit={handleSearch} className="flex gap-2.5 max-w-xl">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mute" />
               <input
@@ -215,6 +249,18 @@ export default function AddProducts({
                 className="w-full pl-9 pr-4 border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-xs transition-all duration-200 h-10 text-foreground"
               />
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                setScannerMode("search");
+                setScannerOpen(true);
+              }}
+              className="h-10 px-4 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white font-bold text-xs rounded-lg transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0"
+              title="Scan barcode with camera"
+            >
+              <Camera className="w-4 h-4" />
+              <span>Scan Barcode</span>
+            </button>
             <button
               type="submit"
               className="px-5 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
@@ -285,14 +331,27 @@ export default function AddProducts({
               <label className="block text-xs font-semibold text-foreground mb-1.5">
                 Barcode / UPC <span className="text-mute font-normal">(Recommended)</span>
               </label>
-              <input
-                type="text"
-                name="barcode"
-                placeholder="e.g. 8901058002315"
-                value={requestForm.barcode}
-                onChange={handleRequestChange}
-                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  name="barcode"
+                  placeholder="e.g. 8901058002315"
+                  value={requestForm.barcode}
+                  onChange={handleRequestChange}
+                  className="flex-1 min-w-0 border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setScannerMode("request");
+                    setScannerOpen(true);
+                  }}
+                  className="h-10 px-3 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white rounded-lg transition-all duration-150 flex items-center justify-center cursor-pointer shrink-0"
+                  title="Scan barcode with camera"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div>
@@ -424,6 +483,15 @@ export default function AddProducts({
           </div>
         </div>
       )}
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScanner
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleBarcodeScan}
+        continuous={false}
+        title={scannerMode === "search" ? "Scan to Search Global DB" : "Scan Product Barcode"}
+      />
     </div>
   );
 }
