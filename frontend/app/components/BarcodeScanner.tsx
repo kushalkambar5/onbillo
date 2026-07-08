@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Camera, X, Volume2, VolumeX } from "lucide-react";
+import { Camera, X, Flashlight } from "lucide-react";
 import { useZxing } from "react-zxing";
 
 interface BarcodeScannerProps {
@@ -21,17 +21,27 @@ export default function BarcodeScanner({
   continuous = false,
   scanError = "",
 }: BarcodeScannerProps) {
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+  const [torchEnabledChoice, setTorchEnabledChoice] = useState<boolean>(false);
   const [hasError, setHasError] = useState<string>("");
   const [isPaused, setIsPaused] = useState(false);
 
-  const isMutedRef = useRef(isMuted);
   const lastScannedBarcode = useRef<string>("");
   const lastScannedTime = useRef<number>(0);
 
+  // Detect if mobile device or tablet
   useEffect(() => {
-    isMutedRef.current = isMuted;
-  }, [isMuted]);
+    if (typeof window !== "undefined") {
+      const ua = navigator.userAgent;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      const isTablet = /iPad|PlayBook/i.test(ua) || (navigator.maxTouchPoints > 0 && /Macintosh/i.test(ua));
+      setIsMobileOrTablet(isMobile || isTablet);
+
+      // Load initial torch choice from local storage
+      const saved = localStorage.getItem("scanner_torch_enabled");
+      setTorchEnabledChoice(saved === "true");
+    }
+  }, []);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -44,7 +54,6 @@ export default function BarcodeScanner({
   }, [isOpen]);
 
   const playBeep = useCallback(() => {
-    if (isMutedRef.current) return;
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
@@ -62,7 +71,7 @@ export default function BarcodeScanner({
     } catch (_) {}
   }, []);
 
-  const { ref } = useZxing({
+  const { ref, torch } = useZxing({
     paused: !isOpen || isPaused,
     wasmUrl: "/zxing_reader.wasm",
     trySkew: true,
@@ -123,6 +132,31 @@ export default function BarcodeScanner({
     },
   });
 
+  // Auto-enable torch if choice is set to true and it becomes available
+  useEffect(() => {
+    if (isOpen && torch.isAvailable && torchEnabledChoice && !torch.isOn) {
+      torch.on().catch((err) => {
+        console.error("Failed to auto-enable torch:", err);
+      });
+    }
+  }, [isOpen, torch.isAvailable, torchEnabledChoice, torch.isOn, torch]);
+
+  const toggleTorch = async () => {
+    try {
+      if (torch.isOn) {
+        await torch.off();
+        setTorchEnabledChoice(false);
+        localStorage.setItem("scanner_torch_enabled", "false");
+      } else {
+        await torch.on();
+        setTorchEnabledChoice(true);
+        localStorage.setItem("scanner_torch_enabled", "true");
+      }
+    } catch (err) {
+      console.error("Failed to toggle torch:", err);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -153,13 +187,19 @@ export default function BarcodeScanner({
             <h3 className="text-sm font-bold text-foreground font-sans">{title}</h3>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className="p-1.5 hover:bg-canvas rounded-lg text-mute hover:text-foreground transition-colors"
-              title={isMuted ? "Unmute scan beep" : "Mute scan beep"}
-            >
-              {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-            </button>
+            {isMobileOrTablet && torch.isAvailable && (
+              <button
+                onClick={toggleTorch}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  torch.isOn
+                    ? "bg-brand-primary/10 text-brand-primary"
+                    : "hover:bg-canvas text-mute hover:text-foreground"
+                }`}
+                title={torch.isOn ? "Turn off torch" : "Turn on torch"}
+              >
+                <Flashlight className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
               onClick={onClose}
               className="p-1.5 hover:bg-canvas rounded-lg text-mute hover:text-foreground transition-colors"

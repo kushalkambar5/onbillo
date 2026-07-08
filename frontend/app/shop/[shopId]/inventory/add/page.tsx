@@ -339,7 +339,7 @@ export default function AddProducts({
           <div className="border-b border-hairline pb-3">
             <h3 className="text-sm font-bold text-foreground font-sans">Add Custom Product in My Shop</h3>
             <p className="text-[10px] text-mute mt-1 leading-snug">
-              Provide product details to add it directly to your shop inventory. It will also be submitted as pending in the global registry.
+              Provide product details to add it to your shop inventory.
             </p>
           </div>
 
