@@ -212,18 +212,40 @@ export default function ShopBills({
           )}
         </div>
 
+        {/* Mobile Backdrop for Selected Bill Inspector */}
+        {selectedBill && (
+          <div 
+            className="lg:hidden fixed inset-0 z-40 bg-black/40"
+            onClick={() => setSelectedBill(null)}
+          />
+        )}
+
         {/* Selected Bill Side Panel (Details) */}
-        <div className="lg:col-span-4 bg-canvas border border-hairline rounded-2xl p-5 shadow-sm space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-mute font-mono border-b border-hairline pb-2">
-            Invoice Inspector
-          </h3>
+        <div className={`bg-canvas border border-hairline rounded-2xl p-5 shadow-sm space-y-4 ${
+          selectedBill 
+            ? "fixed inset-4 sm:inset-y-12 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-sm z-50 flex flex-col lg:static lg:z-auto lg:translate-x-0 lg:max-w-none lg:w-auto lg:col-span-4 animate-in fade-in zoom-in-95 lg:animate-none"
+            : "hidden lg:block lg:col-span-4"
+        }`}>
+          <div className="flex items-center justify-between border-b border-hairline pb-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-mute font-mono">
+              Invoice Inspector
+            </h3>
+            {selectedBill && (
+              <button
+                onClick={() => setSelectedBill(null)}
+                className="lg:hidden p-1 rounded-md border border-hairline text-mute hover:text-foreground hover:bg-canvas-soft text-[10px] font-bold cursor-pointer"
+              >
+                Close ✕
+              </button>
+            )}
+          </div>
 
           {!selectedBill ? (
             <div className="p-8 text-center text-mute">
               <p className="text-[10px]">Select an invoice from the ledger to inspect products, cashier tags, and print settings.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 flex-1 overflow-y-auto pr-1">
               {/* Receipt Area */}
               <div className="bg-canvas-soft border border-hairline rounded-xl p-4 font-mono text-[9px] text-zinc-800 relative select-text select-all">
                 <div className="text-center space-y-1 mb-3">

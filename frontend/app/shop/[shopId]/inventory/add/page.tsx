@@ -46,7 +46,8 @@ export default function AddProducts({
     name: "",
     brand: "",
     category: "",
-    mrp: ""
+    mrp: "",
+    sellingPrice: ""
   });
   const [requestLoading, setRequestLoading] = useState(false);
 
@@ -66,7 +67,7 @@ export default function AddProducts({
       setMessage({ text: "", type: "" });
       try {
         const token = await getToken();
-        const list = await productsApi.searchGlobalProducts(token, cleanBarcode);
+        const list = await productsApi.searchGlobalProducts(token, cleanBarcode, shopId);
         setGlobalProducts(list);
       } catch (err: any) {
         setMessage({ text: err.message || "Failed to search global database.", type: "error" });
@@ -88,7 +89,7 @@ export default function AddProducts({
     setMessage({ text: "", type: "" });
     try {
       const token = await getToken();
-      const list = await productsApi.searchGlobalProducts(token, searchQuery);
+      const list = await productsApi.searchGlobalProducts(token, searchQuery, shopId);
       setGlobalProducts(list);
     } catch (err: any) {
       setMessage({ text: err.message || "Failed to search global database.", type: "error" });
@@ -142,8 +143,8 @@ export default function AddProducts({
 
   const submitGlobalRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!requestForm.name || !requestForm.mrp) {
-      setMessage({ text: "Product Name and MRP are required fields.", type: "error" });
+    if (!requestForm.name || !requestForm.mrp || !requestForm.sellingPrice) {
+      setMessage({ text: "Product Name, MRP, and Your Shop Price are required fields.", type: "error" });
       return;
     }
 
@@ -153,22 +154,31 @@ export default function AddProducts({
       return;
     }
 
+    const sellingPriceFloat = parseFloat(requestForm.sellingPrice);
+    if (isNaN(sellingPriceFloat) || sellingPriceFloat <= 0) {
+      setMessage({ text: "Please enter a valid Shop Price.", type: "error" });
+      return;
+    }
+
     setRequestLoading(true);
     setMessage({ text: "", type: "" });
 
     try {
       const token = await getToken();
       const mrpPaise = Math.round(mrpFloat * 100);
-      await productsApi.requestNewGlobalProduct(token, {
+      const unitPricePaise = Math.round(sellingPriceFloat * 100);
+
+      await productsApi.addCustomProduct(token, shopId, {
         barcode: requestForm.barcode,
         name: requestForm.name,
         brand: requestForm.brand,
         category: requestForm.category,
-        mrp: mrpPaise
+        mrp: mrpPaise,
+        unitPrice: unitPricePaise
       });
 
       setMessage({ 
-        text: `Global registration request submitted for ${requestForm.name}. It is now pending admin approval.`, 
+        text: `Successfully added "${requestForm.name}" to your shop! It has also been submitted as pending to the global registry.`, 
         type: "success" 
       });
       
@@ -178,23 +188,22 @@ export default function AddProducts({
         name: "",
         brand: "",
         category: "",
-        mrp: ""
+        mrp: "",
+        sellingPrice: ""
       });
     } catch (err: any) {
-      setMessage({ text: err.message || "Failed to submit request.", type: "error" });
+      setMessage({ text: err.message || "Failed to add product to shop.", type: "error" });
     } finally {
       setRequestLoading(false);
     }
   };
 
+
   return (
     <div className="space-y-8 select-none">
       {/* 1. Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground font-sans">Expand Shop Catalog</h1>
-        <p className="text-xs text-mute mt-1">
-          Link products from Onbillo's shared global retail index or request new additions.
-        </p>
+        <h1 className="text-2xl font-bold text-foreground font-sans">Add Products to your shop's inventory</h1>
       </div>
 
       {/* Tabs Switcher */}
@@ -210,7 +219,7 @@ export default function AddProducts({
               : "text-mute hover:text-foreground"
           }`}
         >
-          Search Global Database
+          Add Existing Products
         </button>
         <button
           onClick={() => {
@@ -223,9 +232,10 @@ export default function AddProducts({
               : "text-mute hover:text-foreground"
           }`}
         >
-          Request Global Product
+          Add a New Product 
         </button>
       </div>
+
 
       {message.text && (
         <div
@@ -243,7 +253,7 @@ export default function AddProducts({
       {/* TAB 1: Search Global DB */}
       {activeTab === "search" && (
         <div className="space-y-6">
-          <form onSubmit={handleSearch} className="flex gap-2.5 max-w-xl">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2.5 max-w-xl">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mute" />
               <input
@@ -254,24 +264,26 @@ export default function AddProducts({
                 className="w-full pl-9 pr-4 border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-xs transition-all duration-200 h-10 text-foreground"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setScannerMode("search");
-                setScannerOpen(true);
-              }}
-              className="h-10 px-4 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white font-bold text-xs rounded-lg transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0"
-              title="Scan barcode with camera"
-            >
-              <Camera className="w-4 h-4" />
-              <span>Scan Barcode</span>
-            </button>
-            <button
-              type="submit"
-              className="px-5 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
-            >
-              Search
-            </button>
+            <div className="flex gap-2.5 sm:contents">
+              <button
+                type="button"
+                onClick={() => {
+                  setScannerMode("search");
+                  setScannerOpen(true);
+                }}
+                className="flex-1 sm:flex-none h-10 px-4 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white font-bold text-xs rounded-lg transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                title="Scan barcode with camera"
+              >
+                <Camera className="w-4 h-4" />
+                <span>Scan Barcode</span>
+              </button>
+              <button
+                type="submit"
+                className="flex-1 sm:flex-none px-5 h-10 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
+              >
+                Search
+              </button>
+            </div>
           </form>
 
           {/* Results Grid */}
@@ -321,13 +333,13 @@ export default function AddProducts({
         </div>
       )}
 
-      {/* TAB 2: Request Global Product */}
+      {/* TAB 2: Add a Product in My Shop */}
       {activeTab === "request" && (
         <form onSubmit={submitGlobalRequest} className="bg-canvas border border-hairline rounded-2xl p-6 max-w-xl space-y-5">
           <div className="border-b border-hairline pb-3">
-            <h3 className="text-sm font-bold text-foreground font-sans">Request New Global Product</h3>
+            <h3 className="text-sm font-bold text-foreground font-sans">Add Custom Product in My Shop</h3>
             <p className="text-[10px] text-mute mt-1 leading-snug">
-              Provide product specs. Once verified, this barcode item will be published globally for all shops on the network to use.
+              Provide product details to add it directly to your shop inventory. It will also be submitted as pending in the global registry.
             </p>
           </div>
 
@@ -416,6 +428,21 @@ export default function AddProducts({
                 className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
               />
             </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-foreground mb-1.5">
+                Your Shop Price (₹) <span className="text-error-deep">*</span>
+              </label>
+              <input
+                type="text"
+                name="sellingPrice"
+                required
+                placeholder="e.g. 28.00"
+                value={requestForm.sellingPrice}
+                onChange={handleRequestChange}
+                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground font-mono font-bold"
+              />
+            </div>
           </div>
 
           <button
@@ -429,20 +456,21 @@ export default function AddProducts({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Submitting Request...
+                Adding Product...
               </>
             ) : (
               <>
-                <Send className="w-3.5 h-3.5" /> Submit Registration Request
+                <Send className="w-3.5 h-3.5" /> Add Product to Shop
               </>
             )}
           </button>
         </form>
+
       )}
 
       {/* Price Input Modal (for adding product) */}
       {addingProduct && (
-        <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-canvas border border-hairline rounded-2xl shadow-level-4 max-w-sm w-full p-6 space-y-4">
             <div>
               <h3 className="text-sm font-bold text-foreground font-sans">Set Shop Selling Price</h3>

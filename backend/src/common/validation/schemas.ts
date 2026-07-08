@@ -162,6 +162,11 @@ export const CreateProductSchema = z.object({
 
 export const UpdateProductSchema = CreateProductSchema.partial();
 
+export const CreateCustomProductSchema = CreateProductSchema.extend({
+  unitPrice: z.number().int().positive('Unit price must be positive'),
+});
+
+
 // ShopProductsController
 export const CreateShopProductSchema = z.object({
   productId: z.number().int().positive(),

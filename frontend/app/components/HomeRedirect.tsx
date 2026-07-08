@@ -45,7 +45,7 @@ export default function HomeRedirect() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md transition-all duration-300">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background transition-all duration-300">
         <div className="flex flex-col items-center gap-4 p-8 bg-canvas border border-hairline rounded-2xl shadow-level-4 animate-in fade-in scale-in duration-200">
           <svg className="animate-spin h-10 w-10 text-brand-primary" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

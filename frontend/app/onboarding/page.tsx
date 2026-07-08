@@ -118,8 +118,6 @@ export default function OnboardingPage() {
   if (checkingUser) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background relative overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-brand-primary/5 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-brand-secondary/5 rounded-full blur-[100px] pointer-events-none" />
         
         <svg className="animate-spin h-10 w-10 text-brand-primary" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -132,8 +130,6 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background relative overflow-hidden">
-      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-brand-primary/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-brand-secondary/5 rounded-full blur-[100px] pointer-events-none" />
       
       <div className="w-full max-w-2xl bg-canvas border border-hairline rounded-2xl shadow-level-4 p-8 z-10 relative transition-all duration-300">
         

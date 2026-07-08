@@ -3,8 +3,9 @@ Brand Identity Color Pallettes and Typography
 Typography: Geist and Inter
 
 color palette:
-#0066ff
-#4274D9
-#95CCDD
-#D0E7E6
 #ffffff
+#f7f8f9
+#eef0f3
+#0052ff
+#578bfa
+#0667d0

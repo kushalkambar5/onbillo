@@ -211,7 +211,7 @@ export default function AdminPendingProducts() {
 
       {/* Reject Product Modal */}
       {rejectingProduct && (
-        <div className="fixed inset-0 z-50 bg-foreground/25 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg max-w-sm w-full p-6 space-y-4 text-white">
             <div>
               <h3 className="text-sm font-bold font-sans">Reject Global Registration</h3>

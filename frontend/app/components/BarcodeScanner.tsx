@@ -126,7 +126,7 @@ export default function BarcodeScanner({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/75 backdrop-blur-md transition-all duration-300 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/75 transition-all duration-300 animate-in fade-in duration-200">
       <style>{`
         @keyframes scan-laser {
           0% { top: 4%; }
@@ -210,7 +210,7 @@ export default function BarcodeScanner({
           )}
 
           {scanError && (
-            <div className="absolute bottom-6 left-6 right-6 z-30 bg-red-600/90 text-white text-[10px] font-bold py-2 px-3 rounded-lg text-center shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="absolute bottom-6 left-6 right-6 z-30 bg-red-600 text-white text-[10px] font-bold py-2 px-3 rounded-lg text-center shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200">
               ⚠️ {scanError}
             </div>
           )}

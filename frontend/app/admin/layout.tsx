@@ -14,7 +14,9 @@ import {
   Users, 
   Store, 
   FileCheck,
-  ArrowLeft
+  ArrowLeft,
+  Menu,
+  X
 } from "lucide-react";
 
 export default function AdminWorkspaceLayout({
@@ -29,6 +31,7 @@ export default function AdminWorkspaceLayout({
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     async function checkAdminAuth() {
@@ -112,7 +115,7 @@ export default function AdminWorkspaceLayout({
   return (
     <div className="min-h-screen flex bg-zinc-950 text-zinc-100 antialiased font-sans">
       {/* 1. Admin Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-zinc-800/60 bg-zinc-900/60 backdrop-blur shrink-0 h-screen sticky top-0">
+      <aside className="hidden md:flex flex-col w-64 border-r border-zinc-800 bg-zinc-900 shrink-0 h-screen sticky top-0">
         {/* Header: Admin Branding */}
         <div className="p-5 border-b border-zinc-800/60">
           <div className="flex items-center gap-2.5">
@@ -181,13 +184,104 @@ export default function AdminWorkspaceLayout({
         </div>
       </aside>
 
+      {/* Mobile Drawer Menu (Mobile only) */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Overlay background */}
+          <div 
+            className="fixed inset-0 bg-black/50 transition-opacity" 
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Drawer content panel */}
+          <div className="relative flex flex-col w-full max-w-[280px] bg-zinc-900 border-r border-zinc-800 h-full p-4 animate-in slide-in-from-left duration-200 text-zinc-100">
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-800 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-brand-primary rounded-lg flex items-center justify-center shrink-0 shadow shadow-brand-primary/40">
+                  🛡️
+                </div>
+                <span className="font-bold tracking-tight text-white text-sm">Onbillo Admin</span>
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1 rounded-md border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Nav Links */}
+            <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
+              {navItems.map((item) => {
+                const active = pathname === item.href;
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200 outline-none ${
+                      active
+                        ? "bg-zinc-800 text-white border border-zinc-700/50"
+                        : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 ${active ? "text-brand-primary" : "text-zinc-500"}`} />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Exit back link */}
+            <div className="pb-4">
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 shrink-0 text-zinc-500" />
+                Exit Admin Panel
+              </Link>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="pt-4 border-t border-zinc-800 flex items-center justify-between gap-3 mt-auto">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <UserButton />
+                <div className="overflow-hidden">
+                  <p className="text-[10px] font-bold text-white truncate">
+                    {currentUser?.name}
+                  </p>
+                  <span className="text-[8px] font-mono text-zinc-500 block uppercase font-bold tracking-wider">
+                    System Admin
+                  </span>
+                </div>
+              </div>
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 2. Main Page Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Header */}
-        <header className="h-14 border-b border-zinc-800/60 bg-zinc-900/40 backdrop-blur flex items-center justify-between px-6 sticky top-0 z-40">
-          <span className="text-xs font-bold text-white font-mono uppercase tracking-widest">
-            Platform Administration Console
-          </span>
+        <header className="h-14 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between px-6 sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white md:hidden outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer"
+              aria-label="Open administration menu"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+            <span className="text-[10px] sm:text-xs font-bold text-white font-mono uppercase tracking-widest truncate max-w-[200px] sm:max-w-none">
+              Platform Administration Console
+            </span>
+          </div>
           <div className="flex items-center gap-3 md:hidden">
             <UserButton />
           </div>

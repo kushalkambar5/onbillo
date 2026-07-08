@@ -17,7 +17,9 @@ import {
   UpdateShopProductSchema,
   IdParamSchema,
   BarcodeSchema,
+  CreateCustomProductSchema,
 } from '../common/validation/schemas';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('api/shops/:shopId/products')
 @UseGuards(AuthGuard, ShopRolesGuard)
@@ -40,6 +42,17 @@ export class ShopProductsController {
   ) {
     return this.productsService.addShopProduct(shopId, body);
   }
+
+  @Post('custom')
+  @ShopRoles('owner', 'shop_worker')
+  addCustomProduct(
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Body(new ZodValidationPipe(CreateCustomProductSchema)) body: any,
+    @CurrentUser() user: any,
+  ) {
+    return this.productsService.addCustomProduct(shopId, body, user);
+  }
+
 
   @Put(':id')
   @ShopRoles('owner', 'shop_worker')

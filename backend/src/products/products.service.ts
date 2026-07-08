@@ -5,8 +5,9 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { products, shopProducts } from '../db/schema';
-import { eq, and, or, ilike } from 'drizzle-orm';
+import { products, shopProducts, shopMembers } from '../db/schema';
+import { eq, and, or, ilike, inArray } from 'drizzle-orm';
+
 
 @Injectable()
 export class ProductsService {
@@ -32,6 +33,52 @@ export class ProductsService {
   }
 
   async addShopProduct(shopId: number, data: any) {
+    const [product] = await this.dbService.db
+      .select()
+      .from(products)
+      .where(eq(products.id, data.productId))
+      .limit(1);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    const [existing] = await this.dbService.db
+      .select()
+      .from(shopProducts)
+      .where(
+        and(
+          eq(shopProducts.shopId, shopId),
+          eq(shopProducts.productId, data.productId),
+        ),
+      )
+      .limit(1);
+    if (existing) {
+      throw new BadRequestException('This product is already in your shop.');
+    }
+
+    if (product.status === 'pending') {
+      if (!product.createdBy) {
+        throw new ForbiddenException(
+          'You cannot add this pending product to your shop.',
+        );
+      }
+      const [member] = await this.dbService.db
+        .select()
+        .from(shopMembers)
+        .where(
+          and(
+            eq(shopMembers.shopId, shopId),
+            eq(shopMembers.userId, product.createdBy),
+          ),
+        )
+        .limit(1);
+      if (!member) {
+        throw new ForbiddenException(
+          'You cannot add this pending product to your shop.',
+        );
+      }
+    }
+
     const [shopProduct] = await this.dbService.db
       .insert(shopProducts)
       .values({
@@ -42,13 +89,9 @@ export class ProductsService {
       })
       .returning();
 
-    const [product] = await this.dbService.db
-      .select()
-      .from(products)
-      .where(eq(products.id, shopProduct.productId))
-      .limit(1);
     return { ...shopProduct, product };
   }
+
 
   async updateShopProduct(shopId: number, id: number, data: any) {
     const [shopProduct] = await this.dbService.db
@@ -95,19 +138,52 @@ export class ProductsService {
   }
 
   // --- Global Products ---
-  async searchGlobalProducts(query?: string) {
+  async searchGlobalProducts(user: any, query?: string, shopId?: number) {
+    let isMember = false;
+    let memberUserIds: number[] = [];
+
+    if (shopId) {
+      const membersList = await this.dbService.db
+        .select({ userId: shopMembers.userId })
+        .from(shopMembers)
+        .where(eq(shopMembers.shopId, shopId));
+      memberUserIds = membersList.map((m) => m.userId);
+      isMember = memberUserIds.includes(user.id) || user.role === 'app_admin';
+    }
+
+    const approvedClause = eq(products.status, 'approved');
+    const userClause = eq(products.createdBy, user.id);
+
+    let visibilityClause: any;
+    if (shopId && isMember) {
+      const conditions: any[] = [userClause];
+      if (memberUserIds.length > 0) {
+        conditions.push(inArray(products.createdBy, memberUserIds));
+      }
+      visibilityClause = or(
+        approvedClause,
+        and(eq(products.status, 'pending'), or(...conditions)),
+      );
+    } else {
+      visibilityClause = or(
+        approvedClause,
+        and(eq(products.status, 'pending'), userClause),
+      );
+    }
+
     if (!query) {
       return await this.dbService.db
         .select()
         .from(products)
-        .where(eq(products.status, 'approved'));
+        .where(visibilityClause);
     }
+
     return await this.dbService.db
       .select()
       .from(products)
       .where(
         and(
-          eq(products.status, 'approved'),
+          visibilityClause,
           or(
             ilike(products.name, `%${query}%`),
             ilike(products.barcode, `%${query}%`),
@@ -116,6 +192,7 @@ export class ProductsService {
         ),
       );
   }
+
 
   async lookupGlobalProductByBarcode(code: string) {
     const [product] = await this.dbService.db
@@ -159,6 +236,103 @@ export class ProductsService {
 
     return product;
   }
+
+  async addCustomProduct(shopId: number, data: any, user: any) {
+    const status = user.role === 'app_admin' ? 'approved' : 'pending';
+
+    if (data.barcode) {
+      const [existing] = await this.dbService.db
+        .select()
+        .from(products)
+        .where(eq(products.barcode, data.barcode))
+        .limit(1);
+
+      if (existing) {
+        if (existing.status === 'approved') {
+          throw new BadRequestException(
+            'A verified product with this barcode already exists. Please search and add it.',
+          );
+        }
+
+        const [existingShopProduct] = await this.dbService.db
+          .select()
+          .from(shopProducts)
+          .where(
+            and(
+              eq(shopProducts.shopId, shopId),
+              eq(shopProducts.productId, existing.id),
+            ),
+          )
+          .limit(1);
+        if (existingShopProduct) {
+          throw new BadRequestException(
+            'This pending product is already in your shop.',
+          );
+        }
+
+        if (!existing.createdBy) {
+          throw new BadRequestException(
+            'A pending product with this barcode already exists.',
+          );
+        }
+
+        const [member] = await this.dbService.db
+          .select()
+          .from(shopMembers)
+          .where(
+            and(
+              eq(shopMembers.shopId, shopId),
+              eq(shopMembers.userId, existing.createdBy),
+            ),
+          )
+          .limit(1);
+        if (!member && existing.createdBy !== user.id) {
+          throw new BadRequestException(
+            'A pending product with this barcode already exists but belongs to another shop.',
+          );
+        }
+
+        const [shopProduct] = await this.dbService.db
+          .insert(shopProducts)
+          .values({
+            shopId,
+            productId: existing.id,
+            unitPrice: data.unitPrice,
+            isActive: true,
+          })
+          .returning();
+
+        return { ...shopProduct, product: existing };
+      }
+    }
+
+    const [product] = await this.dbService.db
+      .insert(products)
+      .values({
+        barcode: data.barcode,
+        name: data.name,
+        brand: data.brand,
+        category: data.category,
+        imageUrl: data.imageUrl,
+        mrp: data.mrp,
+        status: status,
+        createdBy: user.id,
+      })
+      .returning();
+
+    const [shopProduct] = await this.dbService.db
+      .insert(shopProducts)
+      .values({
+        shopId,
+        productId: product.id,
+        unitPrice: data.unitPrice,
+        isActive: true,
+      })
+      .returning();
+
+    return { ...shopProduct, product };
+  }
+
 
   async updateGlobalProduct(id: number, data: any, user: any) {
     const [product] = await this.dbService.db

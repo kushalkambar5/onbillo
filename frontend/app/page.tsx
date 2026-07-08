@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { ScanBarcode, BarChart3, Calculator, TrendingUp, Printer, WifiOff, Zap, ShieldCheck, HelpCircle, Store, ShoppingBag } from "lucide-react";
+import { ScanBarcode, BarChart3, Calculator, TrendingUp, Printer, WifiOff, Zap, ShieldCheck, HelpCircle, Store, ShoppingBag, Menu, X } from "lucide-react";
 import ThemeToggle from "./components/ThemeToggle";
 import GlobalDatabaseMockup from "./components/GlobalDatabaseMockup";
 import HomeRedirect from "./components/HomeRedirect";
@@ -7,12 +10,14 @@ import InteractiveSteps from "./components/InteractiveSteps";
 import FaqAccordion from "./components/FaqAccordion";
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors duration-200">
       <HomeRedirect />
       
       {/* 1. Header/Navigation */}
-      <header className="sticky top-0 z-50 h-16 w-full border-b border-hairline bg-canvas/80 backdrop-blur-md transition-colors duration-200">
+      <header className="sticky top-0 z-50 h-16 w-full border-b border-hairline bg-canvas transition-colors duration-200">
         <div className="max-w-[1400px] h-full mx-auto px-4 md:px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 outline-none group focus-visible:ring-2 focus-visible:ring-brand-primary/50 rounded-lg">
@@ -50,8 +55,8 @@ export default function Home() {
             </a>
           </nav>
 
-          {/* Action CTAs & Toggle */}
-          <div className="flex items-center gap-3">
+          {/* Action CTAs & Toggle (Desktop) */}
+          <div className="hidden md:flex items-center gap-3">
             <Link
               href="/sign-in"
               className="h-8 px-4 rounded-md bg-canvas hover:bg-canvas-soft border border-hairline text-xs font-medium text-foreground transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
@@ -66,8 +71,72 @@ export default function Home() {
             </Link>
             <ThemeToggle />
           </div>
+
+          {/* Mobile Menu Action Toggle */}
+          <div className="flex md:hidden items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-1.5 rounded-lg border border-hairline bg-canvas text-body hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer"
+              aria-label="Toggle Menu"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
       </header>
+
+      {/* Mobile Drawer Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-x-0 top-16 bottom-0 z-40 bg-background border-b border-hairline animate-in fade-in slide-in-from-top-5 duration-200 overflow-y-auto">
+          <nav className="flex flex-col p-6 space-y-4">
+            <a
+              href="#features"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-foreground py-3 border-b border-hairline"
+            >
+              Features
+            </a>
+            <a
+              href="#database"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-foreground py-3 border-b border-hairline"
+            >
+              Global DB
+            </a>
+            <a
+              href="#how-it-works"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-foreground py-3 border-b border-hairline"
+            >
+              How it Works
+            </a>
+            <a
+              href="#faqs"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-foreground py-3 border-b border-hairline"
+            >
+              FAQs
+            </a>
+            <div className="flex flex-col gap-3 pt-4">
+              <Link
+                href="/sign-in"
+                onClick={() => setMobileMenuOpen(false)}
+                className="h-10 w-full rounded-xl bg-canvas hover:bg-canvas-soft border border-hairline text-xs font-semibold text-foreground flex items-center justify-center transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/sign-up"
+                onClick={() => setMobileMenuOpen(false)}
+                className="h-10 w-full rounded-xl bg-brand-primary hover:bg-brand-primary/95 text-xs font-semibold text-white flex items-center justify-center transition-colors"
+              >
+                Get Started
+              </Link>
+            </div>
+          </nav>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1">

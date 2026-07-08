@@ -8,9 +8,12 @@ export const productsApi = {
       method: "GET"
     }, token);
   },
-  searchGlobalProducts: async (token: string | null, query: string): Promise<Product[]> => {
+  searchGlobalProducts: async (token: string | null, query: string, shopId?: number): Promise<Product[]> => {
+    const url = shopId
+      ? `/api/products?q=${encodeURIComponent(query)}&shopId=${shopId}`
+      : `/api/products?q=${encodeURIComponent(query)}`;
     return await apiCall<Product[]>({
-      url: `/api/products?q=${encodeURIComponent(query)}`,
+      url,
       method: "GET"
     }, token);
   },
@@ -34,5 +37,24 @@ export const productsApi = {
       method: "POST",
       data
     }, token);
+  },
+  addCustomProduct: async (
+    token: string | null,
+    shopId: number,
+    data: {
+      barcode: string;
+      name: string;
+      brand: string;
+      category: string;
+      mrp: number;
+      unitPrice: number;
+    }
+  ): Promise<ShopProduct> => {
+    return await apiCall<ShopProduct>({
+      url: `/api/shops/${shopId}/products/custom`,
+      method: "POST",
+      data
+    }, token);
   }
 };
+

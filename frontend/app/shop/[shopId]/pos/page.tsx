@@ -33,6 +33,7 @@ export default function ShopPosRegister({
   const { getToken } = useAuth();
   
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"catalog" | "cart">("catalog");
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -213,9 +214,38 @@ export default function ShopPosRegister({
 
   return (
     <Skeleton name="shop-pos" loading={loading}>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-140px)] select-none">
+      {/* Mobile Tab Switcher */}
+      <div className="flex lg:hidden bg-canvas border border-hairline rounded-xl p-1 mb-4 shrink-0">
+        <button
+          onClick={() => setActiveTab("catalog")}
+          className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all duration-150 cursor-pointer ${
+            activeTab === "catalog"
+              ? "bg-brand-primary text-white shadow-sm"
+              : "text-body hover:text-foreground"
+          }`}
+        >
+          Catalog ({filteredProducts.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("cart")}
+          className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all duration-150 relative cursor-pointer ${
+            activeTab === "cart"
+              ? "bg-brand-primary text-white shadow-sm"
+              : "text-body hover:text-foreground"
+          }`}
+        >
+          Cart ({cart.reduce((sum, item) => sum + item.quantity, 0)})
+          {cart.length > 0 && (
+            <span className="absolute top-1.5 right-6 w-2 h-2 rounded-full bg-error-deep animate-ping" />
+          )}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-140px)] h-[calc(100vh-210px)] select-none">
       {/* 1. Catalog / Search panel (Left side) */}
-      <div className="lg:col-span-7 flex flex-col bg-canvas border border-hairline rounded-2xl p-5 overflow-hidden">
+      <div className={`lg:col-span-7 flex flex-col bg-canvas border border-hairline rounded-2xl p-5 overflow-hidden ${
+        activeTab === "catalog" ? "flex" : "hidden lg:flex"
+      }`}>
         {/* Search header */}
         <div className="flex gap-2.5 mb-4">
           <div className="relative flex-1">
@@ -281,7 +311,9 @@ export default function ShopPosRegister({
       </div>
 
       {/* 2. Billing Checkout panel (Right side) */}
-      <div className="lg:col-span-5 flex flex-col bg-canvas border border-hairline rounded-2xl p-5 overflow-hidden">
+      <div className={`lg:col-span-5 flex flex-col bg-canvas border border-hairline rounded-2xl p-5 overflow-hidden ${
+        activeTab === "cart" ? "flex" : "hidden lg:flex"
+      }`}>
         <h3 className="text-xs font-bold uppercase tracking-wider text-mute mb-3 font-mono">
           Current Checkout Bill
         </h3>
@@ -389,7 +421,7 @@ export default function ShopPosRegister({
 
       {/* 3. Thermal Receipt Preview Modal */}
       {receiptModalOpen && generatedBill && (
-        <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-canvas border border-hairline rounded-2xl shadow-level-4 max-w-sm w-full p-6 relative flex flex-col max-h-[90vh]">
             <h2 className="text-xs font-bold text-foreground uppercase tracking-widest text-center border-b border-hairline pb-3 mb-4">
               Invoice Generated Successfully

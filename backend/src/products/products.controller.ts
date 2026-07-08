@@ -29,10 +29,14 @@ export class ProductsController {
 
   @Get()
   searchGlobalProducts(
+    @CurrentUser() user: any,
     @Query('q', new ZodValidationPipe(SearchQuerySchema)) query?: string,
+    @Query('shopId') shopId?: string,
   ) {
-    return this.productsService.searchGlobalProducts(query);
+    const parsedShopId = shopId ? parseInt(shopId, 10) : undefined;
+    return this.productsService.searchGlobalProducts(user, query, parsedShopId);
   }
+
 
   @Get('barcode/:code')
   lookupGlobalProductByBarcode(

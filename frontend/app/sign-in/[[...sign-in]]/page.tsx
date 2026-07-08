@@ -4,10 +4,6 @@ import Link from "next/link";
 export default function SignInPage() {
   return (
     <div className="mesh-gradient-bg min-h-screen w-full flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 bg-background relative overflow-hidden">
-      {/* Decorative Blur Orbs */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-brand-primary/10 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[350px] h-[350px] bg-brand-secondary/10 rounded-full blur-[120px] pointer-events-none" />
-
       {/* Brand Header */}
       <div className="mb-8 text-center z-10">
         <Link href="/" className="inline-flex items-center gap-2.5 group outline-none">
@@ -27,7 +23,7 @@ export default function SignInPage() {
           appearance={{
             elements: {
               rootBox: "w-full shadow-level-4 rounded-2xl bg-canvas",
-              card: "w-full border border-hairline bg-canvas/90 backdrop-blur-md shadow-none rounded-2xl p-6 md:p-8",
+              card: "w-full border border-hairline bg-canvas shadow-none rounded-2xl p-6 md:p-8",
               headerTitle: "text-foreground font-sans font-bold tracking-tight text-xl",
               headerSubtitle: "text-body text-sm mt-1",
               socialButtonsBlockButton: "border border-hairline hover:bg-canvas-soft text-foreground rounded-lg transition-all duration-200 text-sm h-10",

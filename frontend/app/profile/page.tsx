@@ -97,19 +97,19 @@ export default function ProfilePage() {
       </div>
 
       <div className="max-w-3xl mx-auto bg-canvas border border-hairline rounded-2xl shadow-level-3 p-8 relative overflow-hidden">
-        {/* Decorative Grid Mesh */}
-        <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-brand-primary/5 rounded-full blur-[80px] pointer-events-none" />
 
         <div className="mb-8 border-b border-hairline pb-6">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full border border-hairline bg-canvas-soft flex items-center justify-center text-xl font-bold text-brand-primary">
-              {user?.name ? user.name.charAt(0).toUpperCase() : ""}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full border border-hairline bg-canvas-soft flex items-center justify-center text-xl font-bold text-brand-primary shrink-0">
+                {user?.name ? user.name.charAt(0).toUpperCase() : ""}
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground font-sans truncate max-w-[220px] sm:max-w-none">{user?.name}</h1>
+                <p className="text-xs text-mute font-mono mt-0.5 truncate max-w-[220px] sm:max-w-none">{user?.email}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground font-sans">{user?.name}</h1>
-              <p className="text-xs text-mute font-mono mt-0.5">{user?.email}</p>
-            </div>
-            <div className="ml-auto flex flex-col items-end gap-1.5">
+            <div className="sm:ml-auto w-full sm:w-auto flex flex-row sm:flex-col items-center sm:items-end justify-start sm:justify-end gap-1.5 mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-hairline/40 sm:border-t-0">
               {user?.isPremium ? (
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-brand-primary/10 border border-brand-primary/20 text-brand-primary uppercase tracking-wider">
                   ✦ Premium Member

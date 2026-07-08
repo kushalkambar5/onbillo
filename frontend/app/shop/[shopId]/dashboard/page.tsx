@@ -171,9 +171,6 @@ export default function ShopDashboard({
       {/* 1. Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground font-sans">Business Analytics</h1>
-        <p className="text-xs text-mute mt-1">
-          Real-time insights on your shop's revenue, operations, and stock updates.
-        </p>
       </div>
 
       {/* 2. Key Stats Grid */}

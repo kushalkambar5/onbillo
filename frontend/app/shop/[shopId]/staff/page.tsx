@@ -253,7 +253,7 @@ export default function ShopStaff({
 
       {/* Invite Member Modal */}
       {inviteModalOpen && (
-        <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <form onSubmit={handleSendInvite} className="bg-canvas border border-hairline rounded-2xl shadow-level-4 max-w-sm w-full p-6 space-y-4">
             <div>
               <h3 className="text-sm font-bold text-foreground font-sans">Invite Staff Member</h3>
