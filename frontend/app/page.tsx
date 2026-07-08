@@ -51,13 +51,13 @@ export default function Home() {
           {/* Action CTAs & Toggle */}
           <div className="flex items-center gap-3">
             <Link
-              href="/login"
+              href="/sign-in"
               className="h-8 px-4 rounded-md bg-canvas hover:bg-canvas-soft border border-hairline text-xs font-medium text-foreground transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
             >
               Login
             </Link>
             <Link
-              href="/register"
+              href="/sign-up"
               className="h-8 px-4 rounded-md bg-brand-primary hover:bg-brand-primary/90 text-xs font-medium text-white shadow-sm transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
             >
               Get Started
@@ -89,13 +89,13 @@ export default function Home() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <Link
-                href="/register"
+                href="/sign-up"
                 className="h-12 px-8 rounded-full bg-brand-primary hover:bg-brand-primary/95 text-white font-medium text-sm transition-all duration-200 flex items-center justify-center cursor-pointer shadow-md shadow-brand-primary/10 outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
               >
                 Get Started
               </Link>
               <Link
-                href="/login"
+                href="/sign-in"
                 className="h-12 px-8 rounded-full bg-canvas hover:bg-canvas-soft border border-hairline text-foreground font-medium text-sm transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
               >
                 Login
