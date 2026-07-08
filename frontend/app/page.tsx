@@ -2,12 +2,14 @@ import Link from "next/link";
 import { ScanBarcode, BarChart3, Calculator, TrendingUp, Printer, WifiOff, Zap, ShieldCheck, HelpCircle, Store, ShoppingBag } from "lucide-react";
 import ThemeToggle from "./components/ThemeToggle";
 import GlobalDatabaseMockup from "./components/GlobalDatabaseMockup";
+import HomeRedirect from "./components/HomeRedirect";
 import InteractiveSteps from "./components/InteractiveSteps";
 import FaqAccordion from "./components/FaqAccordion";
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors duration-200">
+      <HomeRedirect />
       
       {/* 1. Header/Navigation */}
       <header className="sticky top-0 z-50 h-16 w-full border-b border-hairline bg-canvas/80 backdrop-blur-md transition-colors duration-200">
