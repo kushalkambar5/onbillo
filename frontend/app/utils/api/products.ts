@@ -2,13 +2,13 @@ import { apiCall } from "./client";
 import { Product, ShopProduct } from "./types";
 
 export const productsApi = {
-  getShopProducts: async (token: string | null, shopId: number): Promise<ShopProduct[]> => {
+  getShopProducts: async (token: string | null, shopId: string): Promise<ShopProduct[]> => {
     return await apiCall<ShopProduct[]>({
       url: `/api/shops/${shopId}/products`,
       method: "GET"
     }, token);
   },
-  searchGlobalProducts: async (token: string | null, query: string, shopId?: number): Promise<Product[]> => {
+  searchGlobalProducts: async (token: string | null, query: string, shopId?: string): Promise<Product[]> => {
     const url = shopId
       ? `/api/products?q=${encodeURIComponent(query)}&shopId=${shopId}`
       : `/api/products?q=${encodeURIComponent(query)}`;
@@ -17,14 +17,14 @@ export const productsApi = {
       method: "GET"
     }, token);
   },
-  addGlobalProductToShop: async (token: string | null, shopId: number, productId: number, unitPrice: number): Promise<ShopProduct> => {
+  addGlobalProductToShop: async (token: string | null, shopId: string, productId: string, unitPrice: number): Promise<ShopProduct> => {
     return await apiCall<ShopProduct>({
       url: `/api/shops/${shopId}/products`,
       method: "POST",
       data: { productId, unitPrice }
     }, token);
   },
-  updateShopProduct: async (token: string | null, shopId: number, shopProductId: number, data: { unitPrice?: number; isActive?: boolean }): Promise<ShopProduct> => {
+  updateShopProduct: async (token: string | null, shopId: string, shopProductId: string, data: { unitPrice?: number; isActive?: boolean }): Promise<ShopProduct> => {
     return await apiCall<ShopProduct>({
       url: `/api/shops/${shopId}/products/${shopProductId}`,
       method: "PUT",
@@ -40,12 +40,12 @@ export const productsApi = {
   },
   addCustomProduct: async (
     token: string | null,
-    shopId: number,
+    shopId: string,
     data: {
-      barcode: string;
+      barcode?: string | null;
       name: string;
-      brand: string;
-      category: string;
+      brand?: string | null;
+      category?: string | null;
       mrp: number;
       unitPrice: number;
     }

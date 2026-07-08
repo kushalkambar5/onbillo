@@ -11,18 +11,18 @@ export class AnalyticsController {
   @Get('summary')
   @ShopRoles('owner', 'app_admin')
   getSummary(@Param('shopId') shopId: string) {
-    return this.analyticsService.getSummary(parseInt(shopId, 10));
+    return this.analyticsService.getSummary(shopId);
   }
 
   @Get('top-products')
   @ShopRoles('owner', 'app_admin')
   getTopProducts(@Param('shopId') shopId: string) {
-    return this.analyticsService.getTopProducts(parseInt(shopId, 10));
+    return this.analyticsService.getTopProducts(shopId);
   }
 
   @Get('sales-trend')
   @ShopRoles('owner', 'app_admin')
   getSalesTrend(@Param('shopId') shopId: string) {
-    return this.analyticsService.getSalesTrend(parseInt(shopId, 10));
+    return this.analyticsService.getSalesTrend(shopId);
   }
 }

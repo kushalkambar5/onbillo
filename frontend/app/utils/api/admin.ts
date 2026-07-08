@@ -14,14 +14,14 @@ export const adminApi = {
       method: "GET"
     }, token);
   },
-  togglePremium: async (token: string | null, userId: number, isPremium: boolean): Promise<User> => {
+  togglePremium: async (token: string | null, userId: string, isPremium: boolean): Promise<User> => {
     return await apiCall<User>({
       url: `/api/admin/users/${userId}/premium`,
       method: "PUT",
       data: { isPremium }
     }, token);
   },
-  toggleBan: async (token: string | null, userId: number, isBanned: boolean): Promise<User> => {
+  toggleBan: async (token: string | null, userId: string, isBanned: boolean): Promise<User> => {
     return await apiCall<User>({
       url: `/api/admin/users/${userId}/ban`,
       method: "PUT",
@@ -40,13 +40,13 @@ export const adminApi = {
       method: "GET"
     }, token);
   },
-  approveProduct: async (token: string | null, productId: number): Promise<Product> => {
+  approveProduct: async (token: string | null, productId: string): Promise<Product> => {
     return await apiCall<Product>({
       url: `/api/admin/products/${productId}/approve`,
       method: "PUT"
     }, token);
   },
-  rejectProduct: async (token: string | null, productId: number, reason: string): Promise<Product> => {
+  rejectProduct: async (token: string | null, productId: string, reason: string): Promise<Product> => {
     return await apiCall<Product>({
       url: `/api/admin/products/${productId}/reject`,
       method: "PUT",

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth, UserButton } from "@clerk/nextjs";
 import { User, usersApi } from "../utils/api";
+import { UpdateMeSchema, PhoneSchema, validateSchema } from "../utils/validation";
 import { mockUser } from "../utils/api/mockData";
 import { Skeleton } from "boneyard-js/react";
 import DevMockModeIndicator from "../components/DevMockModeIndicator";
@@ -19,6 +20,48 @@ export default function ProfilePage() {
     name: "",
     phone: "",
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateField = (name: string, value: string) => {
+    if (name === "name") {
+      if (!value.trim()) return "Full name is required";
+      if (value.length > 255) return "Full name must be at most 255 characters";
+      return "";
+    }
+    if (name === "phone") {
+      if (!value.trim()) return "Phone number is required";
+      const res = PhoneSchema.safeParse(value);
+      if (!res.success) return res.error.issues[0].message;
+      return "";
+    }
+    return "";
+  };
+
+  const handleFieldBlur = (name: string, value: string) => {
+    setTouched(prev => ({ ...prev, [name]: true }));
+    setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+  };
+
+  const handleFieldChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (touched[name]) {
+      setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+    }
+  };
+
+  const getMissingOrInvalidFields = () => {
+    const list: string[] = [];
+    const nameErr = validateField("name", formData.name);
+    if (nameErr) list.push("Full Name: " + nameErr);
+    const phoneErr = validateField("phone", formData.phone);
+    if (phoneErr) list.push("Phone Number: " + phoneErr);
+    return list;
+  };
+
+  const missingOrInvalid = getMissingOrInvalidFields();
+  const isFormValid = missingOrInvalid.length === 0;
 
   useEffect(() => {
     async function loadProfile() {
@@ -54,20 +97,32 @@ export default function ProfilePage() {
   }, [getToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    handleFieldChange(e.target.name, e.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setMessage({ text: "", type: "" });
+    setTouched({ name: true, phone: true });
+
+    const fieldErrors = getMissingOrInvalidFields();
+    if (fieldErrors.length > 0) {
+      setMessage({ text: fieldErrors[0], type: "error" });
+      setSaving(false);
+      return;
+    }
+
+    const validation = validateSchema(UpdateMeSchema, { phone: formData.phone });
+    if (!validation.success) {
+      setMessage({ text: validation.error, type: "error" });
+      setSaving(false);
+      return;
+    }
 
     try {
       const token = await getToken();
-      const updated = await usersApi.updateProfile(token, formData.name, formData.phone);
+      const updated = await usersApi.updateProfile(token, formData.name, validation.data.phone);
       setUser(updated);
       setMessage({ text: "Profile updated successfully!", type: "success" });
     } catch (err: any) {
@@ -147,33 +202,68 @@ export default function ProfilePage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Full Name
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  Full Name <span className="text-error-deep">*</span>
+                </label>
+                <span className="text-[10px] text-mute font-mono">
+                  {formData.name.length}/255 chars
+                </span>
+              </div>
               <input
                 type="text"
                 name="name"
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                onBlur={(e) => handleFieldBlur("name", e.target.value)}
+                className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                  touched.name && errors.name ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                }`}
               />
+              {touched.name && errors.name && (
+                <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Phone Number
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  Phone Number <span className="text-error-deep">*</span>
+                </label>
+                <span className="text-[10px] text-mute font-mono">
+                  {formData.phone.length}/20 chars
+                </span>
+              </div>
               <input
                 type="text"
                 name="phone"
+                required
                 placeholder="e.g. +91 9876543210"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                onBlur={(e) => handleFieldBlur("phone", e.target.value)}
+                className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                  touched.phone && errors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                }`}
               />
+              {touched.phone && errors.phone && (
+                <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+              )}
             </div>
           </div>
+
+          {/* Submit button blocker explainer */}
+          {!isFormValid && (
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs font-medium text-yellow-700 dark:text-yellow-400 space-y-1">
+              <p className="font-bold">⚠️ Please resolve the following to save changes:</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                {missingOrInvalid.map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="pt-4 border-t border-hairline flex items-center justify-between">
             <div className="text-xs text-mute">
@@ -181,8 +271,8 @@ export default function ProfilePage() {
             </div>
             <button
               type="submit"
-              disabled={saving}
-              className="h-10 px-6 bg-brand-primary hover:bg-brand-secondary text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-sm shadow-brand-primary/10 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              disabled={saving || !isFormValid}
+              className="h-10 px-6 bg-brand-primary hover:bg-brand-secondary text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-sm shadow-brand-primary/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {saving ? (
                 <>

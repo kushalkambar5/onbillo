@@ -28,7 +28,7 @@ export class AdminController {
 
   @Put('users/:id/premium')
   togglePremium(
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @Body(new ZodValidationPipe(TogglePremiumSchema)) body: any,
   ) {
     return this.adminService.togglePremium(id, body.isPremium);
@@ -36,7 +36,7 @@ export class AdminController {
 
   @Put('users/:id/ban')
   toggleBan(
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @Body(new ZodValidationPipe(ToggleBanSchema)) body: any,
   ) {
     return this.adminService.toggleBan(id, body.isBanned);
@@ -54,14 +54,14 @@ export class AdminController {
 
   @Put('products/:id/approve')
   approveProduct(
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
   ) {
     return this.adminService.approveProduct(id);
   }
 
   @Put('products/:id/reject')
   rejectProduct(
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @Body(new ZodValidationPipe(RejectProductSchema)) body: any,
   ) {
     return this.adminService.rejectProduct(id, body.reason);

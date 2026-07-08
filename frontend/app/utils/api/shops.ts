@@ -8,7 +8,7 @@ export const shopsApi = {
       method: "GET"
     }, token);
   },
-  getShop: async (token: string | null, shopId: number): Promise<Shop> => {
+  getShop: async (token: string | null, shopId: string): Promise<Shop> => {
     return await apiCall<Shop>({
       url: `/api/shops/${shopId}`,
       method: "GET"
@@ -21,14 +21,14 @@ export const shopsApi = {
       data
     }, token);
   },
-  updateShop: async (token: string | null, shopId: number, data: any): Promise<Shop> => {
+  updateShop: async (token: string | null, shopId: string, data: any): Promise<Shop> => {
     return await apiCall<Shop>({
       url: `/api/shops/${shopId}`,
       method: "PUT",
       data
     }, token);
   },
-  getMembers: async (token: string | null, shopId: number): Promise<ShopMember[]> => {
+  getMembers: async (token: string | null, shopId: string): Promise<ShopMember[]> => {
     return await apiCall<ShopMember[]>({
       url: `/api/shops/${shopId}/staff`,
       method: "GET"

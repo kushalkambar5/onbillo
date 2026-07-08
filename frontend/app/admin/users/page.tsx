@@ -22,7 +22,7 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
-  const [actioningId, setActioningId] = useState<number | null>(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
 
   async function loadUsers() {
     try {
@@ -49,7 +49,7 @@ export default function AdminUsers() {
     loadUsers();
   }, [getToken]);
 
-  const handleTogglePremium = async (userId: number, currentPremium: boolean) => {
+  const handleTogglePremium = async (userId: string, currentPremium: boolean) => {
     setActioningId(userId);
     setError("");
     try {
@@ -63,7 +63,7 @@ export default function AdminUsers() {
     }
   };
 
-  const handleToggleBan = async (userId: number, currentBanned: boolean) => {
+  const handleToggleBan = async (userId: string, currentBanned: boolean) => {
     const actionText = currentBanned ? "unban" : "ban";
     if (!confirm(`Are you sure you want to ${actionText} this user account?`)) return;
 

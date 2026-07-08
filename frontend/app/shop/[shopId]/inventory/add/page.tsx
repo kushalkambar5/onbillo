@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { productsApi, Product } from "../../../../utils/api";
+import { CreateCustomProductSchema, BarcodeSchema, validateSchema } from "../../../../utils/validation";
 import { 
   Search, 
   PlusCircle, 
@@ -26,7 +27,7 @@ export default function AddProducts({
   params: Promise<{ shopId: string }>;
 }) {
   const params = use(paramsPromise);
-  const shopId = parseInt(params.shopId, 10);
+  const shopId = params.shopId;
   const { getToken } = useAuth();
   
   const [activeTab, setActiveTab] = useState<"search" | "request">("search");
@@ -50,6 +51,119 @@ export default function AddProducts({
     sellingPrice: ""
   });
   const [requestLoading, setRequestLoading] = useState(false);
+
+  // Validation State for Add New Product Form
+  const [requestErrors, setRequestErrors] = useState<Record<string, string>>({});
+  const [requestTouched, setRequestTouched] = useState<Record<string, boolean>>({});
+
+  const validateRequestField = (name: string, value: string) => {
+    if (name === "name") {
+      if (!value.trim()) return "Product Name is required";
+      if (value.length > 255) return "Product Name must be at most 255 characters";
+      if (!/^[a-zA-Z0-9\s.,\-\/()#&'+:@!_]+$/.test(value)) return "Product Name contains invalid characters";
+      return "";
+    }
+    if (name === "mrp") {
+      if (!value.trim()) return "MRP is required";
+      const floatVal = parseFloat(value);
+      if (isNaN(floatVal) || floatVal <= 0) return "MRP must be a valid positive number";
+      return "";
+    }
+    if (name === "sellingPrice") {
+      if (!value.trim()) return "Your Shop Price is required";
+      const floatVal = parseFloat(value);
+      if (isNaN(floatVal) || floatVal <= 0) return "Your Shop Price must be a valid positive number";
+      
+      const mrpFloat = parseFloat(requestForm.mrp);
+      if (!isNaN(mrpFloat) && floatVal > mrpFloat) {
+        return "Your Shop Price cannot exceed the Maximum Retail Price (MRP)";
+      }
+      return "";
+    }
+    if (name === "barcode") {
+      if (!value.trim()) return "";
+      const res = BarcodeSchema.safeParse(value);
+      if (!res.success) return res.error.issues[0].message;
+      return "";
+    }
+    if (name === "brand") {
+      if (!value.trim()) return "";
+      if (value.length > 255) return "Brand name must be at most 255 characters";
+      if (!/^[a-zA-Z0-9\s.,\-\/()#&'+:@!_]+$/.test(value)) return "Brand name contains invalid characters";
+      return "";
+    }
+    if (name === "category") {
+      if (!value.trim()) return "";
+      if (value.length > 255) return "Category name must be at most 255 characters";
+      if (!/^[a-zA-Z0-9\s.,\-\/()#&'+:@!_]+$/.test(value)) return "Category name contains invalid characters";
+      return "";
+    }
+    return "";
+  };
+
+  const handleRequestBlur = (name: string, value: string) => {
+    setRequestTouched(prev => ({ ...prev, [name]: true }));
+    setRequestErrors(prev => ({ ...prev, [name]: validateRequestField(name, value) }));
+  };
+
+  const handleRequestFieldChange = (name: string, value: string) => {
+    const updatedForm = { ...requestForm, [name]: value };
+    setRequestForm(updatedForm);
+    if (requestTouched[name]) {
+      setRequestErrors(prev => ({ ...prev, [name]: validateRequestField(name, value) }));
+    }
+    if (name === "mrp" && requestTouched["sellingPrice"]) {
+      setRequestErrors(prev => ({ 
+        ...prev, 
+        sellingPrice: validateRequestField("sellingPrice", updatedForm.sellingPrice) 
+      }));
+    }
+  };
+
+  const getMissingRequestFields = () => {
+    const list: string[] = [];
+    if (!requestForm.name.trim()) list.push("Product Name is required");
+    if (!requestForm.mrp.trim()) list.push("MRP is required");
+    if (!requestForm.sellingPrice.trim()) list.push("Your Shop Price is required");
+
+    Object.keys(requestForm).forEach((key) => {
+      const err = validateRequestField(key, (requestForm as any)[key]);
+      if (err) {
+        list.push(err);
+      }
+    });
+    return Array.from(new Set(list));
+  };
+
+  const isRequestFormValid = getMissingRequestFields().length === 0;
+
+  // Validation State for Set Selling Price Dialog (adding global product)
+  const [sellingPriceTouched, setSellingPriceTouched] = useState(false);
+  const [sellingPriceError, setSellingPriceError] = useState("");
+
+  const validateSellingPrice = (val: string, maxMrp?: number) => {
+    if (!val.trim()) return "Price is required";
+    const floatVal = parseFloat(val);
+    if (isNaN(floatVal) || floatVal <= 0) return "Price must be a valid positive number";
+    if (maxMrp !== undefined && floatVal > maxMrp / 100) {
+      return `Price cannot exceed the Maximum Retail Price (MRP) of ₹${(maxMrp / 100).toFixed(2)}`;
+    }
+    return "";
+  };
+
+  const handleSellingPriceChange = (val: string) => {
+    setSellingPrice(val);
+    if (sellingPriceTouched) {
+      setSellingPriceError(validateSellingPrice(val, addingProduct?.mrp));
+    }
+  };
+
+  const handleSellingPriceBlur = () => {
+    setSellingPriceTouched(true);
+    setSellingPriceError(validateSellingPrice(sellingPrice, addingProduct?.mrp));
+  };
+
+  const isSellingPriceValid = sellingPrice.trim() !== "" && !validateSellingPrice(sellingPrice, addingProduct?.mrp);
 
   // Barcode Scanner State
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -143,38 +257,42 @@ export default function AddProducts({
 
   const submitGlobalRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!requestForm.name || !requestForm.mrp || !requestForm.sellingPrice) {
-      setMessage({ text: "Product Name, MRP, and Your Shop Price are required fields.", type: "error" });
-      return;
-    }
 
     const mrpFloat = parseFloat(requestForm.mrp);
-    if (isNaN(mrpFloat) || mrpFloat <= 0) {
-      setMessage({ text: "Please enter a valid MRP.", type: "error" });
+    const sellingPriceFloat = parseFloat(requestForm.sellingPrice);
+    const mrpPaise = isNaN(mrpFloat) ? undefined : Math.round(mrpFloat * 100);
+    const unitPricePaise = isNaN(sellingPriceFloat) ? undefined : Math.round(sellingPriceFloat * 100);
+
+    const validationPayload = {
+      barcode: requestForm.barcode,
+      name: requestForm.name,
+      brand: requestForm.brand,
+      category: requestForm.category,
+      mrp: mrpPaise,
+      unitPrice: unitPricePaise
+    };
+
+    const validation = validateSchema(CreateCustomProductSchema, validationPayload);
+    if (!validation.success) {
+      setMessage({ text: validation.error, type: "error" });
       return;
     }
 
-    const sellingPriceFloat = parseFloat(requestForm.sellingPrice);
-    if (isNaN(sellingPriceFloat) || sellingPriceFloat <= 0) {
-      setMessage({ text: "Please enter a valid Shop Price.", type: "error" });
-      return;
-    }
+    const cleanedData = validation.data;
 
     setRequestLoading(true);
     setMessage({ text: "", type: "" });
 
     try {
       const token = await getToken();
-      const mrpPaise = Math.round(mrpFloat * 100);
-      const unitPricePaise = Math.round(sellingPriceFloat * 100);
 
       await productsApi.addCustomProduct(token, shopId, {
-        barcode: requestForm.barcode,
-        name: requestForm.name,
-        brand: requestForm.brand,
-        category: requestForm.category,
-        mrp: mrpPaise,
-        unitPrice: unitPricePaise
+        barcode: cleanedData.barcode,
+        name: cleanedData.name,
+        brand: cleanedData.brand,
+        category: cleanedData.category,
+        mrp: cleanedData.mrp,
+        unitPrice: cleanedData.unitPrice
       });
 
       setMessage({ 
@@ -345,17 +463,25 @@ export default function AddProducts({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Barcode / UPC <span className="text-mute font-normal">(Recommended)</span>
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  Barcode / UPC <span className="text-mute font-normal">(Recommended)</span>
+                </label>
+                <span className="text-[10px] text-mute font-mono">
+                  {requestForm.barcode.length}/255 chars
+                </span>
+              </div>
               <div className="flex gap-2">
                 <input
                   type="text"
                   name="barcode"
                   placeholder="e.g. 8901058002315"
                   value={requestForm.barcode}
-                  onChange={handleRequestChange}
-                  className="flex-1 min-w-0 border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
+                  onChange={(e) => handleRequestFieldChange("barcode", e.target.value)}
+                  onBlur={(e) => handleRequestBlur("barcode", e.target.value)}
+                  className={`flex-1 min-w-0 border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground ${
+                    requestTouched.barcode && requestErrors.barcode ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline"
+                  }`}
                 />
                 <button
                   type="button"
@@ -369,86 +495,150 @@ export default function AddProducts({
                   <Camera className="w-4 h-4" />
                 </button>
               </div>
+              {requestTouched.barcode && requestErrors.barcode && (
+                <p className="text-xs text-red-500 mt-1">{requestErrors.barcode}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Maximum Retail Price (MRP) <span className="text-error-deep">*</span>
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  Maximum Retail Price (MRP) <span className="text-error-deep">*</span>
+                </label>
+              </div>
               <input
                 type="text"
                 name="mrp"
                 required
                 placeholder="e.g. 30.00"
                 value={requestForm.mrp}
-                onChange={handleRequestChange}
-                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
+                onChange={(e) => handleRequestFieldChange("mrp", e.target.value)}
+                onBlur={(e) => handleRequestBlur("mrp", e.target.value)}
+                className={`w-full border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground ${
+                  requestTouched.mrp && requestErrors.mrp ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline"
+                }`}
               />
+              {requestTouched.mrp && requestErrors.mrp && (
+                <p className="text-xs text-red-500 mt-1">{requestErrors.mrp}</p>
+              )}
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Product Name <span className="text-error-deep">*</span>
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  Product Name <span className="text-error-deep">*</span>
+                </label>
+                <span className="text-[10px] text-mute font-mono">
+                  {requestForm.name.length}/255 chars
+                </span>
+              </div>
               <input
                 type="text"
                 name="name"
                 required
                 placeholder="e.g. Maggi 2-Min Masala Noodles 140g"
                 value={requestForm.name}
-                onChange={handleRequestChange}
-                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
+                onChange={(e) => handleRequestFieldChange("name", e.target.value)}
+                onBlur={(e) => handleRequestBlur("name", e.target.value)}
+                className={`w-full border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground ${
+                  requestTouched.name && requestErrors.name ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline"
+                }`}
               />
+              {requestTouched.name && requestErrors.name && (
+                <p className="text-xs text-red-500 mt-1">{requestErrors.name}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Brand / Manufacturer
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  Brand / Manufacturer
+                </label>
+                <span className="text-[10px] text-mute font-mono">
+                  {requestForm.brand.length}/255 chars
+                </span>
+              </div>
               <input
                 type="text"
                 name="brand"
                 placeholder="e.g. Nestle"
                 value={requestForm.brand}
-                onChange={handleRequestChange}
-                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
+                onChange={(e) => handleRequestFieldChange("brand", e.target.value)}
+                onBlur={(e) => handleRequestBlur("brand", e.target.value)}
+                className={`w-full border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground ${
+                  requestTouched.brand && requestErrors.brand ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline"
+                }`}
               />
+              {requestTouched.brand && requestErrors.brand && (
+                <p className="text-xs text-red-500 mt-1">{requestErrors.brand}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Category
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  Category
+                </label>
+                <span className="text-[10px] text-mute font-mono">
+                  {requestForm.category.length}/255 chars
+                </span>
+              </div>
               <input
                 type="text"
                 name="category"
                 placeholder="e.g. Packaged Foods"
                 value={requestForm.category}
-                onChange={handleRequestChange}
-                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
+                onChange={(e) => handleRequestFieldChange("category", e.target.value)}
+                onBlur={(e) => handleRequestBlur("category", e.target.value)}
+                className={`w-full border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground ${
+                  requestTouched.category && requestErrors.category ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline"
+                }`}
               />
+              {requestTouched.category && requestErrors.category && (
+                <p className="text-xs text-red-500 mt-1">{requestErrors.category}</p>
+              )}
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Your Shop Price (₹) <span className="text-error-deep">*</span>
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  Your Shop Price (₹) <span className="text-error-deep">*</span>
+                </label>
+              </div>
               <input
                 type="text"
                 name="sellingPrice"
                 required
                 placeholder="e.g. 28.00"
                 value={requestForm.sellingPrice}
-                onChange={handleRequestChange}
-                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground font-mono font-bold"
+                onChange={(e) => handleRequestFieldChange("sellingPrice", e.target.value)}
+                onBlur={(e) => handleRequestBlur("sellingPrice", e.target.value)}
+                className={`w-full border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground font-mono font-bold ${
+                  requestTouched.sellingPrice && requestErrors.sellingPrice ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline"
+                }`}
               />
+              {requestTouched.sellingPrice && requestErrors.sellingPrice && (
+                <p className="text-xs text-red-500 mt-1">{requestErrors.sellingPrice}</p>
+              )}
             </div>
           </div>
 
+          {/* Submit warnings panel */}
+          {!isRequestFormValid && (
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs font-medium text-yellow-700 dark:text-yellow-400 space-y-1">
+              <p className="font-bold">⚠️ Resolve the following to enable adding this product:</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                {getMissingRequestFields().map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={requestLoading}
-            className="w-full h-10 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+            disabled={requestLoading || !isRequestFormValid}
+            className="w-full h-10 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {requestLoading ? (
               <>
@@ -487,30 +677,50 @@ export default function AddProducts({
               
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Your Shop Price (₹)
+                  Your Shop Price (₹) <span className="text-error-deep">*</span>
                 </label>
                 <input
                   type="text"
                   value={sellingPrice}
-                  onChange={(e) => setSellingPrice(e.target.value)}
-                  className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground font-mono font-bold"
+                  onChange={(e) => handleSellingPriceChange(e.target.value)}
+                  onBlur={handleSellingPriceBlur}
+                  className={`w-full border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground font-mono font-bold ${
+                    sellingPriceTouched && sellingPriceError ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline"
+                  }`}
                 />
+                {sellingPriceTouched && sellingPriceError && (
+                  <p className="text-xs text-red-500 mt-1">{sellingPriceError}</p>
+                )}
               </div>
             </div>
 
             <div className="flex gap-3 pt-2">
               <button
-                onClick={() => setAddingProduct(null)}
+                onClick={() => {
+                  setAddingProduct(null);
+                  setSellingPriceTouched(false);
+                  setSellingPriceError("");
+                }}
                 className="flex-1 h-9.5 border border-hairline hover:bg-canvas-soft text-foreground text-xs font-bold rounded-lg cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={submitAddToShop}
-                disabled={addLoading}
-                className="flex-1 h-9.5 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-bold rounded-lg cursor-pointer flex items-center justify-center gap-1.5"
+                disabled={addLoading || !isSellingPriceValid}
+                className="flex-1 h-9.5 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-bold rounded-lg cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {addLoading ? "Adding..." : "Add to Shop"}
+                {addLoading ? (
+                  <>
+                    <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>Adding…</span>
+                  </>
+                ) : (
+                  "Add to Shop"
+                )}
               </button>
             </div>
           </div>

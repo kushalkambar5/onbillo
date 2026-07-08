@@ -12,7 +12,7 @@ export default function InvitesPage() {
   const { getToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [invites, setInvites] = useState<StaffRequest[]>([]);
-  const [actioningId, setActioningId] = useState<number | null>(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
   const [message, setMessage] = useState({ text: "", type: "" });
 
   async function loadInvites() {
@@ -40,7 +40,7 @@ export default function InvitesPage() {
     loadInvites();
   }, [getToken]);
 
-  const handleResponse = async (requestId: number, accept: boolean) => {
+  const handleResponse = async (requestId: string, accept: boolean) => {
     setActioningId(requestId);
     setMessage({ text: "", type: "" });
     try {

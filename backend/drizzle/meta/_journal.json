@@ -15,6 +15,13 @@
       "when": 1783455023176,
       "tag": "0001_flowery_ben_grimm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783538512804,
+      "tag": "0002_brave_praxagora",
+      "breakpoints": true
     }
   ]
 }

@@ -107,7 +107,7 @@ export default function InteractiveSteps() {
             <span className="text-[11px] font-mono text-mute bg-canvas-soft-2 px-3 py-1 rounded border border-hairline">
               {activeStep === 1 && "onbillo.com/setup"}
               {activeStep === 2 && "onbillo.com/inventory"}
-              {activeStep === 3 && "onbillo.com/pos-billing"}
+              {activeStep === 3 && "onbillo.com/billing"}
               {activeStep === 4 && "onbillo.com/dashboard"}
             </span>
             <div className="w-8" /> {/* Spacer */}

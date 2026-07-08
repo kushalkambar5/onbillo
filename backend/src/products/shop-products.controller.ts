@@ -29,7 +29,7 @@ export class ShopProductsController {
   @Get()
   @ShopRoles('owner', 'shop_worker')
   listShopProducts(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
   ) {
     return this.productsService.listShopProducts(shopId);
   }
@@ -37,7 +37,7 @@ export class ShopProductsController {
   @Post()
   @ShopRoles('owner', 'shop_worker')
   addShopProduct(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
     @Body(new ZodValidationPipe(CreateShopProductSchema)) body: any,
   ) {
     return this.productsService.addShopProduct(shopId, body);
@@ -46,7 +46,7 @@ export class ShopProductsController {
   @Post('custom')
   @ShopRoles('owner', 'shop_worker')
   addCustomProduct(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
     @Body(new ZodValidationPipe(CreateCustomProductSchema)) body: any,
     @CurrentUser() user: any,
   ) {
@@ -57,8 +57,8 @@ export class ShopProductsController {
   @Put(':id')
   @ShopRoles('owner', 'shop_worker')
   updateShopProduct(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @Body(new ZodValidationPipe(UpdateShopProductSchema)) body: any,
   ) {
     return this.productsService.updateShopProduct(shopId, id, body);
@@ -67,8 +67,8 @@ export class ShopProductsController {
   @Delete(':id')
   @ShopRoles('owner')
   deleteShopProduct(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
   ) {
     return this.productsService.deleteShopProduct(shopId, id);
   }
@@ -76,7 +76,7 @@ export class ShopProductsController {
   @Get('barcode/:code')
   @ShopRoles('owner', 'shop_worker')
   lookupShopProductByBarcode(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
     @Param('code', new ZodValidationPipe(BarcodeSchema)) code: string,
   ) {
     return this.productsService.lookupShopProductByBarcode(shopId, code);

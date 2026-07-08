@@ -40,7 +40,7 @@ export class ShopRolesGuard implements CanActivate {
       .from(shopMembers)
       .where(
         and(
-          eq(shopMembers.shopId, parseInt(shopId, 10)),
+          eq(shopMembers.shopId, shopId),
           eq(shopMembers.userId, user.id),
         ),
       )

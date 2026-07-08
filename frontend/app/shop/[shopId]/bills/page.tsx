@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { billsApi, shopsApi, Bill, Shop } from "../../../utils/api";
@@ -11,18 +11,18 @@ import {
   Trash2, 
   Printer, 
   XCircle, 
-  CheckCircle2, 
   Eye,
-  AlertCircle
+  AlertCircle,
+  FileSpreadsheet
 } from "lucide-react";
-
+ 
 export default function ShopBills({
   params: paramsPromise,
 }: {
   params: Promise<{ shopId: string }>;
 }) {
   const params = use(paramsPromise);
-  const shopId = parseInt(params.shopId, 10);
+  const shopId = params.shopId;
   const { getToken } = useAuth();
   
   const [loading, setLoading] = useState(true);
@@ -30,9 +30,13 @@ export default function ShopBills({
   const [bills, setBills] = useState<Bill[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
-  const [voidingId, setVoidingId] = useState<number | null>(null);
+  const [voidingId, setVoidingId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
+  // CSV Export state
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+ 
   async function loadBills() {
     try {
       const isBoneyard = typeof window !== "undefined" && 
@@ -40,11 +44,11 @@ export default function ShopBills({
       
       if (isBoneyard) {
         setShop(mockShops[0]);
-        setBills(mockBills[shopId] || mockBills[1] || []);
+        setBills(mockBills[shopId] || mockBills["1"] || []);
         setLoading(false);
         return;
       }
-
+ 
       const token = await getToken();
       const [shopDetail, billsList] = await Promise.all([
         shopsApi.getShop(token, shopId),
@@ -58,17 +62,17 @@ export default function ShopBills({
       setLoading(false);
     }
   }
-
+ 
   useEffect(() => {
     loadBills();
   }, [shopId, getToken]);
-
-  const handleVoid = async (billId: number) => {
+ 
+  const handleVoid = async (billId: string) => {
     if (!confirm("Are you sure you want to void this invoice? This action cannot be undone.")) return;
     
     setVoidingId(billId);
     setError("");
-
+ 
     try {
       const token = await getToken();
       const updated = await billsApi.voidBill(token, shopId, billId);
@@ -82,16 +86,52 @@ export default function ShopBills({
       setVoidingId(null);
     }
   };
-
+ 
+  const handleExport = () => {
+    setExporting(true);
+    setExportProgress(0);
+    const interval = setInterval(() => {
+      setExportProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            // Compile record data into CSV and trigger download
+            const headers = ["Bill Number", "Date/Time", "Cashier", "Amount (Rs)", "Status", "Notes"];
+            const rows = bills.map(b => [
+              b.billNumber,
+              new Date(b.createdAt).toLocaleString("en-IN"),
+              b.cashierName || "Cashier",
+              (b.totalPrice / 100).toFixed(2),
+              b.status,
+              b.notes || ""
+            ]);
+            const csvContent = "data:text/csv;charset=utf-8," 
+              + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `sales_ledger_shop_${shopId}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setExporting(false);
+          }, 300);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 150);
+  };
+ 
   const filteredBills = bills.filter((b) => {
     const query = searchQuery.toLowerCase();
     return b.billNumber.toLowerCase().includes(query);
   });
-
+ 
   const printReceipt = () => {
     window.print();
   };
-
+ 
   return (
     <Skeleton name="shop-bills" loading={loading}>
       <div className="space-y-8 select-none">
@@ -104,25 +144,38 @@ export default function ShopBills({
           </p>
         </div>
         
-        {/* Search */}
-        <div className="relative w-full sm:w-72 shrink-0">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mute" />
-          <input
-            type="text"
-            placeholder="Search by Invoice number..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-xl text-xs transition-all duration-200 h-10 text-foreground"
-          />
+        <div className="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto">
+          {/* Export Button */}
+          <button
+            onClick={handleExport}
+            disabled={bills.length === 0}
+            className="h-10 px-4 border border-hairline hover:bg-canvas-soft text-foreground font-bold text-xs rounded-xl transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Export sales ledger to CSV"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-mute" />
+            <span>Export CSV</span>
+          </button>
+ 
+          {/* Search */}
+          <div className="relative flex-1 sm:w-64 sm:flex-none">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mute" />
+            <input
+              type="text"
+              placeholder="Search by Invoice number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-xl text-xs transition-all duration-200 h-10 text-foreground"
+            />
+          </div>
         </div>
       </div>
-
+ 
       {error && (
         <div className="p-3.5 rounded-lg bg-error-soft border border-error/15 text-xs font-semibold text-error-deep">
           ⚠️ {error}
         </div>
       )}
-
+ 
       {/* 2. Main content split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Ledger Table */}
@@ -132,7 +185,7 @@ export default function ShopBills({
               <Receipt className="w-10 h-10 mx-auto text-mute mb-3" />
               <h4 className="text-xs font-bold text-foreground">No invoices registered</h4>
               <p className="text-[10px] text-mute mt-1.5">
-                Generate transaction bills in the POS Register page to compile logs here.
+                Generate transaction bills in the Billing page to compile logs here.
               </p>
             </div>
           ) : (
@@ -187,7 +240,7 @@ export default function ShopBills({
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => setSelectedBill(b)}
-                            className="p-1 text-mute hover:text-foreground hover:bg-canvas-soft rounded transition-colors"
+                            className="p-1 text-mute hover:text-foreground hover:bg-canvas-soft rounded transition-colors cursor-pointer"
                             title="View Details"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -196,10 +249,17 @@ export default function ShopBills({
                             <button
                               disabled={voidingId !== null}
                               onClick={() => handleVoid(b.id)}
-                              className="p-1 text-mute hover:text-error-deep hover:bg-error-soft/30 rounded transition-colors"
+                              className="p-1 text-mute hover:text-error-deep hover:bg-error-soft/30 rounded transition-colors cursor-pointer flex items-center justify-center min-w-5 h-5"
                               title="Void Bill"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              {voidingId === b.id ? (
+                                <svg className="animate-spin h-3.5 w-3.5 text-error-deep" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                              )}
                             </button>
                           )}
                         </div>
@@ -211,7 +271,7 @@ export default function ShopBills({
             </div>
           )}
         </div>
-
+ 
         {/* Mobile Backdrop for Selected Bill Inspector */}
         {selectedBill && (
           <div 
@@ -219,7 +279,7 @@ export default function ShopBills({
             onClick={() => setSelectedBill(null)}
           />
         )}
-
+ 
         {/* Selected Bill Side Panel (Details) */}
         <div className={`bg-canvas border border-hairline rounded-2xl p-5 shadow-sm space-y-4 ${
           selectedBill 
@@ -239,7 +299,7 @@ export default function ShopBills({
               </button>
             )}
           </div>
-
+ 
           {!selectedBill ? (
             <div className="p-8 text-center text-mute">
               <p className="text-[10px]">Select an invoice from the ledger to inspect products, cashier tags, and print settings.</p>
@@ -252,7 +312,7 @@ export default function ShopBills({
                   <h4 className="font-bold text-black">{shop?.name}</h4>
                   <p className="text-[8px] text-mute">{shop?.city}, {shop?.state}</p>
                 </div>
-
+ 
                 <div className="border-t border-b border-dashed border-zinc-400 py-1.5 my-2 space-y-0.5">
                   <div className="flex justify-between">
                     <span>BILL NO:</span>
@@ -269,7 +329,7 @@ export default function ShopBills({
                     </span>
                   </div>
                 </div>
-
+ 
                 <div className="border-b border-dashed border-zinc-400 pb-2 space-y-1">
                   {selectedBill.items?.map((item) => (
                     <div key={item.id} className="flex justify-between leading-snug">
@@ -280,19 +340,19 @@ export default function ShopBills({
                     </div>
                   ))}
                 </div>
-
+ 
                 <div className="pt-2 text-black font-bold flex justify-between text-xs">
                   <span>TOTAL:</span>
                   <span>₹{(selectedBill.totalPrice / 100).toFixed(2)}</span>
                 </div>
-
+ 
                 {selectedBill.notes && (
                   <div className="mt-3 bg-canvas border border-hairline p-2 rounded text-[8px] text-mute">
                     <strong>Notes:</strong> {selectedBill.notes}
                   </div>
                 )}
               </div>
-
+ 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-1">
                 <button
@@ -307,7 +367,19 @@ export default function ShopBills({
                     onClick={() => handleVoid(selectedBill.id)}
                     className="flex-1 h-9 border border-error/20 hover:bg-error-soft text-error-deep text-xs font-bold rounded-xl cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    <XCircle className="w-3.5 h-3.5" /> Void
+                    {voidingId === selectedBill.id ? (
+                      <>
+                        <svg className="animate-spin h-3.5 w-3.5 text-error-deep" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        <span>Voiding…</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-3.5 h-3.5" /> Void
+                      </>
+                    )}
                   </button>
                 )}
               </div>
@@ -315,6 +387,33 @@ export default function ShopBills({
           )}
         </div>
       </div>
+ 
+      {/* CSV Export Progress Modal */}
+      {exporting && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-canvas border border-hairline rounded-2xl shadow-level-4 max-w-sm w-full p-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-foreground font-sans">Generating Sales Spreadsheet</h3>
+              <p className="text-[10px] text-mute mt-1 leading-snug">
+                Compiling invoice records, notes, and calculating sums...
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="w-full bg-canvas-soft border border-hairline h-3.5 rounded-full overflow-hidden relative">
+                <div 
+                  className="bg-brand-primary h-full rounded-full transition-all duration-150 ease-out" 
+                  style={{ width: `${exportProgress}%` }} 
+                />
+              </div>
+              <div className="flex justify-between items-center text-[10px] font-mono text-mute font-bold">
+                <span>{exportProgress < 100 ? "Processing records…" : "Ready for download!"}</span>
+                <span>{exportProgress}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </Skeleton>
   );

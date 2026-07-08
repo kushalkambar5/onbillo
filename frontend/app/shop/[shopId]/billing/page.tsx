@@ -29,7 +29,7 @@ export default function ShopPosRegister({
   params: Promise<{ shopId: string }>;
 }) {
   const params = use(paramsPromise);
-  const shopId = parseInt(params.shopId, 10);
+  const shopId = params.shopId;
   const { getToken } = useAuth();
   
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,7 @@ export default function ShopPosRegister({
         
         if (isBoneyard) {
           setShop(mockShops[0]);
-          setProducts((mockShopProducts[shopId] || mockShopProducts[1] || []).filter(p => p.isActive));
+          setProducts((mockShopProducts[shopId] || mockShopProducts["1"] || []).filter(p => p.isActive));
         } else {
           const token = await getToken();
           const [shopDetail, productsList] = await Promise.all([
@@ -125,7 +125,7 @@ export default function ShopPosRegister({
     }
   };
 
-  const updateQuantity = (shopProductId: number, delta: number) => {
+  const updateQuantity = (shopProductId: string, delta: number) => {
     const existing = cart.find((item) => item.shopProduct.id === shopProductId);
     if (!existing) return;
     
@@ -143,7 +143,7 @@ export default function ShopPosRegister({
     }
   };
 
-  const removeFromCart = (shopProductId: number) => {
+  const removeFromCart = (shopProductId: string) => {
     setCart(cart.filter((item) => item.shopProduct.id !== shopProductId));
   };
 
@@ -415,7 +415,17 @@ export default function ShopPosRegister({
           disabled={cart.length === 0 || checkoutLoading}
           className="w-full h-11 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-sm rounded-xl transition-all duration-200 shadow-sm shadow-brand-primary/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {checkoutLoading ? "Compiling invoice..." : "Generate Invoice Bill"}
+          {checkoutLoading ? (
+            <>
+              <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span>Compiling invoice…</span>
+            </>
+          ) : (
+            "Generate Invoice Bill"
+          )}
         </button>
       </div>
 

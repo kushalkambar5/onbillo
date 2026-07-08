@@ -2,11 +2,17 @@ import { z } from 'zod';
 
 // Helper Regex Patterns
 // Phone: 7-20 chars, optional + followed by digits, dashes, spaces, parentheses
-export const PhoneSchema = z
-  .string()
+export const PhoneSchema = z.preprocess((val) => {
+  if (typeof val !== 'string') return val;
+  const cleaned = val.trim();
+  const startsWithPlus = cleaned.startsWith('+');
+  const digitsOnly = cleaned.replace(/\D/g, '');
+  return startsWithPlus ? `+${digitsOnly}` : digitsOnly;
+}, z.string()
   .min(7, 'Phone number must be at least 7 characters')
   .max(20, 'Phone number must be at most 20 characters')
-  .regex(/^[+\d][- \d()]*$/, 'Phone number contains invalid characters');
+  .regex(/^\+?\d+$/, 'Phone number must contain only digits and optional leading +')
+) as unknown as z.ZodType<string>;
 
 // Email: Standard email validation, max 255 chars
 export const EmailSchema = z
@@ -21,11 +27,10 @@ export const PincodeSchema = z
   .max(20, 'Pincode must be at most 20 characters')
   .regex(/^[a-zA-Z0-9\-\s]+$/, 'Pincode contains invalid characters');
 
-// Numeric Path Parameter Schema (for ids)
+// UUID Path Parameter Schema (for ids)
 export const IdParamSchema = z
   .string()
-  .regex(/^\d+$/, 'ID must be a numeric string')
-  .transform(Number);
+  .uuid('ID must be a valid UUID');
 
 // Barcode: 1-255 characters, alphanumeric, dashes, underscores
 export const BarcodeSchema = z
@@ -169,7 +174,7 @@ export const CreateCustomProductSchema = CreateProductSchema.extend({
 
 // ShopProductsController
 export const CreateShopProductSchema = z.object({
-  productId: z.number().int().positive(),
+  productId: z.string().uuid('Product ID must be a valid UUID'),
   unitPrice: z.number().int().positive('Unit price must be positive'),
   isActive: z.boolean().optional(),
 });
@@ -192,7 +197,7 @@ export const CreateBillSchema = z.object({
   items: z
     .array(
       z.object({
-        shopProductId: z.number().int().positive(),
+        shopProductId: z.string().uuid('Shop Product ID must be a valid UUID'),
         unitPrice: z.number().int().positive('Unit price must be positive'),
         quantity: z.number().int().positive('Quantity must be positive'),
       }),

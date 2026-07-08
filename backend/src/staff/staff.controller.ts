@@ -28,7 +28,7 @@ export class StaffController {
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner', 'app_admin')
   listStaff(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
   ) {
     return this.staffService.listStaff(shopId);
   }
@@ -37,8 +37,8 @@ export class StaffController {
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner')
   inviteStaff(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
-    @Param('user_id', new ZodValidationPipe(IdParamSchema)) userId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
+    @Param('user_id', new ZodValidationPipe(IdParamSchema)) userId: string,
     @Body(new ZodValidationPipe(InviteStaffRoleSchema)) body: any,
     @CurrentUser() user: any,
   ) {
@@ -49,7 +49,7 @@ export class StaffController {
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner')
   inviteStaffByEmail(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
     @Body(new ZodValidationPipe(InviteStaffByEmailSchema)) body: any,
     @CurrentUser() user: any,
   ) {
@@ -63,7 +63,7 @@ export class StaffController {
 
   @Put('accept')
   acceptInvite(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
     @CurrentUser() user: any,
   ) {
     return this.staffService.acceptInvite(shopId, user.id);
@@ -73,8 +73,8 @@ export class StaffController {
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner')
   updateStaffRole(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @Body(new ZodValidationPipe(InviteStaffRoleSchema)) body: any,
   ) {
     return this.staffService.updateStaffRole(shopId, id, body.role);
@@ -84,8 +84,8 @@ export class StaffController {
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner')
   removeStaff(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
   ) {
     return this.staffService.removeStaff(shopId, id);
   }

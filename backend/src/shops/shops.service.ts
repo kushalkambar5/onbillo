@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 export class ShopsService {
   constructor(private dbService: DbService) {}
 
-  async createShop(data: any, userId: number) {
+  async createShop(data: any, userId: string) {
     return await this.dbService.db.transaction(async (tx) => {
       const [shop] = await tx
         .insert(shops)
@@ -36,7 +36,7 @@ export class ShopsService {
     });
   }
 
-  async getUserShops(userId: number) {
+  async getUserShops(userId: string) {
     return await this.dbService.db
       .select({ shop: shops, role: shopMembers.role })
       .from(shopMembers)
@@ -44,7 +44,7 @@ export class ShopsService {
       .where(eq(shopMembers.userId, userId));
   }
 
-  async getShop(id: number) {
+  async getShop(id: string) {
     const [shop] = await this.dbService.db
       .select()
       .from(shops)
@@ -56,7 +56,7 @@ export class ShopsService {
     return shop;
   }
 
-  async updateShop(id: number, data: any) {
+  async updateShop(id: string, data: any) {
     const [shop] = await this.dbService.db
       .update(shops)
       .set({
@@ -72,7 +72,7 @@ export class ShopsService {
     return shop;
   }
 
-  async deleteShop(id: number) {
+  async deleteShop(id: string) {
     await this.dbService.db.delete(shops).where(eq(shops.id, id));
     return { success: true };
   }

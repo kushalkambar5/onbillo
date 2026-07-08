@@ -14,7 +14,7 @@ export class ProductsService {
   constructor(private dbService: DbService) {}
 
   // --- Shop Products ---
-  async listShopProducts(shopId: number) {
+  async listShopProducts(shopId: string) {
     const result = await this.dbService.db
       .select({
         id: shopProducts.id,
@@ -32,7 +32,7 @@ export class ProductsService {
     return result;
   }
 
-  async addShopProduct(shopId: number, data: any) {
+  async addShopProduct(shopId: string, data: any) {
     const [product] = await this.dbService.db
       .select()
       .from(products)
@@ -93,7 +93,7 @@ export class ProductsService {
   }
 
 
-  async updateShopProduct(shopId: number, id: number, data: any) {
+  async updateShopProduct(shopId: string, id: string, data: any) {
     const [shopProduct] = await this.dbService.db
       .update(shopProducts)
       .set({
@@ -114,14 +114,14 @@ export class ProductsService {
     return { ...shopProduct, product };
   }
 
-  async deleteShopProduct(shopId: number, id: number) {
+  async deleteShopProduct(shopId: string, id: string) {
     await this.dbService.db
       .delete(shopProducts)
       .where(and(eq(shopProducts.id, id), eq(shopProducts.shopId, shopId)));
     return { success: true };
   }
 
-  async lookupShopProductByBarcode(shopId: number, code: string) {
+  async lookupShopProductByBarcode(shopId: string, code: string) {
     const result = await this.dbService.db
       .select({
         shopProduct: shopProducts,
@@ -138,9 +138,9 @@ export class ProductsService {
   }
 
   // --- Global Products ---
-  async searchGlobalProducts(user: any, query?: string, shopId?: number) {
+  async searchGlobalProducts(user: any, query?: string, shopId?: string) {
     let isMember = false;
-    let memberUserIds: number[] = [];
+    let memberUserIds: string[] = [];
 
     if (shopId) {
       const membersList = await this.dbService.db
@@ -237,7 +237,7 @@ export class ProductsService {
     return product;
   }
 
-  async addCustomProduct(shopId: number, data: any, user: any) {
+  async addCustomProduct(shopId: string, data: any, user: any) {
     const status = user.role === 'app_admin' ? 'approved' : 'pending';
 
     if (data.barcode) {
@@ -334,7 +334,7 @@ export class ProductsService {
   }
 
 
-  async updateGlobalProduct(id: number, data: any, user: any) {
+  async updateGlobalProduct(id: string, data: any, user: any) {
     const [product] = await this.dbService.db
       .select()
       .from(products)
@@ -358,7 +358,7 @@ export class ProductsService {
     return updatedProduct;
   }
 
-  async verifyProduct(id: number) {
+  async verifyProduct(id: string) {
     const [product] = await this.dbService.db
       .update(products)
       .set({
@@ -371,7 +371,7 @@ export class ProductsService {
     return product;
   }
 
-  async deleteGlobalProduct(id: number, user: any) {
+  async deleteGlobalProduct(id: string, user: any) {
     const [product] = await this.dbService.db
       .select()
       .from(products)

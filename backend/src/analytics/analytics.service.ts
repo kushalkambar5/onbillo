@@ -6,7 +6,7 @@ import { sql } from 'drizzle-orm';
 export class AnalyticsService {
   constructor(private dbService: DbService) {}
 
-  async getSummary(shopId: number) {
+  async getSummary(shopId: string) {
     const result = await this.dbService.db.execute(sql`
       SELECT 
         COALESCE(SUM(total_price) FILTER (WHERE created_at >= CURRENT_DATE), 0) as todays_sales,
@@ -19,7 +19,7 @@ export class AnalyticsService {
     return result[0] || { todays_sales: 0, weekly_sales: 0, total_bills: 0 };
   }
 
-  async getTopProducts(shopId: number) {
+  async getTopProducts(shopId: string) {
     const result = await this.dbService.db.execute(sql`
       SELECT sp.product_id, p.name, SUM(bi.quantity) as total_quantity
       FROM bill_items bi
@@ -37,7 +37,7 @@ export class AnalyticsService {
     return result;
   }
 
-  async getSalesTrend(shopId: number) {
+  async getSalesTrend(shopId: string) {
     const result = await this.dbService.db.execute(sql`
       SELECT DATE(created_at) as date, COALESCE(SUM(total_price), 0) as revenue
       FROM bills

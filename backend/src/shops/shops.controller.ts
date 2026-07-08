@@ -40,7 +40,7 @@ export class ShopsController {
   @Get(':id')
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner', 'shop_worker')
-  getShop(@Param('id', new ZodValidationPipe(IdParamSchema)) id: number) {
+  getShop(@Param('id', new ZodValidationPipe(IdParamSchema)) id: string) {
     return this.shopsService.getShop(id);
   }
 
@@ -48,7 +48,7 @@ export class ShopsController {
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner')
   updateShop(
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @Body(new ZodValidationPipe(UpdateShopSchema)) body: any,
   ) {
     return this.shopsService.updateShop(id, body);
@@ -57,7 +57,7 @@ export class ShopsController {
   @Delete(':id')
   @UseGuards(ShopRolesGuard)
   @ShopRoles('owner')
-  deleteShop(@Param('id', new ZodValidationPipe(IdParamSchema)) id: number) {
+  deleteShop(@Param('id', new ZodValidationPipe(IdParamSchema)) id: string) {
     return this.shopsService.deleteShop(id);
   }
 }

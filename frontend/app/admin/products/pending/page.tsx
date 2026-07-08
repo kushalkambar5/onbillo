@@ -21,7 +21,7 @@ export default function AdminPendingProducts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [actioningId, setActioningId] = useState<number | null>(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
 
   // Rejection dialog state
   const [rejectingProduct, setRejectingProduct] = useState<Product | null>(null);
@@ -35,7 +35,7 @@ export default function AdminPendingProducts() {
       
       if (isBoneyard) {
         setPendingProducts([
-          { id: 11, barcode: "8901030818279", name: "Red Label Tea 500g", brand: "Brooke Bond", category: "Beverages", mrp: 19500, status: "pending", rejectionReason: null, createdBy: 99, createdAt: new Date().toISOString() }
+          { id: "11", barcode: "8901030818279", name: "Red Label Tea 500g", brand: "Brooke Bond", category: "Beverages", mrp: 19500, status: "pending", rejectionReason: null, createdBy: "99", createdAt: new Date().toISOString() }
         ]);
         setLoading(false);
         return;
@@ -55,7 +55,7 @@ export default function AdminPendingProducts() {
     loadPending();
   }, [getToken]);
 
-  const handleApprove = async (productId: number, productName: string) => {
+  const handleApprove = async (productId: string, productName: string) => {
     setActioningId(productId);
     setError("");
     setSuccess("");

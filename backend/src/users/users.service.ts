@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 export class UsersService {
   constructor(private dbService: DbService) {}
 
-  async updatePhone(userId: number, phone: string) {
+  async updatePhone(userId: string, phone: string) {
     const [user] = await this.dbService.db
       .update(users)
       .set({

@@ -42,7 +42,7 @@ export class AdminService {
     return await this.dbService.db.select().from(users);
   }
 
-  async togglePremium(id: number, isPremium: boolean) {
+  async togglePremium(id: string, isPremium: boolean) {
     const [user] = await this.dbService.db
       .update(users)
       .set({
@@ -55,7 +55,7 @@ export class AdminService {
     return user;
   }
 
-  async toggleBan(id: number, isBanned: boolean) {
+  async toggleBan(id: string, isBanned: boolean) {
     const [user] = await this.dbService.db
       .update(users)
       .set({
@@ -79,7 +79,7 @@ export class AdminService {
       .where(eq(products.status, 'pending'));
   }
 
-  async approveProduct(id: number) {
+  async approveProduct(id: string) {
     const [product] = await this.dbService.db
       .update(products)
       .set({
@@ -92,7 +92,7 @@ export class AdminService {
     return product;
   }
 
-  async rejectProduct(id: number, reason: string) {
+  async rejectProduct(id: string, reason: string) {
     const [product] = await this.dbService.db
       .update(products)
       .set({

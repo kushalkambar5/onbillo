@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { usersApi, User } from "../utils/api";
+import { UpdateMeSchema, validateSchema } from "../utils/validation";
 
 export default function PhonePromptModal() {
   const { isSignedIn, getToken } = useAuth();
@@ -13,6 +14,35 @@ export default function PhonePromptModal() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [profile, setProfile] = useState<User | null>(null);
+
+  const [inlineError, setInlineError] = useState("");
+  const [touched, setTouched] = useState(false);
+
+  const validatePhone = (val: string) => {
+    if (!val.trim()) {
+      return "Phone number is required";
+    }
+    const validation = validateSchema(UpdateMeSchema, { phone: val });
+    if (!validation.success) {
+      return validation.error.replace("Phone: ", "");
+    }
+    return "";
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setPhone(val);
+    if (touched) {
+      setInlineError(validatePhone(val));
+    }
+  };
+
+  const handlePhoneBlur = () => {
+    setTouched(true);
+    setInlineError(validatePhone(phone));
+  };
+
+  const isFormValid = phone.trim() !== "" && !validatePhone(phone);
 
   useEffect(() => {
     if (isSignedIn) {
@@ -35,16 +65,20 @@ export default function PhonePromptModal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const cleanedPhone = phone.trim();
-    if (!cleanedPhone) {
-      setError("Phone number is required");
+    setTouched(true);
+    const errText = validatePhone(phone);
+    if (errText) {
+      setInlineError(errText);
+      setError(errText);
       return;
     }
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    if (!phoneRegex.test(cleanedPhone.replace(/[\s()-]/g, ""))) {
-      setError("Please enter a valid phone number (e.g. +91 9876543210)");
+
+    const validation = validateSchema(UpdateMeSchema, { phone });
+    if (!validation.success) {
+      setError(validation.error);
       return;
     }
+    const cleanedPhone = validation.data.phone;
 
     setLoading(true);
     try {
@@ -86,25 +120,42 @@ export default function PhonePromptModal() {
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5">
-              Phone Number
-            </label>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-xs font-semibold text-foreground">
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <span className="text-[10px] text-mute font-mono">
+                {phone.length}/20 chars
+              </span>
+            </div>
             <input
               type="text"
               name="phone"
               required
               placeholder="e.g. +91 98765 43210"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={handlePhoneChange}
+              onBlur={handlePhoneBlur}
               disabled={loading}
-              className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+              className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                touched && inlineError ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+              }`}
             />
+            {touched && inlineError && (
+              <p className="text-xs text-red-500 mt-1">{inlineError}</p>
+            )}
           </div>
+
+          {!isFormValid && (
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs font-medium text-yellow-700 dark:text-yellow-400">
+              ⚠️ Phone number must contain only digits (optionally starting with +) and be 7-20 characters long.
+            </div>
+          )}
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full h-10 bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-sm shadow-brand-primary/10 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+            disabled={loading || !isFormValid}
+            className="w-full h-10 bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-sm shadow-brand-primary/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

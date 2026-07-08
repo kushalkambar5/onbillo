@@ -7,7 +7,7 @@ import { eq, and, desc, inArray } from 'drizzle-orm';
 export class BillsService {
   constructor(private dbService: DbService) {}
 
-  async createBill(shopId: number, data: any, userId: number) {
+  async createBill(shopId: string, data: any, userId: string) {
     return await this.dbService.db.transaction(async (tx) => {
       // 1. Get the shop detail to read invoicePrefix and invoiceCounter
       const [shop] = await tx
@@ -86,7 +86,7 @@ export class BillsService {
     });
   }
 
-  async listBills(shopId: number) {
+  async listBills(shopId: string) {
     const dbBills = await this.dbService.db
       .select()
       .from(bills)
@@ -112,7 +112,7 @@ export class BillsService {
       .innerJoin(products, eq(products.id, shopProducts.productId))
       .where(inArray(billItems.billId, billIds));
 
-    const billItemsMap = new Map<number, any[]>();
+    const billItemsMap = new Map<string, any[]>();
     for (const item of allItems) {
       if (!billItemsMap.has(item.billId)) {
         billItemsMap.set(item.billId, []);
@@ -126,7 +126,7 @@ export class BillsService {
     }));
   }
 
-  async getBillDetail(shopId: number, id: number) {
+  async getBillDetail(shopId: string, id: string) {
     const [bill] = await this.dbService.db
       .select()
       .from(bills)
@@ -152,7 +152,7 @@ export class BillsService {
     return { ...bill, items };
   }
 
-  async cancelBill(shopId: number, id: number) {
+  async cancelBill(shopId: string, id: string) {
     const [bill] = await this.dbService.db
       .update(bills)
       .set({

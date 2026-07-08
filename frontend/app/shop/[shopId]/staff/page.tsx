@@ -2,7 +2,8 @@
 
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { staffApi, shopsApi, ShopMember, StaffRequest, Shop } from "../../../utils/api";
+import { ShopMember, StaffRequest, staffApi, shopsApi, Shop } from "../../../utils/api";
+import { InviteStaffByEmailSchema, EmailSchema, validateSchema } from "../../../utils/validation";
 import { mockShops, mockShopMembers, mockStaffRequests } from "../../../utils/api/mockData";
 import { Skeleton } from "boneyard-js/react";
 import { 
@@ -21,7 +22,7 @@ export default function ShopStaff({
   params: Promise<{ shopId: string }>;
 }) {
   const params = use(paramsPromise);
-  const shopId = parseInt(params.shopId, 10);
+  const shopId = params.shopId;
   const { getToken } = useAuth();
 
   const [loading, setLoading] = useState(true);
@@ -35,9 +36,33 @@ export default function ShopStaff({
   const [inviteRole, setInviteRole] = useState<"owner" | "shop_worker">("shop_worker");
   const [submittingInvite, setSubmittingInvite] = useState(false);
   
+  const [inviteEmailError, setInviteEmailError] = useState("");
+  const [inviteEmailTouched, setInviteEmailTouched] = useState(false);
+
+  const validateInviteEmail = (val: string) => {
+    if (!val.trim()) return "Email address is required";
+    const res = EmailSchema.safeParse(val);
+    if (!res.success) return res.error.issues[0].message;
+    return "";
+  };
+
+  const handleEmailChange = (val: string) => {
+    setInviteEmail(val);
+    if (inviteEmailTouched) {
+      setInviteEmailError(validateInviteEmail(val));
+    }
+  };
+
+  const handleEmailBlur = () => {
+    setInviteEmailTouched(true);
+    setInviteEmailError(validateInviteEmail(inviteEmail));
+  };
+
+  const isInviteFormValid = inviteEmail.trim() !== "" && !validateInviteEmail(inviteEmail);
+  
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [actioningId, setActioningId] = useState<number | null>(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
 
   async function loadStaffData() {
     try {
@@ -46,7 +71,7 @@ export default function ShopStaff({
       
       if (isBoneyard) {
         setShop(mockShops[0]);
-        setMembers(mockShopMembers[shopId] || mockShopMembers[2] || []);
+        setMembers(mockShopMembers[shopId] || mockShopMembers["2"] || []);
         setPendingInvites(mockStaffRequests.filter(inv => inv.shopId === shopId));
         setLoading(false);
         return;
@@ -78,7 +103,16 @@ export default function ShopStaff({
 
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail) return;
+
+    const validation = validateSchema(InviteStaffByEmailSchema, {
+      email: inviteEmail,
+      role: inviteRole,
+    });
+
+    if (!validation.success) {
+      setError(validation.error);
+      return;
+    }
 
     setSubmittingInvite(true);
     setError("");
@@ -86,9 +120,14 @@ export default function ShopStaff({
 
     try {
       const token = await getToken();
-      const invite = await staffApi.sendInvite(token, shopId, inviteEmail, inviteRole);
+      const invite = await staffApi.sendInvite(
+        token,
+        shopId,
+        validation.data.email,
+        validation.data.role
+      );
       setPendingInvites([...pendingInvites, invite]);
-      setSuccess(`Invitation sent successfully to ${inviteEmail}!`);
+      setSuccess(`Invitation sent successfully to ${validation.data.email}!`);
       setInviteEmail("");
       setInviteModalOpen(false);
     } catch (err: any) {
@@ -98,7 +137,7 @@ export default function ShopStaff({
     }
   };
 
-  const handleRemoveStaff = async (memberId: number, memberName: string) => {
+  const handleRemoveStaff = async (memberId: string, memberName: string) => {
     if (!confirm(`Are you sure you want to revoke ${memberName}'s access to this shop?`)) return;
 
     setActioningId(memberId);
@@ -203,10 +242,17 @@ export default function ShopStaff({
                     <button
                       disabled={actioningId !== null}
                       onClick={() => handleRemoveStaff(m.id, m.user?.name || "Staff")}
-                      className="p-1.5 text-mute hover:text-error-deep hover:bg-error-soft/30 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-mute hover:text-error-deep hover:bg-error-soft/30 rounded-lg transition-colors cursor-pointer flex items-center justify-center min-w-7 h-7"
                       title="Revoke Access"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      {actioningId === m.id ? (
+                        <svg className="animate-spin h-3.5 w-3.5 text-error-deep" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   )}
                 </div>
@@ -264,9 +310,14 @@ export default function ShopStaff({
 
             <div className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Email Address
-                </label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-semibold text-foreground">
+                    Email Address <span className="text-error-deep">*</span>
+                  </label>
+                  <span className="text-[10px] text-mute font-mono">
+                    {inviteEmail.length}/255 chars
+                  </span>
+                </div>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mute" />
                   <input
@@ -274,10 +325,16 @@ export default function ShopStaff({
                     required
                     placeholder="staff@mybusiness.com"
                     value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 text-foreground"
+                    onChange={(e) => handleEmailChange(e.target.value)}
+                    onBlur={handleEmailBlur}
+                    className={`w-full pl-9 pr-3 border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 text-foreground ${
+                      inviteEmailTouched && inviteEmailError ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline"
+                    }`}
                   />
                 </div>
+                {inviteEmailTouched && inviteEmailError && (
+                  <p className="text-xs text-red-500 mt-1">{inviteEmailError}</p>
+                )}
               </div>
 
               <div>
@@ -289,11 +346,18 @@ export default function ShopStaff({
                   onChange={(e) => setInviteRole(e.target.value as any)}
                   className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
                 >
-                  <option value="shop_worker">Shop Worker (POS register & Bills only)</option>
-                  <option value="owner">Co-owner (Full permissions)</option>
+                  <option value="shop_worker">Shop Worker (Billing & Bills only)</option>
+                  <option value="owner">Owner</option>
                 </select>
               </div>
             </div>
+
+            {/* Warning if form invalid */}
+            {!isInviteFormValid && (
+              <div className="p-2 rounded bg-yellow-500/10 border border-yellow-500/20 text-[10px] font-medium text-yellow-700 dark:text-yellow-400">
+                ⚠️ Enter a valid email address to enable invitation.
+              </div>
+            )}
 
             <div className="flex gap-3 pt-2">
               <button
@@ -305,10 +369,20 @@ export default function ShopStaff({
               </button>
               <button
                 type="submit"
-                disabled={submittingInvite}
-                className="flex-1 h-9.5 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-bold rounded-lg cursor-pointer flex items-center justify-center gap-1.5"
+                disabled={submittingInvite || !isInviteFormValid}
+                className="flex-1 h-9.5 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-bold rounded-lg cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submittingInvite ? "Sending..." : "Send Invite"}
+                {submittingInvite ? (
+                  <>
+                    <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>Sending…</span>
+                  </>
+                ) : (
+                  "Send Invite"
+                )}
               </button>
             </div>
           </form>

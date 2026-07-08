@@ -22,7 +22,7 @@ export class BillsController {
   @Post()
   @ShopRoles('owner', 'shop_worker')
   createBill(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
     @Body(new ZodValidationPipe(CreateBillSchema)) body: any,
     @CurrentUser() user: any,
   ) {
@@ -32,7 +32,7 @@ export class BillsController {
   @Get()
   @ShopRoles('owner', 'shop_worker', 'app_admin')
   listBills(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
   ) {
     return this.billsService.listBills(shopId);
   }
@@ -40,8 +40,8 @@ export class BillsController {
   @Get(':id')
   @ShopRoles('owner', 'shop_worker', 'app_admin')
   getBillDetail(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
   ) {
     return this.billsService.getBillDetail(shopId, id);
   }
@@ -49,8 +49,8 @@ export class BillsController {
   @Put(':id/cancel')
   @ShopRoles('owner', 'shop_worker')
   cancelBill(
-    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: number,
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
   ) {
     return this.billsService.cancelBill(shopId, id);
   }

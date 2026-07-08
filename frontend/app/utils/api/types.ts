@@ -1,5 +1,5 @@
 export interface User {
-  id: number;
+  id: string;
   clerkId: string;
   email: string;
   phone: string | null;
@@ -11,8 +11,8 @@ export interface User {
 }
 
 export interface Shop {
-  id: number;
-  createdBy: number | null;
+  id: string;
+  createdBy: string | null;
   name: string;
   gstNumber: string | null;
   addressLine1: string;
@@ -35,9 +35,9 @@ export interface Shop {
 }
 
 export interface ShopMember {
-  id: number;
-  shopId: number;
-  userId: number;
+  id: string;
+  shopId: string;
+  userId: string;
   role: "owner" | "shop_worker";
   isActive: boolean;
   joinedAt: string;
@@ -45,7 +45,7 @@ export interface ShopMember {
 }
 
 export interface Product {
-  id: number;
+  id: string;
   barcode?: string | null;
   name: string;
   brand?: string | null;
@@ -54,23 +54,23 @@ export interface Product {
   mrp: number; // in paise
   status: "pending" | "approved" | "rejected";
   rejectionReason?: string | null;
-  createdBy?: number | null;
+  createdBy?: string | null;
   createdAt: string;
 }
 
 export interface ShopProduct {
-  id: number;
-  shopId: number;
-  productId: number;
+  id: string;
+  shopId: string;
+  productId: string;
   unitPrice: number; // in paise
   isActive: boolean;
   product: Product;
 }
 
 export interface BillItem {
-  id: number;
-  billId: number;
-  shopProductId: number;
+  id: string;
+  billId: string;
+  shopProductId: string;
   unitPrice: number; // in paise
   quantity: number;
   productName?: string;
@@ -78,10 +78,10 @@ export interface BillItem {
 }
 
 export interface Bill {
-  id: number;
-  shopId: number;
+  id: string;
+  shopId: string;
   billNumber: string;
-  createdBy: number | null;
+  createdBy: string | null;
   totalPrice: number; // in paise
   notes: string | null;
   templetUsed: string;
@@ -92,10 +92,10 @@ export interface Bill {
 }
 
 export interface StaffRequest {
-  id: number;
-  shopId: number;
-  requestedBy: number;
-  requestedTo: number;
+  id: string;
+  shopId: string;
+  requestedBy: string;
+  requestedTo: string;
   role: "owner" | "shop_worker";
   status: "pending" | "accepted" | "rejected";
   createdAt: string;

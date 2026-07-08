@@ -20,7 +20,7 @@ export default function ShopDashboard({
   params: Promise<{ shopId: string }>;
 }) {
   const params = use(paramsPromise);
-  const shopId = parseInt(params.shopId, 10);
+  const shopId = params.shopId;
   const { getToken } = useAuth();
   
   const [loading, setLoading] = useState(true);
@@ -34,8 +34,8 @@ export default function ShopDashboard({
           ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
         
         if (isBoneyard) {
-          setBills(mockBills[shopId] || mockBills[1] || []);
-          setProducts(mockShopProducts[shopId] || mockShopProducts[1] || []);
+          setBills(mockBills[shopId] || mockBills["1"] || []);
+          setProducts(mockShopProducts[shopId] || mockShopProducts["1"] || []);
           setLoading(false);
           return;
         }

@@ -33,8 +33,7 @@ export class ProductsController {
     @Query('q', new ZodValidationPipe(SearchQuerySchema)) query?: string,
     @Query('shopId') shopId?: string,
   ) {
-    const parsedShopId = shopId ? parseInt(shopId, 10) : undefined;
-    return this.productsService.searchGlobalProducts(user, query, parsedShopId);
+    return this.productsService.searchGlobalProducts(user, query, shopId);
   }
 
 
@@ -55,7 +54,7 @@ export class ProductsController {
 
   @Put(':id')
   updateGlobalProduct(
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @Body(new ZodValidationPipe(UpdateProductSchema)) body: any,
     @CurrentUser() user: any,
   ) {
@@ -65,13 +64,13 @@ export class ProductsController {
   @Put('verify/:id')
   @UseGuards(RolesGuard)
   @Roles('app_admin')
-  verifyProduct(@Param('id', new ZodValidationPipe(IdParamSchema)) id: number) {
+  verifyProduct(@Param('id', new ZodValidationPipe(IdParamSchema)) id: string) {
     return this.productsService.verifyProduct(id);
   }
 
   @Delete(':id')
   deleteGlobalProduct(
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @CurrentUser() user: any,
   ) {
     return this.productsService.deleteGlobalProduct(id, user);

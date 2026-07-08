@@ -20,7 +20,7 @@ export class StaffRequestsController {
 
   @Put(':id')
   respondToInvite(
-    @Param('id', new ZodValidationPipe(IdParamSchema)) id: number,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @Body(new ZodValidationPipe(RespondToInviteSchema)) body: any,
     @CurrentUser() user: any,
   ) {

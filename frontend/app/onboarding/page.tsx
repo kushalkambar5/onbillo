@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { shopsApi, usersApi } from "../utils/api";
+import { CreateShopSchema, UpdateMeSchema, PhoneSchema, validateSchema } from "../utils/validation";
 import DevMockModeIndicator from "../components/DevMockModeIndicator";
 import { Store, User, ArrowLeft } from "lucide-react";
 
@@ -13,6 +14,7 @@ type Role = "owner" | "worker";
 export default function OnboardingPage() {
   const router = useRouter();
   const { getToken } = useAuth();
+  const { user } = useUser();
   
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
@@ -35,6 +37,96 @@ export default function OnboardingPage() {
     taxType: "gst_inclusive",
     taxRate: "18.00"
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateField = (name: string, value: string) => {
+    if (name === "personalPhone") {
+      if (!value.trim()) return "Personal phone number is required";
+      const res = PhoneSchema.safeParse(value);
+      if (!res.success) return res.error.issues[0].message;
+      return "";
+    }
+
+    const optionalFields = ["gstNumber", "addressLine2", "phone", "email", "taxRate"];
+    if (optionalFields.includes(name) && !value.trim()) {
+      return "";
+    }
+
+    const shape = CreateShopSchema.shape as any;
+    const fieldSchema = shape[name];
+    if (fieldSchema) {
+      const res = fieldSchema.safeParse(value);
+      if (!res.success) {
+        return res.error.issues[0].message;
+      }
+    }
+    return "";
+  };
+
+  const handleFieldBlur = (name: string, value: string) => {
+    setTouched(prev => ({ ...prev, [name]: true }));
+    const errorMsg = validateField(name, value);
+    setErrors(prev => ({ ...prev, [name]: errorMsg }));
+  };
+
+  const handleFieldChange = (name: string, value: string) => {
+    if (name === "personalPhone") {
+      setPhone(value);
+      if (touched["personalPhone"]) {
+        setErrors(prev => ({ ...prev, personalPhone: validateField("personalPhone", value) }));
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+      if (touched[name]) {
+        setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+      }
+    }
+  };
+
+  const getMissingOrInvalidFields = () => {
+    const list: string[] = [];
+    
+    // Check personal phone
+    const personalPhoneErr = validateField("personalPhone", phone);
+    if (personalPhoneErr) {
+      list.push("Personal Profile - Phone: " + personalPhoneErr);
+    }
+    
+    if (role === "owner") {
+      // Check required fields are not empty
+      if (!formData.name.trim()) list.push("Shop Name is required");
+      if (!formData.addressLine1.trim()) list.push("Address Line 1 is required");
+      if (!formData.city.trim()) list.push("City is required");
+      if (!formData.state.trim()) list.push("State is required");
+      if (!formData.pincode.trim()) list.push("Pincode is required");
+      
+      // Check all validation rules
+      Object.keys(formData).forEach((key) => {
+        const err = validateField(key, (formData as any)[key]);
+        if (err) {
+          list.push(err);
+        }
+      });
+    }
+    
+    return Array.from(new Set(list));
+  };
+
+  const missingOrInvalid = getMissingOrInvalidFields();
+  const isFormValid = missingOrInvalid.length === 0;
+
+  // Pre-fill user email from Clerk when user object is available
+  useEffect(() => {
+    if (user) {
+      const email = user.primaryEmailAddress?.emailAddress || "";
+      setFormData(prev => ({
+        ...prev,
+        email: prev.email || email,
+      }));
+    }
+  }, [user]);
 
   useEffect(() => {
     async function checkUserOnboarding() {
@@ -59,10 +151,7 @@ export default function OnboardingPage() {
   }, [getToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    handleFieldChange(e.target.name, e.target.value);
   };
 
   const handleRoleSelect = (selectedRole: Role) => {
@@ -75,22 +164,21 @@ export default function OnboardingPage() {
     setError("");
 
     // Validate personal phone number
-    const cleanedPhone = phone.trim();
-    if (!cleanedPhone) {
-      setError("Personal phone number is required.");
+    const personalPhoneValidation = validateSchema(UpdateMeSchema, { phone });
+    if (!personalPhoneValidation.success) {
+      setError(`Personal Profile - ${personalPhoneValidation.error}`);
       return;
     }
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    if (!phoneRegex.test(cleanedPhone.replace(/[\s()-]/g, ""))) {
-      setError("Please enter a valid personal phone number (e.g. +91 9876543210).");
-      return;
-    }
+    const cleanedPersonalPhone = personalPhoneValidation.data.phone;
 
+    let cleanedShopData = null;
     if (role === "owner") {
-      if (!formData.name || !formData.addressLine1 || !formData.city || !formData.state || !formData.pincode) {
-        setError("Please fill in all required shop fields (Shop Name, Address, City, State, and Pincode).");
+      const shopValidation = validateSchema(CreateShopSchema, formData);
+      if (!shopValidation.success) {
+        setError(`Shop Workspace - ${shopValidation.error}`);
         return;
       }
+      cleanedShopData = shopValidation.data;
     }
 
     setLoading(true);
@@ -99,11 +187,11 @@ export default function OnboardingPage() {
       const token = await getToken();
       
       // 1. Save personal phone number in users table
-      await usersApi.updateProfile(token, "", cleanedPhone);
+      await usersApi.updateProfile(token, "", cleanedPersonalPhone);
 
-      if (role === "owner") {
+      if (role === "owner" && cleanedShopData) {
         // 2. Create shop details in shops table
-        const shop = await shopsApi.createShop(token, formData);
+        const shop = await shopsApi.createShop(token, cleanedShopData);
         router.push(`/shop/${shop.id}/dashboard`);
       } else {
         // Redirect worker to invites page
@@ -231,19 +319,30 @@ export default function OnboardingPage() {
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-foreground mb-1.5">
-                      Phone Number <span className="text-error-deep">*</span>
-                    </label>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="block text-xs font-semibold text-foreground">
+                        Phone Number <span className="text-error-deep">*</span>
+                      </label>
+                      <span className="text-[10px] text-mute font-mono">
+                        {phone.length}/20 chars
+                      </span>
+                    </div>
                     <input
                       type="tel"
                       name="personalPhone"
                       required
                       placeholder="e.g. +91 98765 43210"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => handleFieldChange("personalPhone", e.target.value)}
+                      onBlur={(e) => handleFieldBlur("personalPhone", e.target.value)}
                       disabled={phoneInitiallyPresent}
-                      className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground disabled:opacity-60 disabled:cursor-not-allowed"
+                      className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground disabled:opacity-60 disabled:cursor-not-allowed ${
+                        touched.personalPhone && errors.personalPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                      }`}
                     />
+                    {touched.personalPhone && errors.personalPhone && (
+                      <p className="text-xs text-red-500 mt-1">{errors.personalPhone}</p>
+                    )}
                     {phoneInitiallyPresent && (
                       <p className="text-[10px] text-mute mt-1">
                         Phone number is managed in your user settings.
@@ -264,9 +363,14 @@ export default function OnboardingPage() {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-foreground mb-1.5">
-                          Shop Name <span className="text-error-deep">*</span>
-                        </label>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-xs font-semibold text-foreground">
+                            Shop Name <span className="text-error-deep">*</span>
+                          </label>
+                          <span className="text-[10px] text-mute font-mono">
+                            {formData.name.length}/255 chars
+                          </span>
+                        </div>
                         <input
                           type="text"
                           name="name"
@@ -274,50 +378,89 @@ export default function OnboardingPage() {
                           placeholder="e.g. Kambar Groceries"
                           value={formData.name}
                           onChange={handleChange}
-                          className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                          onBlur={(e) => handleFieldBlur("name", e.target.value)}
+                          className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                            touched.name && errors.name ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                          }`}
                         />
+                        {touched.name && errors.name && (
+                          <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+                        )}
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-foreground mb-1.5">
-                          GSTIN (GST Number)
-                        </label>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-xs font-semibold text-foreground">
+                            GSTIN (GST Number)
+                          </label>
+                          <span className="text-[10px] text-mute font-mono">
+                            {formData.gstNumber.length}/50 chars
+                          </span>
+                        </div>
                         <input
                           type="text"
                           name="gstNumber"
                           placeholder="e.g. 29AAAAA0000A1Z1"
                           value={formData.gstNumber}
                           onChange={handleChange}
-                          className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                          onBlur={(e) => handleFieldBlur("gstNumber", e.target.value)}
+                          className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                            touched.gstNumber && errors.gstNumber ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                          }`}
                         />
+                        {touched.gstNumber && errors.gstNumber && (
+                          <p className="text-xs text-red-500 mt-1">{errors.gstNumber}</p>
+                        )}
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-foreground mb-1.5">
-                          Business Phone
-                        </label>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-xs font-semibold text-foreground">
+                            Business Phone
+                          </label>
+                          <span className="text-[10px] text-mute font-mono">
+                            {formData.phone.length}/20 chars
+                          </span>
+                        </div>
                         <input
                           type="text"
                           name="phone"
                           placeholder="e.g. +91 8023456789"
                           value={formData.phone}
                           onChange={handleChange}
-                          className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                          onBlur={(e) => handleFieldBlur("phone", e.target.value)}
+                          className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                            touched.phone && errors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                          }`}
                         />
+                        {touched.phone && errors.phone && (
+                          <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+                        )}
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-foreground mb-1.5">
-                          Business Email
-                        </label>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-xs font-semibold text-foreground">
+                            Business Email
+                          </label>
+                          <span className="text-[10px] text-mute font-mono">
+                            {formData.email.length}/255 chars
+                          </span>
+                        </div>
                         <input
                           type="email"
                           name="email"
                           placeholder="e.g. billing@mybusiness.com"
                           value={formData.email}
                           onChange={handleChange}
-                          className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                          onBlur={(e) => handleFieldBlur("email", e.target.value)}
+                          className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                            touched.email && errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                          }`}
                         />
+                        {touched.email && errors.email && (
+                          <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -331,9 +474,14 @@ export default function OnboardingPage() {
                     </h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-xs font-semibold text-foreground mb-1.5">
-                          Address Line 1 <span className="text-error-deep">*</span>
-                        </label>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-xs font-semibold text-foreground">
+                            Address Line 1 <span className="text-error-deep">*</span>
+                          </label>
+                          <span className="text-[10px] text-mute font-mono">
+                            {formData.addressLine1.length}/500 chars
+                          </span>
+                        </div>
                         <input
                           type="text"
                           name="addressLine1"
@@ -341,29 +489,51 @@ export default function OnboardingPage() {
                           placeholder="Street name, Shop #, Building"
                           value={formData.addressLine1}
                           onChange={handleChange}
-                          className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                          onBlur={(e) => handleFieldBlur("addressLine1", e.target.value)}
+                          className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                            touched.addressLine1 && errors.addressLine1 ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                          }`}
                         />
+                        {touched.addressLine1 && errors.addressLine1 && (
+                          <p className="text-xs text-red-500 mt-1">{errors.addressLine1}</p>
+                        )}
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-foreground mb-1.5">
-                          Address Line 2 (Optional)
-                        </label>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-xs font-semibold text-foreground">
+                            Address Line 2 (Optional)
+                          </label>
+                          <span className="text-[10px] text-mute font-mono">
+                            {formData.addressLine2.length}/500 chars
+                          </span>
+                        </div>
                         <input
                           type="text"
                           name="addressLine2"
                           placeholder="Locality, Sector, Landmark"
                           value={formData.addressLine2}
                           onChange={handleChange}
-                          className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                          onBlur={(e) => handleFieldBlur("addressLine2", e.target.value)}
+                          className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                            touched.addressLine2 && errors.addressLine2 ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                          }`}
                         />
+                        {touched.addressLine2 && errors.addressLine2 && (
+                          <p className="text-xs text-red-500 mt-1">{errors.addressLine2}</p>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-foreground mb-1.5">
-                            City <span className="text-error-deep">*</span>
-                          </label>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <label className="block text-xs font-semibold text-foreground">
+                              City <span className="text-error-deep">*</span>
+                            </label>
+                            <span className="text-[10px] text-mute font-mono">
+                              {formData.city.length}/100 chars
+                            </span>
+                          </div>
                           <input
                             type="text"
                             name="city"
@@ -371,14 +541,25 @@ export default function OnboardingPage() {
                             placeholder="e.g. Bengaluru"
                             value={formData.city}
                             onChange={handleChange}
-                            className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                            onBlur={(e) => handleFieldBlur("city", e.target.value)}
+                            className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                              touched.city && errors.city ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            }`}
                           />
+                          {touched.city && errors.city && (
+                            <p className="text-xs text-red-500 mt-1">{errors.city}</p>
+                          )}
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold text-foreground mb-1.5">
-                            State <span className="text-error-deep">*</span>
-                          </label>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <label className="block text-xs font-semibold text-foreground">
+                              State <span className="text-error-deep">*</span>
+                            </label>
+                            <span className="text-[10px] text-mute font-mono">
+                              {formData.state.length}/100 chars
+                            </span>
+                          </div>
                           <input
                             type="text"
                             name="state"
@@ -386,14 +567,25 @@ export default function OnboardingPage() {
                             placeholder="e.g. Karnataka"
                             value={formData.state}
                             onChange={handleChange}
-                            className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                            onBlur={(e) => handleFieldBlur("state", e.target.value)}
+                            className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                              touched.state && errors.state ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            }`}
                           />
+                          {touched.state && errors.state && (
+                            <p className="text-xs text-red-500 mt-1">{errors.state}</p>
+                          )}
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold text-foreground mb-1.5">
-                            Pincode <span className="text-error-deep">*</span>
-                          </label>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <label className="block text-xs font-semibold text-foreground">
+                              Pincode <span className="text-error-deep">*</span>
+                            </label>
+                            <span className="text-[10px] text-mute font-mono">
+                              {formData.pincode.length}/20 chars
+                            </span>
+                          </div>
                           <input
                             type="text"
                             name="pincode"
@@ -401,8 +593,14 @@ export default function OnboardingPage() {
                             placeholder="e.g. 560034"
                             value={formData.pincode}
                             onChange={handleChange}
-                            className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                            onBlur={(e) => handleFieldBlur("pincode", e.target.value)}
+                            className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                              touched.pincode && errors.pincode ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            }`}
                           />
+                          {touched.pincode && errors.pincode && (
+                            <p className="text-xs text-red-500 mt-1">{errors.pincode}</p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -442,17 +640,35 @@ export default function OnboardingPage() {
                           name="taxRate"
                           value={formData.taxRate}
                           onChange={handleChange}
-                          className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
+                          onBlur={(e) => handleFieldBlur("taxRate", e.target.value)}
+                          className={`w-full border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
+                            touched.taxRate && errors.taxRate ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                          }`}
                         />
+                        {touched.taxRate && errors.taxRate && (
+                          <p className="text-xs text-red-500 mt-1">{errors.taxRate}</p>
+                        )}
                       </div>
                     </div>
                   </div>
                 </>
               )}
 
+              {/* Submit button blocker explainer */}
+              {!isFormValid && (
+                <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs font-medium text-yellow-700 dark:text-yellow-400 space-y-1">
+                  <p className="font-bold">⚠️ Please resolve the following to enable submission:</p>
+                  <ul className="list-disc pl-4 space-y-0.5">
+                    {missingOrInvalid.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !isFormValid}
                 className="w-full mt-4 h-11 bg-brand-primary hover:bg-brand-secondary text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-sm shadow-brand-primary/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (

@@ -31,7 +31,7 @@ export default function ShopWorkspaceLayout({
   params: Promise<{ shopId: string }>;
 }) {
   const params = use(paramsPromise);
-  const shopId = parseInt(params.shopId, 10);
+  const shopId = params.shopId;
   const router = useRouter();
   const pathname = usePathname();
   const { getToken } = useAuth();
@@ -94,9 +94,9 @@ export default function ShopWorkspaceLayout({
 
         if (isOwnerRoute && activeMembership.role === "shop_worker") {
           setIsAuthorized(false);
-          // Redirect worker to POS page
+          // Redirect worker to Billing page
           setTimeout(() => {
-            router.push(`/shop/${shopId}/pos`);
+            router.push(`/shop/${shopId}/billing`);
           }, 3000);
         } else {
           setIsAuthorized(true);
@@ -119,8 +119,8 @@ export default function ShopWorkspaceLayout({
       ownerOnly: true,
     },
     {
-      name: "POS Register",
-      href: `/shop/${shopId}/pos`,
+      name: "Billing",
+      href: `/shop/${shopId}/billing`,
       icon: Calculator,
       ownerOnly: false,
     },
@@ -209,7 +209,7 @@ export default function ShopWorkspaceLayout({
                   key={m.shop.id}
                   onClick={() => {
                     setDropdownOpen(false);
-                    router.push(`/shop/${m.shop.id}/pos`);
+                    router.push(`/shop/${m.shop.id}/billing`);
                   }}
                   className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-canvas-soft-2 transition-colors duration-150 cursor-pointer ${
                     m.shop.id === shopId ? "font-bold text-brand-primary bg-brand-primary/5" : "text-body"
@@ -330,7 +330,7 @@ export default function ShopWorkspaceLayout({
                       onClick={() => {
                         setDropdownOpen(false);
                         setMobileMenuOpen(false);
-                        router.push(`/shop/${m.shop.id}/pos`);
+                        router.push(`/shop/${m.shop.id}/billing`);
                       }}
                       className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-canvas-soft-2 transition-colors duration-150 cursor-pointer ${
                         m.shop.id === shopId ? "font-bold text-brand-primary bg-brand-primary/5" : "text-body"

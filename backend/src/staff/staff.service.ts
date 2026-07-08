@@ -11,7 +11,7 @@ import { eq, and } from 'drizzle-orm';
 export class StaffService {
   constructor(private dbService: DbService) {}
 
-  async listStaff(shopId: number) {
+  async listStaff(shopId: string) {
     const results = await this.dbService.db
       .select({
         member: shopMembers,
@@ -28,9 +28,9 @@ export class StaffService {
   }
 
   async inviteStaff(
-    shopId: number,
-    requestedTo: number,
-    requestedBy: number,
+    shopId: string,
+    requestedTo: string,
+    requestedBy: string,
     role: 'shop_worker' | 'owner',
   ) {
     const [request] = await this.dbService.db
@@ -47,9 +47,9 @@ export class StaffService {
   }
 
   async inviteStaffByEmail(
-    shopId: number,
+    shopId: string,
     email: string,
-    requestedBy: number,
+    requestedBy: string,
     role: 'shop_worker' | 'owner',
   ) {
     const [user] = await this.dbService.db
@@ -110,8 +110,8 @@ export class StaffService {
   }
 
   async updateStaffRole(
-    shopId: number,
-    id: number,
+    shopId: string,
+    id: string,
     role: 'owner' | 'shop_worker',
   ) {
     const [member] = await this.dbService.db
@@ -125,14 +125,14 @@ export class StaffService {
     return member;
   }
 
-  async removeStaff(shopId: number, id: number) {
+  async removeStaff(shopId: string, id: string) {
     await this.dbService.db
       .delete(shopMembers)
       .where(and(eq(shopMembers.id, id), eq(shopMembers.shopId, shopId)));
     return { success: true };
   }
 
-  async acceptInvite(shopId: number, userId: number) {
+  async acceptInvite(shopId: string, userId: string) {
     return await this.dbService.db.transaction(async (tx) => {
       const [request] = await tx
         .select()
@@ -168,7 +168,7 @@ export class StaffService {
     });
   }
 
-  async listPendingInvites(userId: number) {
+  async listPendingInvites(userId: string) {
     const result = await this.dbService.db
       .select({
         id: staffRequests.id,
@@ -194,8 +194,8 @@ export class StaffService {
   }
 
   async respondToInvite(
-    requestId: number,
-    userId: number,
+    requestId: string,
+    userId: string,
     status: 'accepted' | 'rejected',
   ) {
     return await this.dbService.db.transaction(async (tx) => {

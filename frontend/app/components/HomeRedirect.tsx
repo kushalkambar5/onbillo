@@ -24,7 +24,7 @@ export default function HomeRedirect() {
             if (ownerShop) {
               router.push(`/shop/${ownerShop.shop.id}/dashboard`);
             } else {
-              router.push(`/shop/${list[0].shop.id}/pos`);
+              router.push(`/shop/${list[0].shop.id}/billing`);
             }
           } else {
             // If user has no shops, check onboarding status

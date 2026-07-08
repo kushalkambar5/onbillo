@@ -9,7 +9,7 @@
     "/admin/products/pending?boneyard=true",
     "/shop/1/dashboard?boneyard=true",
     "/shop/1/inventory?boneyard=true",
-    "/shop/1/pos?boneyard=true",
+    "/shop/1/billing?boneyard=true",
     "/shop/1/bills?boneyard=true",
     "/shop/1/settings?boneyard=true",
     "/shop/1/staff?boneyard=true",

@@ -10,6 +10,7 @@ import {
   pgEnum,
   unique,
   index,
+  uuid,
 } from 'drizzle-orm/pg-core';
 
 // --- ENUMS ---
@@ -46,7 +47,7 @@ export const staffRequestStatusEnum = pgEnum('request_status', [
 // --- TABLES ---
 
 export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
   clerkId: varchar('clerk_id', { length: 255 }).notNull().unique(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   phone: varchar('phone', { length: 20 }),
@@ -59,8 +60,8 @@ export const users = pgTable('users', {
 });
 
 export const shops = pgTable('shops', {
-  id: serial('id').primaryKey(),
-  createdBy: integer('created_by').references(() => users.id, {
+  id: uuid('id').defaultRandom().primaryKey(),
+  createdBy: uuid('created_by').references(() => users.id, {
     onDelete: 'set null',
   }),
   name: varchar('name', { length: 255 }).notNull(),
@@ -89,11 +90,11 @@ export const shops = pgTable('shops', {
 });
 
 export const shopMembers = pgTable('shop_members', {
-  id: serial('id').primaryKey(),
-  shopId: integer('shop_id')
+  id: uuid('id').defaultRandom().primaryKey(),
+  shopId: uuid('shop_id')
     .references(() => shops.id, { onDelete: 'cascade' })
     .notNull(),
-  userId: integer('user_id')
+  userId: uuid('user_id')
     .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   role: shopMemberRoleEnum('role').default('shop_worker').notNull(),
@@ -104,7 +105,7 @@ export const shopMembers = pgTable('shop_members', {
 export const products = pgTable(
   'products',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     barcode: varchar('barcode', { length: 255 }).unique(),
     name: varchar('name', { length: 255 }).notNull(),
     brand: varchar('brand', { length: 255 }),
@@ -114,7 +115,7 @@ export const products = pgTable(
     mrp: integer('mrp').notNull(),
     status: productStatusEnum('status').default('pending').notNull(),
     rejectionReason: text('rejection_reason'),
-    createdBy: integer('created_by').references(() => users.id, {
+    createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
     }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -128,11 +129,11 @@ export const products = pgTable(
 export const shopProducts = pgTable(
   'shop_products',
   {
-    id: serial('id').primaryKey(),
-    shopId: integer('shop_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id')
       .references(() => shops.id, { onDelete: 'cascade' })
       .notNull(),
-    productId: integer('product_id')
+    productId: uuid('product_id')
       .references(() => products.id, { onDelete: 'cascade' })
       .notNull(),
     // Stored in paise/cents
@@ -149,12 +150,12 @@ export const shopProducts = pgTable(
 export const bills = pgTable(
   'bills',
   {
-    id: serial('id').primaryKey(),
-    shopId: integer('shop_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id')
       .references(() => shops.id, { onDelete: 'cascade' })
       .notNull(),
     billNumber: varchar('bill_number', { length: 100 }).notNull(),
-    createdBy: integer('created_by').references(() => users.id, {
+    createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
     }),
     totalPrice: integer('total_price').notNull(),
@@ -173,11 +174,11 @@ export const bills = pgTable(
 );
 
 export const billItems = pgTable('bill_items', {
-  id: serial('id').primaryKey(),
-  billId: integer('bill_id')
+  id: uuid('id').defaultRandom().primaryKey(),
+  billId: uuid('bill_id')
     .references(() => bills.id, { onDelete: 'cascade' })
     .notNull(),
-  shopProductId: integer('shop_product_id')
+  shopProductId: uuid('shop_product_id')
     .references(() => shopProducts.id)
     .notNull(),
   // Static snapshot stored in paise/cents
@@ -188,14 +189,14 @@ export const billItems = pgTable('bill_items', {
 export const staffRequests = pgTable(
   'staff_requests',
   {
-    id: serial('id').primaryKey(),
-    shopId: integer('shop_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    shopId: uuid('shop_id')
       .references(() => shops.id, { onDelete: 'cascade' })
       .notNull(),
-    requestedBy: integer('requested_by')
+    requestedBy: uuid('requested_by')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
-    requestedTo: integer('requested_to')
+    requestedTo: uuid('requested_to')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
     role: shopMemberRoleEnum('role').default('shop_worker').notNull(),
