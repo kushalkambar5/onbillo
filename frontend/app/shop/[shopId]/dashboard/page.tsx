@@ -8,7 +8,7 @@ import { Skeleton } from "boneyard-js/react";
 import { 
   TrendingUp, 
   ShoppingBag, 
-  Receipt, 
+  ReceiptIndianRupee, 
   AlertTriangle,
   ArrowUpRight,
   TrendingDown
@@ -208,7 +208,7 @@ export default function ShopDashboard({
               Invoices Generated
             </span>
             <div className="w-8 h-8 rounded-lg bg-brand-primary/5 flex items-center justify-center text-brand-primary">
-              <Receipt className="w-4 h-4" />
+              <ReceiptIndianRupee className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3.5">

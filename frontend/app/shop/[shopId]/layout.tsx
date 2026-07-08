@@ -407,7 +407,7 @@ export default function ShopWorkspaceLayout({
       {/* 2. Main Page Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Header (Mobile nav indicator + shop detail) */}
-        <header className="h-14 border-b border-hairline bg-canvas flex items-center justify-between px-6 sticky top-0 z-40">
+        <header className="md:hidden h-14 border-b border-hairline bg-canvas flex items-center justify-between px-6 sticky top-0 z-40">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
@@ -418,9 +418,6 @@ export default function ShopWorkspaceLayout({
             </button>
             <span className="text-xs font-bold text-foreground md:hidden truncate">
               {currentShop ? currentShop.name : <span className="inline-block w-16 h-3 bg-foreground/10 animate-pulse rounded" />}
-            </span>
-            <span className="hidden md:inline text-xs font-bold text-foreground font-mono">
-              Onbillo POS / Shop #{shopId}
             </span>
           </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Store, ShoppingBag, Receipt, BarChart3, Plus, Printer, Check, TrendingUp } from "lucide-react";
+import { Store, ShoppingBag, ReceiptIndianRupee, BarChart3, Plus, Printer, Check, TrendingUp } from "lucide-react";
 
 interface Step {
   id: number;
@@ -27,7 +27,7 @@ const STEPS: Step[] = [
     id: 3,
     title: "Start Billing",
     description: "Scan products, generate invoices, print receipts, and accept payments. Every completed bill automatically updates your inventory.",
-    icon: Receipt
+    icon: ReceiptIndianRupee
   },
   {
     id: 4,

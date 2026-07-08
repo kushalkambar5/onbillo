@@ -7,7 +7,7 @@ import { mockShops, mockBills } from "../../../utils/api/mockData";
 import { Skeleton } from "boneyard-js/react";
 import { 
   Search, 
-  Receipt, 
+  ReceiptIndianRupee, 
   Trash2, 
   Printer, 
   XCircle, 
@@ -182,10 +182,10 @@ export default function ShopBills({
         <div className="lg:col-span-8 bg-canvas border border-hairline rounded-2xl overflow-hidden shadow-sm">
           {filteredBills.length === 0 ? (
             <div className="p-12 text-center text-mute">
-              <Receipt className="w-10 h-10 mx-auto text-mute mb-3" />
+              <ReceiptIndianRupee className="w-10 h-10 mx-auto text-mute mb-3" />
               <h4 className="text-xs font-bold text-foreground">No invoices registered</h4>
               <p className="text-[10px] text-mute mt-1.5">
-                Generate transaction bills in the Billing page to compile logs here.
+                Analyze/Generate transaction bills PDF or print them out.
               </p>
             </div>
           ) : (
