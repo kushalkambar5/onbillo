@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Camera, X, Flashlight } from "lucide-react";
+import { ScanBarcode, X, Flashlight } from "lucide-react";
 import { useZxing } from "react-zxing";
 
 interface BarcodeScannerProps {
@@ -183,7 +183,7 @@ export default function BarcodeScanner({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-hairline bg-canvas-soft">
           <div className="flex items-center gap-2">
-            <Camera className="w-4 h-4 text-brand-primary" />
+            <ScanBarcode className="w-4 h-4 text-brand-primary" />
             <h3 className="text-sm font-bold text-foreground font-sans">{title}</h3>
           </div>
           <div className="flex items-center gap-2">

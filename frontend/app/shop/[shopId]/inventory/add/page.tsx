@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, useRef, use } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { productsApi, Product } from "../../../../utils/api";
 import { CreateCustomProductSchema, BarcodeSchema, validateSchema } from "../../../../utils/validation";
@@ -12,7 +12,10 @@ import {
   HelpCircle,
   FileCheck2,
   FolderOpen,
-  Camera
+  ScanBarcode,
+  Camera,
+  Upload,
+  Flashlight
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -55,6 +58,154 @@ export default function AddProducts({
   // Validation State for Add New Product Form
   const [requestErrors, setRequestErrors] = useState<Record<string, string>>({});
   const [requestTouched, setRequestTouched] = useState<Record<string, boolean>>({});
+
+  // Image & Camera upload/capture state
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const [torchAvailable, setTorchAvailable] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
+  const [torchEnabledChoice, setTorchEnabledChoice] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const deviceFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Load initial torch choice from local storage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("product_photo_torch_enabled");
+      setTorchEnabledChoice(saved === "true");
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview && imagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
+  const startCamera = async () => {
+    setCameraActive(true);
+    setCameraError("");
+    setTorchAvailable(false);
+    setTorchOn(false);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+
+      const track = stream.getVideoTracks()[0];
+      if (track) {
+        setTimeout(async () => {
+          try {
+            const capabilities = (track as any).getCapabilities?.() || {};
+            if (capabilities.torch) {
+              setTorchAvailable(true);
+              const saved = localStorage.getItem("product_photo_torch_enabled") === "true";
+              if (saved) {
+                await track.applyConstraints({
+                  advanced: [{ torch: true } as any]
+                });
+                setTorchOn(true);
+              }
+            }
+          } catch (e) {
+            console.warn("Could not read camera capabilities or auto-enable torch:", e);
+          }
+        }, 500);
+      }
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      setCameraError("Unable to access camera. Please upload an image instead or grant permissions.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+    setTorchOn(false);
+    setTorchAvailable(false);
+  };
+
+  const toggleTorch = async () => {
+    if (!streamRef.current) return;
+    const track = streamRef.current.getVideoTracks()[0];
+    if (!track) return;
+    try {
+      const nextState = !torchOn;
+      await track.applyConstraints({
+        advanced: [{ torch: nextState } as any]
+      });
+      setTorchOn(nextState);
+      setTorchEnabledChoice(nextState);
+      localStorage.setItem("product_photo_torch_enabled", String(nextState));
+    } catch (err) {
+      console.error("Failed to toggle torch:", err);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], `product-captured-${Date.now()}.jpg`, {
+          type: "image/jpeg",
+          lastModified: Date.now()
+        });
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+      }
+      stopCamera();
+    }, "image/jpeg", 0.9);
+  };
+
+  const handleDeviceFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"].includes(file.type)) {
+      alert("Invalid file format. Only PNG, JPG, JPEG, GIF, and WEBP images are allowed.");
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size exceeds 5MB limit.");
+      return;
+    }
+    
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearSelectedImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    if (deviceFileInputRef.current) {
+      deviceFileInputRef.current.value = "";
+    }
+  };
 
   const validateRequestField = (name: string, value: string) => {
     if (name === "name") {
@@ -286,13 +437,20 @@ export default function AddProducts({
     try {
       const token = await getToken();
 
+      let uploadedImageUrl = null;
+      if (imageFile) {
+        const uploadRes = await productsApi.uploadImage(token, imageFile);
+        uploadedImageUrl = uploadRes.url;
+      }
+
       await productsApi.addCustomProduct(token, shopId, {
         barcode: cleanedData.barcode,
         name: cleanedData.name,
         brand: cleanedData.brand,
         category: cleanedData.category,
         mrp: cleanedData.mrp,
-        unitPrice: cleanedData.unitPrice
+        unitPrice: cleanedData.unitPrice,
+        imageUrl: uploadedImageUrl
       });
 
       setMessage({ 
@@ -300,7 +458,7 @@ export default function AddProducts({
         type: "success" 
       });
       
-      // Reset form
+      // Reset form & image
       setRequestForm({
         barcode: "",
         name: "",
@@ -309,6 +467,7 @@ export default function AddProducts({
         mrp: "",
         sellingPrice: ""
       });
+      clearSelectedImage();
     } catch (err: any) {
       setMessage({ text: err.message || "Failed to add product to shop.", type: "error" });
     } finally {
@@ -390,9 +549,9 @@ export default function AddProducts({
                   setScannerOpen(true);
                 }}
                 className="flex-1 sm:flex-none h-10 px-4 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white font-bold text-xs rounded-lg transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-                title="Scan barcode with camera"
+                title="Scan barcode"
               >
-                <Camera className="w-4 h-4" />
+                <ScanBarcode className="w-4 h-4" />
                 <span>Scan Barcode</span>
               </button>
               <button
@@ -490,9 +649,9 @@ export default function AddProducts({
                     setScannerOpen(true);
                   }}
                   className="h-10 px-3 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white rounded-lg transition-all duration-150 flex items-center justify-center cursor-pointer shrink-0"
-                  title="Scan barcode with camera"
+                  title="Scan barcode"
                 >
-                  <Camera className="w-4 h-4" />
+                  <ScanBarcode className="w-4 h-4" />
                 </button>
               </div>
               {requestTouched.barcode && requestErrors.barcode && (
@@ -503,7 +662,7 @@ export default function AddProducts({
             <div>
               <div className="flex justify-between items-center mb-1.5">
                 <label className="block text-xs font-semibold text-foreground">
-                  Maximum Retail Price (MRP) <span className="text-error-deep">*</span>
+                  Maximum Retail Price (MRP) <span className="text-yellow-600 dark:text-yellow-400 font-normal text-[10px]">(*required)</span>
                 </label>
               </div>
               <input
@@ -526,7 +685,7 @@ export default function AddProducts({
             <div className="md:col-span-2">
               <div className="flex justify-between items-center mb-1.5">
                 <label className="block text-xs font-semibold text-foreground">
-                  Product Name <span className="text-error-deep">*</span>
+                  Product Name <span className="text-yellow-600 dark:text-yellow-400 font-normal text-[10px]">(*required)</span>
                 </label>
                 <span className="text-[10px] text-mute font-mono">
                   {requestForm.name.length}/255 chars
@@ -602,7 +761,7 @@ export default function AddProducts({
             <div className="md:col-span-2">
               <div className="flex justify-between items-center mb-1.5">
                 <label className="block text-xs font-semibold text-foreground">
-                  Your Shop Price (₹) <span className="text-error-deep">*</span>
+                  Your Shop Price (₹) <span className="text-yellow-600 dark:text-yellow-400 font-normal text-[10px]">(*required)</span>
                 </label>
               </div>
               <input
@@ -621,19 +780,67 @@ export default function AddProducts({
                 <p className="text-xs text-red-500 mt-1">{requestErrors.sellingPrice}</p>
               )}
             </div>
+
+            {/* Product Image Section */}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-foreground mb-1.5">
+                Product Image <span className="text-mute font-normal text-[10px]">(Optional)</span>
+              </label>
+              <div className="flex flex-col sm:flex-row gap-4 items-center bg-canvas-soft border border-hairline rounded-lg p-4">
+                {/* Image Preview / Placeholder */}
+                <div className="w-20 h-20 rounded-lg border border-hairline flex items-center justify-center bg-canvas overflow-hidden shrink-0 relative group">
+                  {imagePreview ? (
+                    <>
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={clearSelectedImage}
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity duration-150 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-[10px] text-mute text-center px-2">No Image</span>
+                  )}
+                </div>
+
+                {/* Upload Options */}
+                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => deviceFileInputRef.current?.click()}
+                      className="h-8.5 px-3 bg-canvas border border-hairline hover:border-hairline-strong text-foreground font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={startCamera}
+                      className="h-8.5 px-3 bg-canvas border border-hairline hover:border-hairline-strong text-foreground font-bold text-xs rounded-lg transition-colors cursor-pointer flex-1 flex items-center justify-center gap-1.5"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      Take Photo
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-mute font-medium leading-none">
+                    Support formats: PNG, JPG, JPEG, WEBP. Max 5MB.
+                  </p>
+                </div>
+              </div>
+              <input
+                type="file"
+                ref={deviceFileInputRef}
+                accept="image/*"
+                onChange={handleDeviceFileUpload}
+                className="hidden"
+              />
+            </div>
           </div>
 
-          {/* Submit warnings panel */}
-          {!isRequestFormValid && (
-            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs font-medium text-yellow-700 dark:text-yellow-400 space-y-1">
-              <p className="font-bold">⚠️ Resolve the following to enable adding this product:</p>
-              <ul className="list-disc pl-4 space-y-0.5">
-                {getMissingRequestFields().map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+
 
           <button
             type="submit"
@@ -646,7 +853,7 @@ export default function AddProducts({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Adding Product...
+                {imageFile ? "Uploading Image & Adding..." : "Adding Product..."}
               </>
             ) : (
               <>
@@ -677,7 +884,7 @@ export default function AddProducts({
               
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Your Shop Price (₹) <span className="text-error-deep">*</span>
+                  Your Shop Price (₹) <span className="text-yellow-600 dark:text-yellow-400 font-normal text-[10px]">(*required)</span>
                 </label>
                 <input
                   type="text"
@@ -735,6 +942,80 @@ export default function AddProducts({
         continuous={false}
         title={scannerMode === "search" ? "Scan to Search Global DB" : "Scan Product Barcode"}
       />
+
+      {/* Camera Capture Modal */}
+      {cameraActive && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-canvas border border-hairline rounded-2xl shadow-level-4 max-w-md w-full overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-hairline bg-canvas-soft">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-brand-primary" />
+                <h3 className="text-sm font-bold text-foreground font-sans">Take Product Photo</h3>
+              </div>
+              <div className="flex items-center gap-2.5">
+                {torchAvailable && (
+                  <button
+                    type="button"
+                    onClick={toggleTorch}
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      torchOn
+                        ? "bg-brand-primary/10 text-brand-primary"
+                        : "hover:bg-canvas text-mute hover:text-foreground"
+                    }`}
+                    title={torchOn ? "Turn off torch" : "Turn on torch"}
+                  >
+                    <Flashlight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className="text-mute hover:text-foreground text-xs font-semibold cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            
+            {/* Viewfinder */}
+            <div className="relative bg-black aspect-video flex items-center justify-center">
+              {cameraError ? (
+                <div className="p-5 text-center text-xs text-red-500 font-medium">
+                  {cameraError}
+                </div>
+              ) : (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            {/* Controls */}
+            <div className="p-4 bg-canvas flex justify-center gap-3 border-t border-hairline">
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="h-10 px-4 border border-hairline hover:bg-canvas-soft text-foreground text-xs font-bold rounded-lg cursor-pointer flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={capturePhoto}
+                disabled={!!cameraError}
+                className="h-10 px-5 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-lg transition-colors cursor-pointer flex-1 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Camera className="w-4 h-4" />
+                Capture
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

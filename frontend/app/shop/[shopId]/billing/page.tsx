@@ -14,7 +14,7 @@ import {
   Check, 
   AlertCircle,
   FileSpreadsheet,
-  Camera
+  ScanBarcode
 } from "lucide-react";
 import BarcodeScanner from "../../../components/BarcodeScanner";
 
@@ -264,7 +264,7 @@ export default function ShopPosRegister({
             className="h-10 px-4 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-xl transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm shadow-brand-primary/10"
             title="Scan barcode with camera"
           >
-            <Camera className="w-4 h-4" />
+            <ScanBarcode className="w-4 h-4" />
             <span>Scan Barcode</span>
           </button>
         </div>

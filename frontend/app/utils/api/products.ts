@@ -48,12 +48,25 @@ export const productsApi = {
       category?: string | null;
       mrp: number;
       unitPrice: number;
+      imageUrl?: string | null;
     }
   ): Promise<ShopProduct> => {
     return await apiCall<ShopProduct>({
       url: `/api/shops/${shopId}/products/custom`,
       method: "POST",
       data
+    }, token);
+  },
+  uploadImage: async (token: string | null, file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return await apiCall<{ url: string }>({
+      url: "/api/upload",
+      method: "POST",
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
     }, token);
   }
 };
