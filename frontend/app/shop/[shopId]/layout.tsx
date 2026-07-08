@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { shopsApi, Shop } from "../../utils/api";
+import { shopsApi, usersApi, Shop } from "../../utils/api";
 import DevMockModeIndicator from "../../components/DevMockModeIndicator";
 import ThemeToggle from "../../components/ThemeToggle";
 import { 
@@ -47,13 +47,18 @@ export default function ShopWorkspaceLayout({
         const list = await shopsApi.getUserShops(token);
         setShopsList(list);
 
+        const me = await usersApi.getMe(token);
         const activeMembership = list.find((m) => m.shop.id === shopId);
         if (!activeMembership) {
           // User is not a member of this shop
           if (list.length > 0) {
             router.push(`/shop/${list[0].shop.id}/dashboard`);
           } else {
-            router.push("/onboarding");
+            if (me.phone) {
+              router.push("/invites");
+            } else {
+              router.push("/onboarding");
+            }
           }
           return;
         }

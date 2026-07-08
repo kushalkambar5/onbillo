@@ -9,6 +9,11 @@ import { RolesGuard, Roles } from '../auth/roles.guard';
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
+  @Get('stats')
+  getStats() {
+    return this.adminService.getStats();
+  }
+
   @Get('users')
   listUsers() {
     return this.adminService.listUsers();

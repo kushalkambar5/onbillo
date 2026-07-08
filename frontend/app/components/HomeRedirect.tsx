@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { shopsApi } from "../utils/api";
+import { shopsApi, usersApi } from "../utils/api";
 
 export default function HomeRedirect() {
   const { isSignedIn, getToken } = useAuth();
@@ -16,6 +16,7 @@ export default function HomeRedirect() {
       async function redirectUser() {
         try {
           const token = await getToken();
+          const me = await usersApi.getMe(token);
           const list = await shopsApi.getUserShops(token);
           if (list && list.length > 0) {
             // Check if there is an owner role
@@ -26,7 +27,12 @@ export default function HomeRedirect() {
               router.push(`/shop/${list[0].shop.id}/pos`);
             }
           } else {
-            router.push("/onboarding");
+            // If user has no shops, check onboarding status
+            if (me.phone) {
+              router.push("/invites");
+            } else {
+              router.push("/onboarding");
+            }
           }
         } catch (error) {
           console.error("Error during home redirect:", error);

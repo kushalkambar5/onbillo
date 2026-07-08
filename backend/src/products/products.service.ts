@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { products, shopProducts } from '../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or, ilike } from 'drizzle-orm';
 
 @Injectable()
 export class ProductsService {
@@ -9,7 +9,21 @@ export class ProductsService {
 
   // --- Shop Products ---
   async listShopProducts(shopId: number) {
-    return await this.dbService.db.select().from(shopProducts).where(eq(shopProducts.shopId, shopId));
+    const result = await this.dbService.db
+      .select({
+        id: shopProducts.id,
+        shopId: shopProducts.shopId,
+        productId: shopProducts.productId,
+        unitPrice: shopProducts.unitPrice,
+        isActive: shopProducts.isActive,
+        createdAt: shopProducts.createdAt,
+        updatedAt: shopProducts.updatedAt,
+        product: products,
+      })
+      .from(shopProducts)
+      .innerJoin(products, eq(shopProducts.productId, products.id))
+      .where(eq(shopProducts.shopId, shopId));
+    return result;
   }
 
   async addShopProduct(shopId: number, data: any) {
@@ -19,17 +33,22 @@ export class ProductsService {
       unitPrice: data.unitPrice,
       isActive: data.isActive ?? true,
     }).returning();
-    return shopProduct;
+
+    const [product] = await this.dbService.db.select().from(products).where(eq(products.id, shopProduct.productId)).limit(1);
+    return { ...shopProduct, product };
   }
 
   async updateShopProduct(shopId: number, id: number, data: any) {
     const [shopProduct] = await this.dbService.db.update(shopProducts).set({
-      ...data,
+      unitPrice: data.unitPrice,
+      isActive: data.isActive,
       updatedAt: new Date(),
     }).where(and(eq(shopProducts.id, id), eq(shopProducts.shopId, shopId))).returning();
     
     if (!shopProduct) throw new NotFoundException('Shop product not found');
-    return shopProduct;
+
+    const [product] = await this.dbService.db.select().from(products).where(eq(products.id, shopProduct.productId)).limit(1);
+    return { ...shopProduct, product };
   }
 
   async deleteShopProduct(shopId: number, id: number) {
@@ -53,8 +72,19 @@ export class ProductsService {
   }
 
   // --- Global Products ---
-  async searchGlobalProducts() {
-    return await this.dbService.db.select().from(products).where(eq(products.status, 'approved'));
+  async searchGlobalProducts(query?: string) {
+    if (!query) {
+      return await this.dbService.db.select().from(products).where(eq(products.status, 'approved'));
+    }
+    return await this.dbService.db.select().from(products)
+      .where(and(
+        eq(products.status, 'approved'),
+        or(
+          ilike(products.name, `%${query}%`),
+          ilike(products.barcode, `%${query}%`),
+          ilike(products.brand, `%${query}%`)
+        )
+      ));
   }
 
   async lookupGlobalProductByBarcode(code: string) {

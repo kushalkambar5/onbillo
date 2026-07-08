@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard, Roles } from '../auth/roles.guard';
@@ -10,8 +10,8 @@ export class ProductsController {
   constructor(private productsService: ProductsService) {}
 
   @Get()
-  searchGlobalProducts() {
-    return this.productsService.searchGlobalProducts();
+  searchGlobalProducts(@Query('q') query?: string) {
+    return this.productsService.searchGlobalProducts(query);
   }
 
   @Get('barcode/:code')

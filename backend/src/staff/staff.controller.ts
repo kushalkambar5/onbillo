@@ -23,6 +23,13 @@ export class StaffController {
     return this.staffService.inviteStaff(parseInt(shopId, 10), parseInt(userId, 10), user.id, body.role);
   }
 
+  @Post('invite')
+  @UseGuards(ShopRolesGuard)
+  @ShopRoles('owner')
+  inviteStaffByEmail(@Param('shopId') shopId: string, @Body() body: any, @CurrentUser() user: any) {
+    return this.staffService.inviteStaffByEmail(parseInt(shopId, 10), body.email, user.id, body.role);
+  }
+
   @Put('accept')
   acceptInvite(@Param('shopId') shopId: string, @CurrentUser() user: any) {
     return this.staffService.acceptInvite(parseInt(shopId, 10), user.id);

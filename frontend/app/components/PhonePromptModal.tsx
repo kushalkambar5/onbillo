@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 import { usersApi, User } from "../utils/api";
 
 export default function PhonePromptModal() {
   const { isSignedIn, getToken } = useAuth();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,7 +60,7 @@ export default function PhonePromptModal() {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || pathname === "/onboarding") return null;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md transition-all duration-300">
