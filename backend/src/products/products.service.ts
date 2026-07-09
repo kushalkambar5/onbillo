@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { products, shopProducts, shopMembers } from '../db/schema';
+import { products, shopProducts, users } from '../db/schema';
 import { eq, and, or, ilike, inArray } from 'drizzle-orm';
 
 
@@ -62,17 +62,17 @@ export class ProductsService {
           'You cannot add this pending product to your shop.',
         );
       }
-      const [member] = await this.dbService.db
+      const [creator] = await this.dbService.db
         .select()
-        .from(shopMembers)
+        .from(users)
         .where(
           and(
-            eq(shopMembers.shopId, shopId),
-            eq(shopMembers.userId, product.createdBy),
+            eq(users.id, product.createdBy),
+            eq(users.shopId, shopId),
           ),
         )
         .limit(1);
-      if (!member) {
+      if (!creator) {
         throw new ForbiddenException(
           'You cannot add this pending product to your shop.',
         );
@@ -144,9 +144,9 @@ export class ProductsService {
 
     if (shopId) {
       const membersList = await this.dbService.db
-        .select({ userId: shopMembers.userId })
-        .from(shopMembers)
-        .where(eq(shopMembers.shopId, shopId));
+        .select({ userId: users.id })
+        .from(users)
+        .where(eq(users.shopId, shopId));
       memberUserIds = membersList.map((m) => m.userId);
       isMember = memberUserIds.includes(user.id) || user.role === 'app_admin';
     }
@@ -276,17 +276,17 @@ export class ProductsService {
           );
         }
 
-        const [member] = await this.dbService.db
+        const [creator] = await this.dbService.db
           .select()
-          .from(shopMembers)
+          .from(users)
           .where(
             and(
-              eq(shopMembers.shopId, shopId),
-              eq(shopMembers.userId, existing.createdBy),
+              eq(users.id, existing.createdBy),
+              eq(users.shopId, shopId),
             ),
           )
           .limit(1);
-        if (!member && existing.createdBy !== user.id) {
+        if (!creator && existing.createdBy !== user.id) {
           throw new BadRequestException(
             'A pending product with this barcode already exists but belongs to another shop.',
           );

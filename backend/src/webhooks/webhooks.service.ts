@@ -15,7 +15,7 @@ export class WebhooksService {
       const phone = data.phone_numbers?.[0]?.phone_number || null;
 
       const role =
-        data.public_metadata?.role === 'app_admin' ? 'app_admin' : 'user';
+        data.public_metadata?.role === 'app_admin' ? 'app_admin' : null;
 
       if (eventType === 'user.created') {
         await this.dbService.db.insert(users).values({
@@ -26,15 +26,21 @@ export class WebhooksService {
           role,
         });
       } else {
+        const updateData: any = {
+          email: email || '',
+          name,
+          phone,
+          updatedAt: new Date(),
+        };
+
+        // Only overwrite local role if the webhook explicitly says they are app_admin
+        if (role === 'app_admin') {
+          updateData.role = 'app_admin';
+        }
+
         await this.dbService.db
           .update(users)
-          .set({
-            email: email || '',
-            name,
-            phone,
-            role,
-            updatedAt: new Date(),
-          })
+          .set(updateData)
           .where(eq(users.clerkId, data.id));
       }
     } else if (eventType === 'user.deleted') {

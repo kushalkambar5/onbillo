@@ -12,8 +12,7 @@ const sql = postgres(url);
 async function clearDb() {
   try {
     console.log('Clearing database tables...');
-    // Order of tables or using CASCADE
-    await sql`TRUNCATE TABLE bill_items, bills, shop_products, shop_members, staff_requests, products, shops, users CASCADE;`;
+    await sql`TRUNCATE TABLE bill_items, bills, shop_products, staff_requests, products, shops, users CASCADE;`;
     console.log('Database cleared successfully!');
     process.exit(0);
   } catch (error) {

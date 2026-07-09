@@ -14,7 +14,11 @@ import {
 } from 'drizzle-orm/pg-core';
 
 // --- ENUMS ---
-export const userRoleEnum = pgEnum('user_role', ['app_admin', 'user']);
+export const userRoleEnum = pgEnum('user_role', [
+  'app_admin',
+  'shop_owner',
+  'shop_worker',
+]);
 export const currencyEnum = pgEnum('currency', ['rupees']);
 export const taxTypeEnum = pgEnum('tax_type', [
   'gst_inclusive',
@@ -52,7 +56,10 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   phone: varchar('phone', { length: 20 }),
   name: varchar('name', { length: 255 }).notNull(),
-  role: userRoleEnum('role').default('user').notNull(),
+  role: userRoleEnum('role'),
+  shopId: uuid('shop_id').references(() => shops.id, {
+    onDelete: 'set null',
+  }),
   isPremium: boolean('is_premium').default(false).notNull(),
   isBanned: boolean('is_banned').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -89,18 +96,6 @@ export const shops = pgTable('shops', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const shopMembers = pgTable('shop_members', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  shopId: uuid('shop_id')
-    .references(() => shops.id, { onDelete: 'cascade' })
-    .notNull(),
-  userId: uuid('user_id')
-    .references(() => users.id, { onDelete: 'cascade' })
-    .notNull(),
-  role: shopMemberRoleEnum('role').default('shop_worker').notNull(),
-  isActive: boolean('is_active').default(true).notNull(),
-  joinedAt: timestamp('joined_at').defaultNow().notNull(),
-});
 
 export const products = pgTable(
   'products',

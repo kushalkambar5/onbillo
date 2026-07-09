@@ -7,6 +7,7 @@ import { shopsApi, usersApi } from "../utils/api";
 import { CreateShopSchema, UpdateMeSchema, PhoneSchema, validateSchema } from "../utils/validation";
 import DevMockModeIndicator from "../components/DevMockModeIndicator";
 import { Store, User, ArrowLeft } from "lucide-react";
+import LogoUploadAndCrop from "../components/LogoUploadAndCrop";
 
 type Step = "role" | "details";
 type Role = "owner" | "worker";
@@ -35,7 +36,8 @@ export default function OnboardingPage() {
     phone: "", // Business phone
     email: "", // Business email
     taxType: "gst_inclusive",
-    taxRate: "18.00"
+    taxRate: "18.00",
+    logoUrl: ""
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,7 +51,7 @@ export default function OnboardingPage() {
       return "";
     }
 
-    const optionalFields = ["gstNumber", "addressLine2", "phone", "email", "taxRate"];
+    const optionalFields = ["gstNumber", "addressLine2", "phone", "email", "taxRate", "logoUrl"];
     if (optionalFields.includes(name) && !value.trim()) {
       return "";
     }
@@ -650,6 +652,20 @@ export default function OnboardingPage() {
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  <hr className="border-hairline" />
+
+                  {/* Section 4: Shop Logo */}
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-mute mb-4 font-mono">
+                      Shop Logo (Optional)
+                    </h3>
+                    <LogoUploadAndCrop
+                      value={formData.logoUrl}
+                      onChange={(url) => setFormData(prev => ({ ...prev, logoUrl: url || "" }))}
+                      getToken={getToken}
+                    />
                   </div>
                 </>
               )}

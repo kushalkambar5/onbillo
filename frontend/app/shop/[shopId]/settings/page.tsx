@@ -3,10 +3,11 @@
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { shopsApi, Shop } from "../../../utils/api";
-import { CreateShopSchema, validateSchema } from "../../../utils/validation";
+import { CreateShopSchema, UpdateShopSchema, validateSchema } from "../../../utils/validation";
 import { mockShops } from "../../../utils/api/mockData";
 import { Skeleton } from "boneyard-js/react";
 import DevMockModeIndicator from "../../../components/DevMockModeIndicator";
+import LogoUploadAndCrop from "../../../components/LogoUploadAndCrop";
 
 export default function ShopSettings({
   params: paramsPromise,
@@ -34,14 +35,15 @@ export default function ShopSettings({
     taxRate: "18.00",
     invoicePrefix: "INV/",
     invoiceTemplet: "1",
-    footerText: ""
+    footerText: "",
+    logoUrl: ""
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const validateField = (name: string, value: string) => {
-    const optionalFields = ["gstNumber", "addressLine2", "phone", "email", "taxRate", "invoicePrefix", "footerText"];
+    const optionalFields = ["gstNumber", "addressLine2", "phone", "email", "taxRate", "invoicePrefix", "footerText", "logoUrl"];
     if (optionalFields.includes(name) && !value.trim()) {
       return "";
     }
@@ -90,14 +92,14 @@ export default function ShopSettings({
   const missingOrInvalid = getMissingOrInvalidFields();
   const isFormValid = missingOrInvalid.length === 0;
 
+  const isBoneyard = typeof window !== "undefined" && 
+    ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+
   useEffect(() => {
     async function loadShopDetails() {
       try {
-        const isBoneyard = typeof window !== "undefined" && 
-          ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
-        
         if (isBoneyard) {
-          const shop = mockShops[0];
+          const shop = mockShops.find(s => s.id === shopId) || mockShops[0];
           setFormData({
             name: shop.name,
             phone: shop.phone || "",
@@ -112,7 +114,8 @@ export default function ShopSettings({
             taxRate: shop.taxRate,
             invoicePrefix: shop.invoicePrefix,
             invoiceTemplet: shop.invoiceTemplet,
-            footerText: shop.footerText || ""
+            footerText: shop.footerText || "",
+            logoUrl: shop.logoUrl || ""
           });
           setLoading(false);
           return;
@@ -134,7 +137,8 @@ export default function ShopSettings({
           taxRate: shop.taxRate,
           invoicePrefix: shop.invoicePrefix,
           invoiceTemplet: shop.invoiceTemplet,
-          footerText: shop.footerText || ""
+          footerText: shop.footerText || "",
+          logoUrl: shop.logoUrl || ""
         });
       } catch (err) {
         console.error(err);
@@ -143,7 +147,7 @@ export default function ShopSettings({
       }
     }
     loadShopDetails();
-  }, [shopId, getToken]);
+  }, [shopId, getToken, isBoneyard]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     handleFieldChange(e.target.name, e.target.value);
@@ -172,6 +176,16 @@ export default function ShopSettings({
     setMessage({ text: "", type: "" });
 
     try {
+      if (isBoneyard) {
+        const targetShopIdx = mockShops.findIndex(s => s.id === shopId);
+        const idx = targetShopIdx !== -1 ? targetShopIdx : 0;
+        mockShops[idx] = { ...mockShops[idx], ...validation.data };
+        if (typeof window !== "undefined") {
+          localStorage.setItem("mock_shops", JSON.stringify(mockShops));
+        }
+        setMessage({ text: "Shop configurations saved successfully!", type: "success" });
+        return;
+      }
       const token = await getToken();
       await shopsApi.updateShop(token, shopId, validation.data);
       setMessage({ text: "Shop configurations saved successfully!", type: "success" });
@@ -212,6 +226,49 @@ export default function ShopSettings({
           <h3 className="text-xs font-bold uppercase tracking-wider text-mute mb-4 font-mono">
             Shop Profile Details
           </h3>
+
+          <div className="mb-6 bg-canvas p-4 rounded-xl border border-hairline/80">
+            <LogoUploadAndCrop
+              value={formData.logoUrl}
+              onChange={async (url) => {
+                setFormData(prev => ({ ...prev, logoUrl: url || "" }));
+                if (isBoneyard) {
+                  const targetShopIdx = mockShops.findIndex(s => s.id === shopId);
+                  const idx = targetShopIdx !== -1 ? targetShopIdx : 0;
+                  mockShops[idx] = { ...mockShops[idx], logoUrl: url };
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("mock_shops", JSON.stringify(mockShops));
+                  }
+                  setMessage({
+                    text: url ? "Shop logo updated successfully!" : "Shop logo removed successfully!",
+                    type: "success"
+                  });
+                } else {
+                  try {
+                    const token = await getToken();
+                    const validation = validateSchema(UpdateShopSchema, { logoUrl: url });
+                    if (validation.success) {
+                      await shopsApi.updateShop(token, shopId, { logoUrl: url });
+                      setMessage({
+                        text: url ? "Shop logo updated successfully!" : "Shop logo removed successfully!",
+                        type: "success"
+                      });
+                    } else {
+                      setMessage({ text: validation.error, type: "error" });
+                    }
+                  } catch (err) {
+                    const errorMsg = err instanceof Error ? err.message : "An unexpected error occurred.";
+                    setMessage({
+                      text: errorMsg,
+                      type: "error"
+                    });
+                  }
+                }
+              }}
+              getToken={getToken}
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <div className="flex justify-between items-center mb-1.5">

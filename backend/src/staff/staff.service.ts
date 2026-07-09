@@ -4,8 +4,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { shopMembers, staffRequests, users, shops } from '../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { staffRequests, users, shops } from '../db/schema';
+import { eq, and, or, desc } from 'drizzle-orm';
 
 @Injectable()
 export class StaffService {
@@ -13,17 +13,18 @@ export class StaffService {
 
   async listStaff(shopId: string) {
     const results = await this.dbService.db
-      .select({
-        member: shopMembers,
-        user: users,
-      })
-      .from(shopMembers)
-      .innerJoin(users, eq(shopMembers.userId, users.id))
-      .where(eq(shopMembers.shopId, shopId));
+      .select()
+      .from(users)
+      .where(eq(users.shopId, shopId));
 
-    return results.map((row) => ({
-      ...row.member,
-      user: row.user,
+    return results.map((user) => ({
+      id: user.id,
+      shopId: user.shopId,
+      userId: user.id,
+      role: user.role === 'shop_owner' ? 'owner' : 'shop_worker',
+      isActive: !user.isBanned,
+      joinedAt: user.createdAt,
+      user: user,
     }));
   }
 
@@ -33,6 +34,46 @@ export class StaffService {
     requestedBy: string,
     role: 'shop_worker' | 'owner',
   ) {
+    const [user] = await this.dbService.db
+      .select()
+      .from(users)
+      .where(eq(users.id, requestedTo))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    if (user.shopId) {
+      if (user.shopId === shopId) {
+        throw new BadRequestException('User is already a member of this shop.');
+      } else {
+        throw new BadRequestException('User is already associated with another shop.');
+      }
+    }
+
+    const [existingRequest] = await this.dbService.db
+      .select()
+      .from(staffRequests)
+      .where(
+        and(
+          eq(staffRequests.shopId, shopId),
+          eq(staffRequests.requestedTo, requestedTo),
+        ),
+      )
+      .limit(1);
+
+    if (existingRequest) {
+      if (existingRequest.status === 'pending') {
+        throw new BadRequestException(
+          'An invitation is already pending for this user.',
+        );
+      }
+      await this.dbService.db
+        .delete(staffRequests)
+        .where(eq(staffRequests.id, existingRequest.id));
+    }
+
     const [request] = await this.dbService.db
       .insert(staffRequests)
       .values({
@@ -63,15 +104,12 @@ export class StaffService {
       );
     }
 
-    const [existingMember] = await this.dbService.db
-      .select()
-      .from(shopMembers)
-      .where(
-        and(eq(shopMembers.shopId, shopId), eq(shopMembers.userId, user.id)),
-      )
-      .limit(1);
-    if (existingMember) {
-      throw new BadRequestException('User is already a member of this shop.');
+    if (user.shopId) {
+      if (user.shopId === shopId) {
+        throw new BadRequestException('User is already a member of this shop.');
+      } else {
+        throw new BadRequestException('User is already associated with another shop.');
+      }
     }
 
     const [existingRequest] = await this.dbService.db
@@ -81,14 +119,20 @@ export class StaffService {
         and(
           eq(staffRequests.shopId, shopId),
           eq(staffRequests.requestedTo, user.id),
-          eq(staffRequests.status, 'pending'),
         ),
       )
       .limit(1);
+
     if (existingRequest) {
-      throw new BadRequestException(
-        'An invitation is already pending for this user.',
-      );
+      if (existingRequest.status === 'pending') {
+        throw new BadRequestException(
+          'An invitation is already pending for this user.',
+        );
+      }
+      // Delete old accepted/rejected request to avoid unique constraint issue
+      await this.dbService.db
+        .delete(staffRequests)
+        .where(eq(staffRequests.id, existingRequest.id));
     }
 
     const [request] = await this.dbService.db
@@ -114,21 +158,34 @@ export class StaffService {
     id: string,
     role: 'owner' | 'shop_worker',
   ) {
-    const [member] = await this.dbService.db
-      .update(shopMembers)
+    const mappedRole = role === 'owner' ? 'shop_owner' : 'shop_worker';
+    const [user] = await this.dbService.db
+      .update(users)
       .set({
-        role,
+        role: mappedRole,
+        updatedAt: new Date(),
       })
-      .where(and(eq(shopMembers.id, id), eq(shopMembers.shopId, shopId)))
+      .where(and(eq(users.id, id), eq(users.shopId, shopId)))
       .returning();
-    if (!member) throw new NotFoundException('Member not found');
-    return member;
+    if (!user) throw new NotFoundException('Member not found');
+    
+    return {
+      id: user.id,
+      shopId: user.shopId,
+      userId: user.id,
+      role: role,
+    };
   }
 
   async removeStaff(shopId: string, id: string) {
     await this.dbService.db
-      .delete(shopMembers)
-      .where(and(eq(shopMembers.id, id), eq(shopMembers.shopId, shopId)));
+      .update(users)
+      .set({
+        shopId: null,
+        role: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(users.id, id), eq(users.shopId, shopId)));
     return { success: true };
   }
 
@@ -150,21 +207,38 @@ export class StaffService {
         throw new NotFoundException('Pending invite not found');
       }
 
+      // Check if user is already associated with a shop
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      if (user && user.shopId) {
+        throw new BadRequestException('You are already associated with a shop.');
+      }
+
       await tx
         .update(staffRequests)
         .set({ status: 'accepted', updatedAt: new Date() })
         .where(eq(staffRequests.id, request.id));
 
-      const [newMember] = await tx
-        .insert(shopMembers)
-        .values({
+      const mappedRole = request.role === 'owner' ? 'shop_owner' : 'shop_worker';
+      const [updatedUser] = await tx
+        .update(users)
+        .set({
           shopId,
-          userId,
-          role: request.role,
+          role: mappedRole,
+          updatedAt: new Date(),
         })
+        .where(eq(users.id, userId))
         .returning();
 
-      return newMember;
+      return {
+        id: updatedUser.id,
+        shopId: updatedUser.shopId,
+        userId: updatedUser.id,
+        role: request.role,
+      };
     });
   }
 
@@ -185,11 +259,28 @@ export class StaffService {
       .innerJoin(shops, eq(staffRequests.shopId, shops.id))
       .innerJoin(users, eq(staffRequests.requestedBy, users.id))
       .where(
-        and(
-          eq(staffRequests.requestedTo, userId),
-          eq(staffRequests.status, 'pending'),
-        ),
-      );
+        eq(staffRequests.requestedTo, userId),
+      )
+      .orderBy(desc(staffRequests.createdAt));
+    return result;
+  }
+
+  async listShopInvites(shopId: string) {
+    const result = await this.dbService.db
+      .select({
+        id: staffRequests.id,
+        shopId: staffRequests.shopId,
+        requestedBy: staffRequests.requestedBy,
+        requestedTo: staffRequests.requestedTo,
+        role: staffRequests.role,
+        status: staffRequests.status,
+        createdAt: staffRequests.createdAt,
+        receiverEmail: users.email,
+        receiverName: users.name,
+      })
+      .from(staffRequests)
+      .innerJoin(users, eq(staffRequests.requestedTo, users.id))
+      .where(eq(staffRequests.shopId, shopId));
     return result;
   }
 
@@ -215,6 +306,18 @@ export class StaffService {
         throw new NotFoundException('Pending invite not found');
       }
 
+      if (status === 'accepted') {
+        // Check if user is already associated with a shop
+        const [user] = await tx
+          .select()
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+        if (user && user.shopId) {
+          throw new BadRequestException('You are already associated with a shop.');
+        }
+      }
+
       const [updatedRequest] = await tx
         .update(staffRequests)
         .set({ status, updatedAt: new Date() })
@@ -222,11 +325,15 @@ export class StaffService {
         .returning();
 
       if (status === 'accepted') {
-        await tx.insert(shopMembers).values({
-          shopId: request.shopId,
-          userId,
-          role: request.role,
-        });
+        const mappedRole = request.role === 'owner' ? 'shop_owner' : 'shop_worker';
+        await tx
+          .update(users)
+          .set({
+            shopId: request.shopId,
+            role: mappedRole,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, userId));
       }
 
       return updatedRequest;

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useAuth, UserButton } from "@clerk/nextjs";
-import { User, usersApi } from "../utils/api";
+import { User, usersApi, shopsApi } from "../utils/api";
 import { UpdateMeSchema, PhoneSchema, validateSchema } from "../utils/validation";
-import { mockUser } from "../utils/api/mockData";
+import { mockUser, mockShops } from "../utils/api/mockData";
 import { Skeleton } from "boneyard-js/react";
 import DevMockModeIndicator from "../components/DevMockModeIndicator";
 import Link from "next/link";
@@ -15,6 +15,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [user, setUser] = useState<User | null>(null);
+  const [shopsList, setShopsList] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -76,17 +77,24 @@ export default function ProfilePage() {
             name: profile.name,
             phone: profile.phone || "",
           });
+          const hasNoShop = window.location.search.includes("no_shop=true") || 
+                            window.location.pathname.startsWith("/invites");
+          setShopsList(hasNoShop ? [] : [mockShops[0]]);
           setLoading(false);
           return;
         }
 
         const token = await getToken();
-        const profile = await usersApi.getMe(token);
+        const [profile, list] = await Promise.all([
+          usersApi.getMe(token),
+          shopsApi.getUserShops(token)
+        ]);
         setUser(profile);
         setFormData({
           name: profile.name,
           phone: profile.phone || "",
         });
+        setShopsList(list);
       } catch (err) {
         console.error(err);
       } finally {
@@ -132,24 +140,28 @@ export default function ProfilePage() {
     }
   };
 
+  const hasNoShop = shopsList.length === 0;
+
   return (
     <Skeleton name="profile" loading={loading}>
-      <div className="min-h-screen w-full bg-background relative py-12 px-4 sm:px-6 lg:px-8">
+      <div className={hasNoShop ? "max-w-3xl mx-auto py-2 select-none" : "min-h-screen w-full bg-background relative py-12 px-4 sm:px-6 lg:px-8 select-none"}>
       {/* Navigation Header */}
-      <div className="max-w-3xl mx-auto mb-8 flex justify-between items-center">
-        <Link href="/" className="inline-flex items-center gap-2 group outline-none">
-          <img src="/favicon.svg" alt="Onbillo Logo" className="w-6 h-6 rounded-lg" />
-          <span className="font-bold tracking-tight text-foreground font-sans text-sm">
-            Onbillo
-          </span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/invites" className="text-xs font-semibold text-body hover:text-foreground">
-            Staff Invites
+      {!hasNoShop && (
+        <div className="max-w-3xl mx-auto mb-8 flex justify-between items-center">
+          <Link href="/" className="inline-flex items-center gap-2 group outline-none">
+            <img src="/favicon.svg" alt="Onbillo Logo" className="w-6 h-6 rounded-lg" />
+            <span className="font-bold tracking-tight text-foreground font-sans text-sm">
+              Onbillo
+            </span>
           </Link>
-          <UserButton />
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-xs font-semibold text-brand-primary hover:underline">
+              ← Go back to Shop
+            </Link>
+            <UserButton />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-3xl mx-auto bg-canvas border border-hairline rounded-2xl shadow-level-3 p-8 relative overflow-hidden">
 

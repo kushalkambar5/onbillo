@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { shops, shopMembers } from '../db/schema';
+import { shops, users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 @Injectable()
@@ -26,22 +26,42 @@ export class ShopsService {
         })
         .returning();
 
-      await tx.insert(shopMembers).values({
-        shopId: shop.id,
-        userId: userId,
-        role: 'owner',
-      });
+      await tx
+        .update(users)
+        .set({
+          shopId: shop.id,
+          role: 'shop_owner',
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
 
       return shop;
     });
   }
 
   async getUserShops(userId: string) {
-    return await this.dbService.db
-      .select({ shop: shops, role: shopMembers.role })
-      .from(shopMembers)
-      .innerJoin(shops, eq(shopMembers.shopId, shops.id))
-      .where(eq(shopMembers.userId, userId));
+    const [user] = await this.dbService.db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user || !user.shopId) {
+      return [];
+    }
+
+    const [shop] = await this.dbService.db
+      .select()
+      .from(shops)
+      .where(eq(shops.id, user.shopId))
+      .limit(1);
+
+    if (!shop) {
+      return [];
+    }
+
+    const mappedRole = user.role === 'shop_owner' ? 'owner' : user.role;
+    return [{ shop, role: mappedRole }];
   }
 
   async getShop(id: string) {
@@ -73,7 +93,18 @@ export class ShopsService {
   }
 
   async deleteShop(id: string) {
-    await this.dbService.db.delete(shops).where(eq(shops.id, id));
+    await this.dbService.db.transaction(async (tx) => {
+      await tx
+        .update(users)
+        .set({
+          shopId: null,
+          role: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.shopId, id));
+
+      await tx.delete(shops).where(eq(shops.id, id));
+    });
     return { success: true };
   }
 }

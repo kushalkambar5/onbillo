@@ -8,6 +8,12 @@ export const staffApi = {
       method: "GET"
     }, token);
   },
+  getShopInvites: async (token: string | null, shopId: string): Promise<StaffRequest[]> => {
+    return await apiCall<StaffRequest[]>({
+      url: `/api/shops/${shopId}/staff/invites`,
+      method: "GET"
+    }, token);
+  },
   respondToInvite: async (token: string | null, requestId: string, accept: boolean): Promise<any> => {
     return await apiCall<any>({
       url: `/api/staff/invites/${requestId}`,

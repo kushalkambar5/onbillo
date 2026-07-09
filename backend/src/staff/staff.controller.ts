@@ -26,23 +26,20 @@ export class StaffController {
 
   @Get()
   @UseGuards(ShopRolesGuard)
-  @ShopRoles('owner', 'app_admin')
+  @ShopRoles('owner', 'shop_worker', 'app_admin')
   listStaff(
     @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
   ) {
     return this.staffService.listStaff(shopId);
   }
 
-  @Post(':user_id')
+  @Get('invites')
   @UseGuards(ShopRolesGuard)
-  @ShopRoles('owner')
-  inviteStaff(
+  @ShopRoles('owner', 'shop_worker', 'app_admin')
+  listShopInvites(
     @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
-    @Param('user_id', new ZodValidationPipe(IdParamSchema)) userId: string,
-    @Body(new ZodValidationPipe(InviteStaffRoleSchema)) body: any,
-    @CurrentUser() user: any,
   ) {
-    return this.staffService.inviteStaff(shopId, userId, user.id, body.role);
+    return this.staffService.listShopInvites(shopId);
   }
 
   @Post('invite')
@@ -59,6 +56,18 @@ export class StaffController {
       user.id,
       body.role,
     );
+  }
+
+  @Post(':user_id')
+  @UseGuards(ShopRolesGuard)
+  @ShopRoles('owner')
+  inviteStaff(
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
+    @Param('user_id', new ZodValidationPipe(IdParamSchema)) userId: string,
+    @Body(new ZodValidationPipe(InviteStaffRoleSchema)) body: any,
+    @CurrentUser() user: any,
+  ) {
+    return this.staffService.inviteStaff(shopId, userId, user.id, body.role);
   }
 
   @Put('accept')

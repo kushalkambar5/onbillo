@@ -68,6 +68,12 @@ export const productsApi = {
         "Content-Type": "multipart/form-data"
       }
     }, token);
+  },
+  deleteImage: async (token: string | null, key: string): Promise<{ success: boolean }> => {
+    return await apiCall<{ success: boolean }>({
+      url: `/api/upload/${key}`,
+      method: "DELETE"
+    }, token);
   }
 };
 

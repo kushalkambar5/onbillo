@@ -12,7 +12,7 @@ export const mockUser: User = {
   createdAt: new Date().toISOString(),
 };
 
-export const mockShops: Shop[] = [
+const initialMockShops: Shop[] = [
   {
     id: "1",
     createdBy: "99",
@@ -60,6 +60,20 @@ export const mockShops: Shop[] = [
     updatedAt: new Date().toISOString(),
   }
 ];
+
+export const mockShops: Shop[] = (() => {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("mock_shops");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+  return initialMockShops;
+})();
 
 export const mockShopMembers: Record<string, ShopMember[]> = {
   "1": [
@@ -139,7 +153,10 @@ export const mockBills: Record<string, Bill[]> = {
 };
 
 export const mockStaffRequests: StaffRequest[] = [
-  { id: "1", shopId: "2", requestedBy: "101", requestedTo: "99", role: "shop_worker", status: "pending", createdAt: new Date().toISOString(), shopName: "Corner Cafe & Bakery", requesterName: "Ananya Sharma" }
+  { id: "1", shopId: "2", requestedBy: "101", requestedTo: "99", role: "shop_worker", status: "pending", createdAt: new Date().toISOString(), shopName: "Corner Cafe & Bakery", requesterName: "Ananya Sharma", receiverEmail: "kushal@onbillo.com", receiverName: "Kushal Kambar" },
+  { id: "2", shopId: "1", requestedBy: "99", requestedTo: "102", role: "shop_worker", status: "pending", createdAt: new Date().toISOString(), shopName: "Kambar Groceries", requesterName: "Kushal Kambar", receiverEmail: "worker@kambar.com", receiverName: "Rahul Kumar" },
+  { id: "3", shopId: "1", requestedBy: "99", requestedTo: "103", role: "shop_worker", status: "rejected", createdAt: new Date().toISOString(), shopName: "Kambar Groceries", requesterName: "Kushal Kambar", receiverEmail: "spammer@bad.com", receiverName: "Suresh Spammer" },
+  { id: "4", shopId: "1", requestedBy: "99", requestedTo: "102", role: "shop_worker", status: "accepted", createdAt: new Date().toISOString(), shopName: "Kambar Groceries", requesterName: "Kushal Kambar", receiverEmail: "accepted-worker@test.com", receiverName: "Accepted Worker" }
 ];
 
 export const mockAdminUsers: User[] = [

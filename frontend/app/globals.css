@@ -20,6 +20,15 @@
   --color-brand-light: #578bfa;
   --color-brand-soft: #eef0f3;
   
+  /* Custom alert colors from DESIGN.md */
+  --color-error: #ee0000;
+  --color-error-soft: #f7d4d6;
+  --color-error-deep: #c50000;
+  
+  --color-warning: #f5a623;
+  --color-warning-soft: #ffefcf;
+  --color-warning-deep: #ab570a;
+  
   --font-sans: var(--font-geist-sans), Inter, system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 }
@@ -41,6 +50,15 @@
   --color-brand-secondary: #0052ff;
   --color-brand-light: #0667d0;
   --color-brand-soft: #0f172a;
+  
+  /* Dark mode variants for custom alert colors */
+  --color-error: #ff4d4d;
+  --color-error-soft: #2c1214;
+  --color-error-deep: #ff6b6b;
+  
+  --color-warning: #fbbf24;
+  --color-warning-soft: #2e1e0a;
+  --color-warning-deep: #f59e0b;
 }
 
 body {

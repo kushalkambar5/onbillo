@@ -2,8 +2,6 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { SetMetadata } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { shopMembers } from '../db/schema';
-import { and, eq } from 'drizzle-orm';
 
 export const ShopRoles = (...roles: string[]) =>
   SetMetadata('shopRoles', roles);
@@ -35,23 +33,19 @@ export class ShopRolesGuard implements CanActivate {
       return true;
     }
 
-    const [member] = await this.dbService.db
-      .select()
-      .from(shopMembers)
-      .where(
-        and(
-          eq(shopMembers.shopId, shopId),
-          eq(shopMembers.userId, user.id),
-        ),
-      )
-      .limit(1);
-
-    if (!member) {
+    if (!user.shopId || user.shopId !== shopId) {
       return false;
     }
 
-    request.shopMember = member;
+    const currentRole = user.role === 'shop_owner' ? 'owner' : user.role;
 
-    return requiredRoles.includes(member.role);
+    request.shopMember = {
+      id: user.id,
+      shopId: user.shopId,
+      userId: user.id,
+      role: currentRole,
+    };
+
+    return requiredRoles.includes(currentRole);
   }
 }

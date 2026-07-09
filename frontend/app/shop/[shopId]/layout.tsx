@@ -86,11 +86,7 @@ export default function ShopWorkspaceLayout({
         setUserRole(activeMembership.role);
 
         // Check if path is owner-only and user is a worker
-        const isOwnerRoute = 
-          pathname.endsWith("/dashboard") || 
-          pathname.includes("/inventory") || 
-          pathname.endsWith("/staff") || 
-          pathname.endsWith("/settings");
+        const isOwnerRoute = pathname.endsWith("/dashboard");
 
         if (isOwnerRoute && activeMembership.role === "shop_worker") {
           setIsAuthorized(false);
@@ -134,25 +130,25 @@ export default function ShopWorkspaceLayout({
       name: "Shop Inventory",
       href: `/shop/${shopId}/inventory`,
       icon: Package,
-      ownerOnly: true,
+      ownerOnly: false,
     },
     {
       name: "Add Products",
       href: `/shop/${shopId}/inventory/add`,
       icon: PlusCircle,
-      ownerOnly: true,
+      ownerOnly: false,
     },
     {
       name: "Staff Management",
       href: `/shop/${shopId}/staff`,
       icon: Users,
-      ownerOnly: true,
+      ownerOnly: false,
     },
     {
-      name: "Shop Settings",
+      name: "Settings",
       href: `/shop/${shopId}/settings`,
       icon: Settings,
-      ownerOnly: true,
+      ownerOnly: false,
     },
   ];
 
@@ -189,9 +185,14 @@ export default function ShopWorkspaceLayout({
             className="w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl border border-hairline hover:border-hairline-strong bg-canvas hover:bg-canvas-soft transition-all duration-200 text-left outline-none cursor-pointer"
           >
             <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-6 h-6 bg-brand-primary/10 rounded-lg flex items-center justify-center shrink-0">
-                <Store className="w-3.5 h-3.5 text-brand-primary" />
-              </div>
+              {currentShop?.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={currentShop.logoUrl} alt="Logo" className="w-6 h-6 rounded-lg object-cover shrink-0" />
+              ) : (
+                <div className="w-6 h-6 bg-brand-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Store className="w-3.5 h-3.5 text-brand-primary" />
+                </div>
+              )}
               <span className="text-xs font-bold text-foreground truncate">
                 {currentShop ? currentShop.name : <span className="inline-block w-24 h-4 bg-foreground/10 animate-pulse rounded" />}
               </span>
@@ -215,7 +216,12 @@ export default function ShopWorkspaceLayout({
                     m.shop.id === shopId ? "font-bold text-brand-primary bg-brand-primary/5" : "text-body"
                   }`}
                 >
-                  <Store className="w-3 h-3 text-mute shrink-0" />
+                  {m.shop.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.shop.logoUrl} alt="Logo" className="w-5 h-5 rounded object-cover shrink-0" />
+                  ) : (
+                    <Store className="w-3 h-3 text-mute shrink-0" />
+                  )}
                   <span className="truncate">{m.shop.name}</span>
                   <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-hairline text-mute uppercase font-mono tracking-wide scale-90">
                     {m.role === "owner" ? "Owner" : "Staff"}
@@ -291,8 +297,16 @@ export default function ShopWorkspaceLayout({
             {/* Drawer Header */}
             <div className="flex items-center justify-between pb-4 border-b border-hairline mb-4">
               <div className="flex items-center gap-2">
-                <img src="/favicon.svg" alt="Onbillo Logo" className="w-6 h-6 rounded" />
-                <span className="font-bold tracking-tight text-foreground text-sm">Onbillo</span>
+                {currentShop?.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={currentShop.logoUrl} alt="Logo" className="w-6 h-6 rounded object-cover" />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src="/favicon.svg" alt="Onbillo Logo" className="w-6 h-6 rounded" />
+                )}
+                <span className="font-bold tracking-tight text-foreground text-sm">
+                  {currentShop ? currentShop.name : "Onbillo"}
+                </span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}

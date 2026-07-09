@@ -27,9 +27,28 @@ export async function apiCall<T>(config: AxiosRequestConfig, token: string | nul
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await axiosInstance.request<T>({
-    ...config,
-    headers,
-  });
-  return response.data;
+  try {
+    const response = await axiosInstance.request<T>({
+      ...config,
+      headers,
+    });
+    return response.data;
+  } catch (err: any) {
+    if (err.response && err.response.data) {
+      const serverData = err.response.data;
+      if (serverData.errors && Array.isArray(serverData.errors)) {
+        err.message = serverData.errors
+          .map((e: any) => `${e.field}: ${e.message}`)
+          .join(", ");
+      } else {
+        const serverMessage = serverData.message || serverData.error;
+        if (serverMessage) {
+          err.message = Array.isArray(serverMessage)
+            ? serverMessage.join(", ")
+            : serverMessage;
+        }
+      }
+    }
+    throw err;
+  }
 }
