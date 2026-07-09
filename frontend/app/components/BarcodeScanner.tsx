@@ -13,7 +13,12 @@ interface BarcodeScannerProps {
   scanError?: string;
 }
 
-export default function BarcodeScanner({
+export default function BarcodeScanner(props: BarcodeScannerProps) {
+  if (!props.isOpen) return null;
+  return <BarcodeScannerInner {...props} />;
+}
+
+function BarcodeScannerInner({
   isOpen,
   onClose,
   onScan,
@@ -35,6 +40,7 @@ export default function BarcodeScanner({
       const ua = navigator.userAgent;
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
       const isTablet = /iPad|PlayBook/i.test(ua) || (navigator.maxTouchPoints > 0 && /Macintosh/i.test(ua));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsMobileOrTablet(isMobile || isTablet);
 
       // Load initial torch choice from local storage
@@ -43,18 +49,9 @@ export default function BarcodeScanner({
     }
   }, []);
 
-  // Reset state when modal opens/closes
-  useEffect(() => {
-    if (isOpen) {
-      setHasError("");
-      setIsPaused(false);
-      lastScannedBarcode.current = "";
-      lastScannedTime.current = 0;
-    }
-  }, [isOpen]);
-
   const playBeep = useCallback(() => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
@@ -68,7 +65,9 @@ export default function BarcodeScanner({
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.12);
-    } catch (_) {}
+    } catch {
+      // Ignore error
+    }
   }, []);
 
   const { ref, torch } = useZxing({
@@ -157,7 +156,7 @@ export default function BarcodeScanner({
     }
   };
 
-  if (!isOpen) return null;
+  // Since BarcodeScannerInner is conditionally mounted, isOpen is guaranteed to be true here.
 
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/75 transition-all duration-300 animate-in fade-in duration-200">
