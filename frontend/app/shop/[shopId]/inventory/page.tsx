@@ -2,7 +2,7 @@
  
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { productsApi, ShopProduct } from "../../../utils/api";
+import { productsApi, ShopProduct, shopsApi } from "../../../utils/api";
 import { mockShopProducts } from "../../../utils/api/mockData";
 import { Skeleton } from "boneyard-js/react";
 import { 
@@ -12,7 +12,8 @@ import {
   Check, 
   X, 
   AlertCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Trash2
 } from "lucide-react";
  
 export default function ShopInventory({
@@ -28,6 +29,7 @@ export default function ShopInventory({
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
+  const [isOwner, setIsOwner] = useState(false);
   
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -45,11 +47,18 @@ export default function ShopInventory({
       
       if (isBoneyard) {
         setProducts(mockShopProducts[shopId] || mockShopProducts["1"] || []);
+        setIsOwner(true);
         setLoading(false);
         return;
       }
  
       const token = await getToken();
+      
+      // Load user role to check if they are owner
+      const shopsList = await shopsApi.getUserShops(token);
+      const membership = shopsList.find(m => m.shop.id === shopId);
+      setIsOwner(membership?.role === "owner");
+
       const list = await productsApi.getShopProducts(token, shopId);
       setProducts(list);
     } catch (err) {
@@ -62,6 +71,18 @@ export default function ShopInventory({
   useEffect(() => {
     loadInventory();
   }, [shopId, getToken]);
+
+  const handleDeleteProduct = async (shopProductId: string) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    setError("");
+    try {
+      const token = await getToken();
+      await productsApi.deleteShopProduct(token, shopId, shopProductId);
+      setProducts(prev => prev.filter(p => p.id !== shopProductId));
+    } catch (err: any) {
+      setError(err.message || "Failed to delete product.");
+    }
+  };
  
   const handleToggleActive = async (shopProductId: string, currentActive: boolean) => {
     setError("");
@@ -221,6 +242,7 @@ export default function ShopInventory({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-canvas-soft border-b border-hairline text-[9px] font-bold text-mute uppercase tracking-wider font-mono">
+                  <th className="py-3.5 px-4 w-14">Image</th>
                   <th className="py-3.5 px-4">Barcode</th>
                   <th className="py-3.5 px-4">Product Name</th>
                   <th className="py-3.5 px-4">Brand</th>
@@ -228,11 +250,25 @@ export default function ShopInventory({
                   <th className="py-3.5 px-4 text-right">MRP (₹)</th>
                   <th className="py-3.5 px-4 text-right">Selling Price (₹)</th>
                   <th className="py-3.5 px-4 text-center">POS Status</th>
+                  {isOwner && <th className="py-3.5 px-4 w-12"></th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-hairline text-xs">
                 {filteredProducts.map((sp) => (
                   <tr key={sp.id} className="hover:bg-canvas-soft/40 transition-colors">
+                    <td className="py-2.5 px-4">
+                      <div className="w-9 h-9 rounded-lg bg-canvas-soft border border-hairline overflow-hidden flex items-center justify-center shrink-0">
+                        {sp.product.imageUrl ? (
+                          <img
+                            src={sp.product.imageUrl}
+                            alt={sp.product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Package className="w-4 h-4 text-mute" />
+                        )}
+                      </div>
+                    </td>
                     <td className="py-3.5 px-4 font-mono font-bold text-mute truncate max-w-[120px]">
                       {sp.product.barcode || "N/A"}
                     </td>
@@ -306,6 +342,17 @@ export default function ShopInventory({
                         {sp.isActive ? "Enabled" : "Disabled"}
                       </button>
                     </td>
+                    {isOwner && (
+                      <td className="py-3.5 px-4 text-center">
+                        <button
+                          onClick={() => handleDeleteProduct(sp.id)}
+                          className="p-1.5 hover:bg-canvas-soft text-mute hover:text-red-500 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Product"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

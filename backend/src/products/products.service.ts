@@ -5,8 +5,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { products, shopProducts, users } from '../db/schema';
-import { eq, and, or, ilike, inArray } from 'drizzle-orm';
+import { products, shopProducts, users, billItems } from '../db/schema';
+import { eq, and, or, ilike, inArray, notInArray } from 'drizzle-orm';
 
 
 @Injectable()
@@ -115,9 +115,47 @@ export class ProductsService {
   }
 
   async deleteShopProduct(shopId: string, id: string) {
+    // 1. Get the shop product and the associated product
+    const [shopProduct] = await this.dbService.db
+      .select({
+        id: shopProducts.id,
+        productId: shopProducts.productId,
+        productStatus: products.status,
+      })
+      .from(shopProducts)
+      .innerJoin(products, eq(shopProducts.productId, products.id))
+      .where(and(eq(shopProducts.id, id), eq(shopProducts.shopId, shopId)))
+      .limit(1);
+
+    if (!shopProduct) {
+      throw new NotFoundException('Shop product not found');
+    }
+
+    // 2. Check if the shop product is referenced in any bills
+    const [hasBills] = await this.dbService.db
+      .select()
+      .from(billItems)
+      .where(eq(billItems.shopProductId, id))
+      .limit(1);
+
+    if (hasBills) {
+      throw new BadRequestException(
+        'Cannot delete this product because it has historical billing records.',
+      );
+    }
+
+    // 3. Delete from shop_products
     await this.dbService.db
       .delete(shopProducts)
-      .where(and(eq(shopProducts.id, id), eq(shopProducts.shopId, shopId)));
+      .where(eq(shopProducts.id, id));
+
+    // 4. If product is not approved, delete it from the products table too
+    if (shopProduct.productStatus !== 'approved') {
+      await this.dbService.db
+        .delete(products)
+        .where(eq(products.id, shopProduct.productId));
+    }
+
     return { success: true };
   }
 
@@ -155,7 +193,9 @@ export class ProductsService {
     const userClause = eq(products.createdBy, user.id);
 
     let visibilityClause: any;
-    if (shopId && isMember) {
+    if (shopId) {
+      visibilityClause = approvedClause;
+    } else if (isMember) {
       const conditions: any[] = [userClause];
       if (memberUserIds.length > 0) {
         conditions.push(inArray(products.createdBy, memberUserIds));
@@ -171,26 +211,37 @@ export class ProductsService {
       );
     }
 
-    if (!query) {
-      return await this.dbService.db
-        .select()
-        .from(products)
-        .where(visibilityClause);
+    let shopProductIds: string[] = [];
+    if (shopId) {
+      const existingShopProducts = await this.dbService.db
+        .select({ productId: shopProducts.productId })
+        .from(shopProducts)
+        .where(eq(shopProducts.shopId, shopId));
+      shopProductIds = existingShopProducts
+        .map((sp) => sp.productId)
+        .filter(Boolean);
+    }
+
+    const conditions: any[] = [visibilityClause];
+
+    if (shopId && shopProductIds.length > 0) {
+      conditions.push(notInArray(products.id, shopProductIds));
+    }
+
+    if (query) {
+      conditions.push(
+        or(
+          ilike(products.name, `%${query}%`),
+          ilike(products.barcode, `%${query}%`),
+          ilike(products.brand, `%${query}%`),
+        ),
+      );
     }
 
     return await this.dbService.db
       .select()
       .from(products)
-      .where(
-        and(
-          visibilityClause,
-          or(
-            ilike(products.name, `%${query}%`),
-            ilike(products.barcode, `%${query}%`),
-            ilike(products.brand, `%${query}%`),
-          ),
-        ),
-      );
+      .where(and(...conditions));
   }
 
 
@@ -382,6 +433,10 @@ export class ProductsService {
       .where(eq(products.id, id))
       .limit(1);
     if (!product) throw new NotFoundException('Product not found');
+
+    if (product.status === 'approved') {
+      throw new BadRequestException('Approved products cannot be deleted.');
+    }
 
     if (user.role !== 'app_admin') {
       if (product.createdBy !== user.id || product.status !== 'pending') {

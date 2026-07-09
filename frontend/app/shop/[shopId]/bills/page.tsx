@@ -15,6 +15,7 @@ import {
   AlertCircle,
   FileSpreadsheet
 } from "lucide-react";
+import ThermalReceipt from "../../../components/ThermalReceipt";
  
 export default function ShopBills({
   params: paramsPromise,
@@ -314,52 +315,13 @@ export default function ShopBills({
             </div>
           ) : (
             <div className="space-y-4 flex-1 overflow-y-auto pr-1">
-              {/* Receipt Area */}
-              <div className="bg-canvas-soft border border-hairline rounded-xl p-4 font-mono text-[9px] text-zinc-800 relative select-text select-all">
-                <div className="text-center space-y-1 mb-3">
-                  <h4 className="font-bold text-black">{shop?.name}</h4>
-                  <p className="text-[8px] text-mute">{shop?.city}, {shop?.state}</p>
+              <ThermalReceipt bill={selectedBill} shop={shop} />
+
+              {selectedBill.notes && (
+                <div className="bg-canvas border border-hairline p-3 rounded-xl text-[10px] text-mute print:hidden">
+                  <strong>Notes:</strong> {selectedBill.notes}
                 </div>
- 
-                <div className="border-t border-b border-dashed border-zinc-400 py-1.5 my-2 space-y-0.5">
-                  <div className="flex justify-between">
-                    <span>BILL NO:</span>
-                    <span className="font-bold text-black">{selectedBill.billNumber}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>DATE:</span>
-                    <span>{new Date(selectedBill.createdAt).toLocaleString("en-IN")}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>STATUS:</span>
-                    <span className={`font-bold ${selectedBill.status === "active" ? "text-brand-primary" : "text-error-deep"}`}>
-                      {selectedBill.status.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
- 
-                <div className="border-b border-dashed border-zinc-400 pb-2 space-y-1">
-                  {selectedBill.items?.map((item) => (
-                    <div key={item.id} className="flex justify-between leading-snug">
-                      <span className="truncate max-w-[120px]">{item.productName}</span>
-                      <span>
-                        {item.quantity} x {((item.unitPrice) / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
- 
-                <div className="pt-2 text-black font-bold flex justify-between text-xs">
-                  <span>TOTAL:</span>
-                  <span>₹{(selectedBill.totalPrice / 100).toFixed(2)}</span>
-                </div>
- 
-                {selectedBill.notes && (
-                  <div className="mt-3 bg-canvas border border-hairline p-2 rounded text-[8px] text-mute">
-                    <strong>Notes:</strong> {selectedBill.notes}
-                  </div>
-                )}
-              </div>
+              )}
  
               {/* Action Buttons */}
               <div className="flex gap-3 pt-1">

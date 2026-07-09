@@ -57,6 +57,12 @@ export const productsApi = {
       data
     }, token);
   },
+  deleteShopProduct: async (token: string | null, shopId: string, shopProductId: string): Promise<{ success: boolean }> => {
+    return await apiCall<{ success: boolean }>({
+      url: `/api/shops/${shopId}/products/${shopProductId}`,
+      method: "DELETE"
+    }, token);
+  },
   uploadImage: async (token: string | null, file: File): Promise<{ url: string }> => {
     const formData = new FormData();
     formData.append("file", file);

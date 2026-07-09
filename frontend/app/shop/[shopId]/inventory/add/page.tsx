@@ -15,7 +15,8 @@ import {
   ScanBarcode,
   Camera,
   Upload,
-  Flashlight
+  Flashlight,
+  Package
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -586,16 +587,29 @@ export default function AddProducts({
                   key={p.id}
                   className="bg-canvas border border-hairline rounded-2xl p-4.5 shadow-sm flex items-center justify-between gap-4 transition-all duration-150 hover:border-hairline-strong"
                 >
-                  <div className="min-w-0">
-                    <span className="text-[9px] font-bold text-mute uppercase font-mono tracking-wider">
-                      {p.brand || "Generic"}
-                    </span>
-                    <h4 className="text-xs font-bold text-foreground truncate mt-0.5">
-                      {p.name}
-                    </h4>
-                    <p className="text-[10px] text-mute font-medium mt-1 font-mono">
-                      UPC: {p.barcode || "N/A"} | MRP: ₹{(p.mrp / 100).toFixed(2)}
-                    </p>
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-canvas-soft border border-hairline overflow-hidden flex items-center justify-center shrink-0">
+                      {p.imageUrl ? (
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Package className="w-5 h-5 text-mute" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-bold text-mute uppercase font-mono tracking-wider">
+                        {p.brand || "Generic"}
+                      </span>
+                      <h4 className="text-xs font-bold text-foreground truncate mt-0.5">
+                        {p.name}
+                      </h4>
+                      <p className="text-[10px] text-mute font-medium mt-1 font-mono">
+                        UPC: {p.barcode || "N/A"} | MRP: ₹{(p.mrp / 100).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => triggerAddToShop(p)}

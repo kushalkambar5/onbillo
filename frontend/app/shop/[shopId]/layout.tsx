@@ -16,7 +16,6 @@ import {
   PlusCircle, 
   Users, 
   Settings, 
-  ChevronDown, 
   Store,
   AlertTriangle,
   Menu,
@@ -40,7 +39,6 @@ export default function ShopWorkspaceLayout({
   const [shopsList, setShopsList] = useState<{ shop: Shop; role: "owner" | "shop_worker" }[]>([]);
   const [currentShop, setCurrentShop] = useState<Shop | null>(null);
   const [userRole, setUserRole] = useState<"owner" | "shop_worker">("shop_worker");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -191,10 +189,7 @@ export default function ShopWorkspaceLayout({
 
         {/* Sidebar Header: Active Shop Selector */}
         <div className="px-4 pb-4 border-b border-hairline relative">
-          <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl border border-hairline hover:border-hairline-strong bg-canvas hover:bg-canvas-soft transition-all duration-200 text-left outline-none cursor-pointer"
-          >
+          <div className="w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl border border-hairline bg-canvas text-left">
             <div className="flex items-center gap-2 overflow-hidden">
               {currentShop?.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -208,39 +203,7 @@ export default function ShopWorkspaceLayout({
                 {currentShop ? currentShop.name : <span className="inline-block w-24 h-4 bg-foreground/10 animate-pulse rounded" />}
               </span>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-mute shrink-0" />
-          </button>
-
-          {dropdownOpen && (
-            <div className="absolute left-4 right-4 mt-1 bg-canvas border border-hairline rounded-xl shadow-level-4 py-1.5 z-[100] animate-in fade-in slide-in-from-top-1 duration-150">
-              <div className="px-3 py-1 text-[9px] font-bold text-mute uppercase tracking-wider border-b border-hairline mb-1 font-mono">
-                My Workspace Shops
-              </div>
-              {shopsList.map((m) => (
-                <button
-                  key={m.shop.id}
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    router.push(`/shop/${m.shop.id}/billing`);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-canvas-soft-2 transition-colors duration-150 cursor-pointer ${
-                    m.shop.id === shopId ? "font-bold text-brand-primary bg-brand-primary/5" : "text-body"
-                  }`}
-                >
-                  {m.shop.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.shop.logoUrl} alt="Logo" className="w-5 h-5 rounded object-cover shrink-0" />
-                  ) : (
-                    <Store className="w-3 h-3 text-mute shrink-0" />
-                  )}
-                  <span className="truncate">{m.shop.name}</span>
-                  <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-hairline text-mute uppercase font-mono tracking-wide scale-90">
-                    {m.role === "owner" ? "Owner" : "Staff"}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Sidebar Nav */}
@@ -312,12 +275,9 @@ export default function ShopWorkspaceLayout({
               </button>
             </div>
 
-            {/* Shop Selector Dropdown */}
+            {/* Shop Selector */}
             <div className="relative mb-4">
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl border border-hairline bg-canvas hover:bg-canvas-soft text-left outline-none cursor-pointer"
-              >
+              <div className="w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl border border-hairline bg-canvas text-left">
                 <div className="flex items-center gap-2 overflow-hidden">
                   {currentShop?.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -331,40 +291,7 @@ export default function ShopWorkspaceLayout({
                     {currentShop ? currentShop.name : "Select Shop"}
                   </span>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-mute shrink-0" />
-              </button>
-
-              {dropdownOpen && (
-                <div className="absolute left-0 right-0 mt-1 bg-canvas border border-hairline rounded-xl shadow-level-4 py-1.5 z-[110] animate-in fade-in slide-in-from-top-1 duration-150">
-                  <div className="px-3 py-1 text-[9px] font-bold text-mute uppercase tracking-wider border-b border-hairline mb-1 font-mono">
-                    My Workspace Shops
-                  </div>
-                  {shopsList.map((m) => (
-                    <button
-                      key={m.shop.id}
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        setMobileMenuOpen(false);
-                        router.push(`/shop/${m.shop.id}/billing`);
-                      }}
-                      className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-canvas-soft-2 transition-colors duration-150 cursor-pointer ${
-                        m.shop.id === shopId ? "font-bold text-brand-primary bg-brand-primary/5" : "text-body"
-                      }`}
-                    >
-                      {m.shop.logoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={m.shop.logoUrl} alt="Logo" className="w-5 h-5 rounded object-cover shrink-0" />
-                      ) : (
-                        <Store className="w-3 h-3 text-mute shrink-0" />
-                      )}
-                      <span className="truncate">{m.shop.name}</span>
-                      <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-hairline text-mute uppercase font-mono tracking-wide scale-90">
-                        {m.role === "owner" ? "Owner" : "Staff"}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              </div>
             </div>
 
             {/* Nav Links */}
