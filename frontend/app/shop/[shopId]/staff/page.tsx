@@ -141,8 +141,13 @@ export default function ShopStaff({
     } catch (err: any) {
       if (err.response?.status === 404) {
         setModalError(
-          "Make sure this email's account exists in Onbillo. If the user doesn't have account on Onbillo, then tell me to create account on Onbillo"
+          "Make sure this email's account exists in Onbillo. If the user doesn't have account on Onbillo, then tell him/her to create account on Onbillo"
         );
+      } else if (
+        err.message?.toLowerCase().includes("working in another shop") ||
+        err.message?.toLowerCase().includes("associated with another shop")
+      ) {
+        setModalError("This user is already working in another shop, so they cannot work with you.");
       } else {
         setModalError(err.message || "Failed to send staff invitation.");
       }
@@ -488,99 +493,6 @@ export default function ShopStaff({
           </div>
         </div>
 
-        {/* My Received Invitations & Histories */}
-        <div className="border-t border-hairline pt-8 space-y-6">
-          <div>
-            <h3 className="text-sm font-bold text-foreground font-sans">My Received Invitations</h3>
-            <p className="text-xs text-mute mt-0.5">Invitations sent to you from other shop workspaces.</p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Pending */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono">
-                Pending ({pendingReceived.length})
-              </h4>
-              {pendingReceived.length === 0 ? (
-                <div className="bg-canvas border border-hairline rounded-2xl p-8 text-center shadow-sm opacity-80">
-                  <p className="text-xs text-mute">No pending received invitations</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {pendingReceived.map((invite) => (
-                    <div
-                      key={invite.id}
-                      className="bg-canvas border border-hairline rounded-xl p-4 shadow-sm flex items-center justify-between gap-4 transition-all duration-200 hover:border-hairline-strong"
-                    >
-                      <div>
-                        <h5 className="text-xs font-bold text-foreground">{invite.shopName}</h5>
-                        <p className="text-[10px] text-mute mt-1">
-                          Role: <span className="font-semibold text-body capitalize">{invite.role === "shop_worker" ? "Worker" : "Owner"}</span> • Invited by: <span className="font-semibold text-body">{invite.requesterName}</span>
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          disabled={actioningId !== null}
-                          onClick={() => handleRespondToReceivedInvite(invite.id, false)}
-                          className="h-8 px-3 border border-hairline text-foreground hover:bg-canvas-soft font-semibold text-[10px] rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50"
-                        >
-                          Decline
-                        </button>
-                        <button
-                          disabled={actioningId !== null}
-                          onClick={() => handleRespondToReceivedInvite(invite.id, true)}
-                          className="h-8 px-3 bg-brand-primary hover:bg-brand-secondary text-white font-semibold text-[10px] rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-                        >
-                          Accept
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* History */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-foreground uppercase tracking-wider font-mono">
-                History ({historyReceived.length})
-              </h4>
-              {historyReceived.length === 0 ? (
-                <div className="bg-canvas border border-hairline rounded-2xl p-8 text-center shadow-sm opacity-60">
-                  <p className="text-xs text-mute">No history</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {historyReceived.map((invite) => (
-                    <div
-                      key={invite.id}
-                      className="bg-canvas border border-hairline rounded-xl p-4 flex flex-row items-center justify-between gap-4 opacity-75 hover:opacity-100 transition-opacity duration-200"
-                    >
-                      <div>
-                        <h5 className="text-xs font-bold text-foreground">{invite.shopName}</h5>
-                        <p className="text-[9px] text-mute mt-1">
-                          Role: <span className="capitalize">{invite.role === "shop_worker" ? "Worker" : "Owner"}</span> • Invited by: <span className="text-body font-medium">{invite.requesterName}</span>
-                        </p>
-                      </div>
-                      <div>
-                        {invite.status === "accepted" ? (
-                          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-success-soft text-success-deep border border-success/15 capitalize">
-                            Accepted
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-error-soft text-error-deep border border-error/15 capitalize">
-                            Declined
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
         {inviteModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">

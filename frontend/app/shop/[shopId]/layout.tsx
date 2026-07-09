@@ -86,7 +86,7 @@ export default function ShopWorkspaceLayout({
         setUserRole(activeMembership.role);
 
         // Check if path is owner-only and user is a worker
-        const isOwnerRoute = pathname.endsWith("/dashboard");
+        const isOwnerRoute = pathname.endsWith("/dashboard") || pathname.endsWith("/settings");
 
         if (isOwnerRoute && activeMembership.role === "shop_worker") {
           setIsAuthorized(false);
@@ -148,7 +148,7 @@ export default function ShopWorkspaceLayout({
       name: "Settings",
       href: `/shop/${shopId}/settings`,
       icon: Settings,
-      ownerOnly: false,
+      ownerOnly: true,
     },
   ];
 
@@ -228,16 +228,6 @@ export default function ShopWorkspaceLayout({
                   </span>
                 </button>
               ))}
-              <div className="border-t border-hairline mt-1 pt-1.5">
-                <Link
-                  href="/onboarding"
-                  onClick={() => setDropdownOpen(false)}
-                  className="w-full text-left px-3 py-1.5 text-xs text-brand-primary hover:bg-brand-primary/5 font-semibold flex items-center gap-2"
-                >
-                  <PlusCircle className="w-3 h-3" />
-                  Add New Shop
-                </Link>
-              </div>
             </div>
           )}
         </div>
@@ -357,19 +347,6 @@ export default function ShopWorkspaceLayout({
                       </span>
                     </button>
                   ))}
-                  <div className="border-t border-hairline mt-1 pt-1.5">
-                    <Link
-                      href="/onboarding"
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-brand-primary hover:bg-brand-primary/5 font-semibold flex items-center gap-2"
-                    >
-                      <PlusCircle className="w-3 h-3" />
-                      Add New Shop
-                    </Link>
-                  </div>
                 </div>
               )}
             </div>

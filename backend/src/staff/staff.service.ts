@@ -48,7 +48,7 @@ export class StaffService {
       if (user.shopId === shopId) {
         throw new BadRequestException('User is already a member of this shop.');
       } else {
-        throw new BadRequestException('User is already associated with another shop.');
+        throw new BadRequestException('User is already working in another shop, so they cannot work with you.');
       }
     }
 
@@ -108,7 +108,7 @@ export class StaffService {
       if (user.shopId === shopId) {
         throw new BadRequestException('User is already a member of this shop.');
       } else {
-        throw new BadRequestException('User is already associated with another shop.');
+        throw new BadRequestException('User is already working in another shop, so they cannot work with you.');
       }
     }
 

@@ -47,7 +47,7 @@ export class BillsController {
   }
 
   @Put(':id/cancel')
-  @ShopRoles('owner', 'shop_worker')
+  @ShopRoles('owner')
   cancelBill(
     @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
     @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,

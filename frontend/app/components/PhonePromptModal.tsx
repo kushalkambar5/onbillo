@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { usersApi, User } from "../utils/api";
@@ -17,6 +17,8 @@ export default function PhonePromptModal() {
 
   const [inlineError, setInlineError] = useState("");
   const [touched, setTouched] = useState(false);
+
+  const lastCheckedPathname = useRef<string | null>(null);
 
   const validatePhone = (val: string) => {
     if (!val.trim()) {
@@ -44,8 +46,14 @@ export default function PhonePromptModal() {
 
   const isFormValid = phone.trim() !== "" && !validatePhone(phone);
 
+  const isAppPath =
+    pathname.startsWith("/shop") ||
+    pathname.startsWith("/invites") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/profile");
+
   useEffect(() => {
-    if (isSignedIn) {
+    if (isSignedIn && isAppPath) {
       async function checkPhone() {
         try {
           const token = await getToken();
@@ -53,14 +61,19 @@ export default function PhonePromptModal() {
           setProfile(me);
           if (!me.phone) {
             setIsOpen(true);
+          } else {
+            setIsOpen(false);
           }
         } catch (err) {
           console.error("Error checking phone number:", err);
         }
       }
-      checkPhone();
+      if (!profile || (isOpen && lastCheckedPathname.current !== pathname)) {
+        lastCheckedPathname.current = pathname;
+        checkPhone();
+      }
     }
-  }, [isSignedIn, getToken]);
+  }, [isSignedIn, getToken, pathname, isOpen, profile, isAppPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +98,7 @@ export default function PhonePromptModal() {
       const token = await getToken();
       if (profile) {
         await usersApi.updateProfile(token, profile.name, cleanedPhone);
+        setProfile({ ...profile, phone: cleanedPhone });
         setIsOpen(false);
       }
     } catch (err: any) {
@@ -94,7 +108,7 @@ export default function PhonePromptModal() {
     }
   };
 
-  if (!isOpen || pathname === "/onboarding") return null;
+  if (!isOpen || !isAppPath) return null;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 transition-all duration-300">

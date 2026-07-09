@@ -372,6 +372,10 @@ export class ProductsService {
   }
 
   async deleteGlobalProduct(id: string, user: any) {
+    if (user.role === 'shop_worker') {
+      throw new ForbiddenException('Workers are not allowed to delete products');
+    }
+
     const [product] = await this.dbService.db
       .select()
       .from(products)

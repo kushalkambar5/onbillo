@@ -32,6 +32,7 @@ export default function ShopBills({
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [voidingId, setVoidingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState<"owner" | "shop_worker">("shop_worker");
 
   // CSV Export state
   const [exporting, setExporting] = useState(false);
@@ -45,17 +46,24 @@ export default function ShopBills({
       if (isBoneyard) {
         setShop(mockShops[0]);
         setBills(mockBills[shopId] || mockBills["1"] || []);
+        setUserRole("owner");
         setLoading(false);
         return;
       }
  
       const token = await getToken();
-      const [shopDetail, billsList] = await Promise.all([
+      const [shopDetail, billsList, userShops] = await Promise.all([
         shopsApi.getShop(token, shopId),
-        billsApi.getShopBills(token, shopId)
+        billsApi.getShopBills(token, shopId),
+        shopsApi.getUserShops(token)
       ]);
       setShop(shopDetail);
       setBills(billsList);
+
+      const activeMembership = userShops.find((m) => m.shop.id === shopId);
+      if (activeMembership) {
+        setUserRole(activeMembership.role);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -245,7 +253,7 @@ export default function ShopBills({
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
-                          {b.status === "active" && (
+                          {b.status === "active" && userRole === "owner" && (
                             <button
                               disabled={voidingId !== null}
                               onClick={() => handleVoid(b.id)}
@@ -361,7 +369,7 @@ export default function ShopBills({
                 >
                   <Printer className="w-3.5 h-3.5" /> Print
                 </button>
-                {selectedBill.status === "active" && (
+                {selectedBill.status === "active" && userRole === "owner" && (
                   <button
                     disabled={voidingId !== null}
                     onClick={() => handleVoid(selectedBill.id)}
