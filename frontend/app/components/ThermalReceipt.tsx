@@ -25,6 +25,11 @@ export default function ThermalReceipt({ bill, shop }: ThermalReceiptProps) {
     <>
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
+          html, body {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+          }
           body * {
             visibility: hidden !important;
           }
