@@ -1,5 +1,11 @@
 import React from "react";
 import { Bill, Shop } from "../utils/api";
+import OnbilloBill from "./templates/3InchPrints/OnbilloBill";
+import OnbilloInvoice from "./templates/3InchPrints/OnbilloInvoice";
+import OnbilloReceipt from "./templates/3InchPrints/OnbilloReceipt";
+import RaintechBill from "./templates/3InchPrints/RaintechBill";
+import RaintechReceipt from "./templates/3InchPrints/RaintechReceipt";
+import RaintechA4Invoice from "./templates/A4Prints/RaintechA4Invoice";
 
 interface ThermalReceiptProps {
   bill: Bill;
@@ -7,6 +13,25 @@ interface ThermalReceiptProps {
 }
 
 export default function ThermalReceipt({ bill, shop }: ThermalReceiptProps) {
+  if (shop) {
+    switch (shop.invoiceTemplet) {
+      case "2":
+        return <OnbilloBill bill={bill} shop={shop} />;
+      case "3":
+        return <OnbilloInvoice bill={bill} shop={shop} />;
+      case "4":
+        return <OnbilloReceipt bill={bill} shop={shop} />;
+      case "5":
+        return <RaintechBill bill={bill} shop={shop} />;
+      case "6":
+        return <RaintechReceipt bill={bill} shop={shop} />;
+      case "7":
+        return <RaintechA4Invoice bill={bill} shop={shop} />;
+      default:
+        break;
+    }
+  }
+
   const receiptSubtotal = bill.totalPrice;
   const taxRate = shop ? parseFloat(shop.taxRate) : 18.0;
   let receiptTax = 0;

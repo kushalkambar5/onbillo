@@ -938,36 +938,43 @@ export default function ShopPosRegister({
         )}
 
       {/* 3. Thermal Receipt Preview Modal */}
-      {receiptModalOpen && generatedBill && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-canvas border border-hairline rounded-2xl shadow-level-4 max-w-sm w-full p-6 relative flex flex-col max-h-[90vh]">
-            <h2 className="text-xs font-bold text-foreground uppercase tracking-widest text-center border-b border-hairline pb-3 mb-4 print:hidden">
-              Invoice Generated Successfully
-            </h2>
+      {receiptModalOpen && generatedBill && (() => {
+        const isA4 = shop?.invoiceTemplet === "7";
+        return (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className={`bg-canvas border border-hairline rounded-2xl shadow-level-4 w-full p-6 relative flex flex-col max-h-[90vh] transition-all duration-300 ${
+              isA4 ? "max-w-[900px]" : "max-w-sm"
+            }`}>
+              <h2 className="text-xs font-bold text-foreground uppercase tracking-widest text-center border-b border-hairline pb-3 mb-4 print:hidden">
+                Invoice Generated Successfully
+              </h2>
 
-            <ThermalReceipt bill={generatedBill} shop={shop} />
+              <div className="flex-1 overflow-y-auto overflow-x-auto min-h-[300px] flex justify-center items-start">
+                <ThermalReceipt bill={generatedBill} shop={shop} />
+              </div>
 
-            {/* Actions */}
-            <div className="mt-4 flex gap-3.5 pt-3 border-t border-hairline shrink-0 print:hidden">
-              <button
-                onClick={() => {
-                  setReceiptModalOpen(false);
-                  setGeneratedBill(null);
-                }}
-                className="flex-1 h-10 border border-hairline hover:bg-canvas-soft text-foreground text-xs font-bold rounded-xl cursor-pointer"
-              >
-                Close Register
-              </button>
-              <button
-                onClick={printReceipt}
-                className="flex-1 h-10 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-bold rounded-xl cursor-pointer flex items-center justify-center gap-1.5 shadow-sm shadow-brand-primary/10"
-              >
-                <Printer className="w-3.5 h-3.5" /> Print Receipt
-              </button>
+              {/* Actions */}
+              <div className="mt-4 flex gap-3.5 pt-3 border-t border-hairline shrink-0 print:hidden">
+                <button
+                  onClick={() => {
+                    setReceiptModalOpen(false);
+                    setGeneratedBill(null);
+                  }}
+                  className="flex-1 h-10 border border-hairline hover:bg-canvas-soft text-foreground text-xs font-bold rounded-xl cursor-pointer"
+                >
+                  Close Register
+                </button>
+                <button
+                  onClick={printReceipt}
+                  className="flex-1 h-10 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-bold rounded-xl cursor-pointer flex items-center justify-center gap-1.5 shadow-sm shadow-brand-primary/10"
+                >
+                  <Printer className="w-3.5 h-3.5" /> Print Receipt
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Barcode Scanner Modal */}
       <BarcodeScanner

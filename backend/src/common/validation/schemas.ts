@@ -108,7 +108,7 @@ export const CreateShopSchema = z.object({
     .string()
     .regex(/^\d+(\.\d{1,2})?$/, 'Tax rate must be a valid decimal number')
     .optional(),
-  invoiceTemplet: z.enum(['1', '2', '3', '4', '5']).optional(),
+  invoiceTemplet: z.enum(['1', '2', '3', '4', '5', '6', '7']).optional(),
   invoicePrefix: z
     .string()
     .max(20)

@@ -31,6 +31,8 @@ export const invoiceTempletEnum = pgEnum('invoice_templet', [
   '3',
   '4',
   '5',
+  '6',
+  '7',
 ]);
 export const shopMemberRoleEnum = pgEnum('shop_member_role', [
   'owner',

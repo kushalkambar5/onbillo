@@ -320,7 +320,7 @@ export default function ShopBills({
               <p className="text-[10px]">Select an invoice from the ledger to inspect products, cashier tags, and print settings.</p>
             </div>
           ) : (
-            <div className="space-y-4 flex-1 overflow-y-auto pr-1">
+            <div className="space-y-4 flex-1 overflow-y-auto overflow-x-auto pr-1">
               <ThermalReceipt bill={selectedBill} shop={shop} />
 
               {selectedBill.notes && (

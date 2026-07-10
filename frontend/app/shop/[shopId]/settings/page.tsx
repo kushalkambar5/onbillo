@@ -8,6 +8,14 @@ import { mockShops } from "../../../utils/api/mockData";
 import { Skeleton } from "boneyard-js/react";
 import DevMockModeIndicator from "../../../components/DevMockModeIndicator";
 import LogoUploadAndCrop from "../../../components/LogoUploadAndCrop";
+import ThermalReceipt from "../../../components/ThermalReceipt";
+import OnbilloReceipt from "../../../components/templates/3InchPrints/OnbilloReceipt";
+import OnbilloBill from "../../../components/templates/3InchPrints/OnbilloBill";
+import OnbilloInvoice from "../../../components/templates/3InchPrints/OnbilloInvoice";
+import RaintechBill from "../../../components/templates/3InchPrints/RaintechBill";
+import RaintechReceipt from "../../../components/templates/3InchPrints/RaintechReceipt";
+import RaintechA4Invoice from "../../../components/templates/A4Prints/RaintechA4Invoice";
+import { Eye, FileText, Printer, Lock, X } from "lucide-react";
 
 export default function ShopSettings({
   params: paramsPromise,
@@ -41,6 +49,7 @@ export default function ShopSettings({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
 
   const formatPhoneInput = (val: string) => {
     if (!val.startsWith("+91")) {
@@ -218,6 +227,182 @@ export default function ShopSettings({
       setSaving(false);
     }
   };
+
+  const previewShop: Shop = {
+    id: shopId,
+    createdBy: null,
+    name: formData.name || "ONBILLO STORE",
+    gstNumber: formData.gstNumber || null,
+    addressLine1: formData.addressLine1 || "Elangkavu, vadayar, vaikom",
+    addressLine2: formData.addressLine2 || null,
+    city: formData.city || "Kottayam",
+    state: formData.state || "Kerala",
+    pincode: formData.pincode || "686605",
+    phone: formData.phone || "+918078311945",
+    email: formData.email || "info@onbillo.com",
+    logoUrl: formData.logoUrl || null,
+    currency: "rupees",
+    taxType: formData.taxType as any,
+    taxRate: formData.taxRate,
+    invoiceTemplet: formData.invoiceTemplet,
+    invoicePrefix: formData.invoicePrefix,
+    invoiceCounter: 1,
+    footerText: formData.footerText || "Thanks for your Kind Visit",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const previewBill = {
+    id: "preview-bill",
+    shopId: shopId,
+    billNumber: `${formData.invoicePrefix || "INV/"}0001`,
+    createdBy: "cashier-clerk",
+    totalPrice: 80070, // 800.70 in paise
+    notes: "Cash Sale Preview",
+    templetUsed: formData.invoiceTemplet || "1",
+    status: "active" as const,
+    createdAt: new Date().toISOString(),
+    cashierName: "Onbillo Cashier",
+    items: [
+      {
+        id: "item-1",
+        billId: "preview-bill",
+        shopProductId: "sp-1",
+        unitPrice: 75000,
+        mrp: 75000,
+        quantity: 1,
+        productName: "Tomato"
+      },
+      {
+        id: "item-2",
+        billId: "preview-bill",
+        shopProductId: "sp-2",
+        unitPrice: 3360,
+        mrp: 5600,
+        quantity: 1,
+        productName: "Mango"
+      },
+      {
+        id: "item-3",
+        billId: "preview-bill",
+        shopProductId: "sp-3",
+        unitPrice: 1710,
+        mrp: 17100,
+        quantity: 1,
+        productName: "Potato"
+      }
+    ]
+  };
+
+  const previewBillClassic = {
+    id: "preview-bill-classic",
+    shopId: shopId,
+    billNumber: `${formData.invoicePrefix || "GST-"}0001-2024/25`,
+    createdBy: "cashier-clerk",
+    totalPrice: 25500, // 255.00 in paise
+    notes: "Cash Sale Preview",
+    templetUsed: formData.invoiceTemplet || "1",
+    status: "active" as const,
+    createdAt: new Date("2024-04-05T15:40:00").toISOString(),
+    cashierName: "Onbillo Cashier",
+    items: [
+      {
+        id: "item-1",
+        billId: "preview-bill-classic",
+        shopProductId: "sp-1",
+        unitPrice: 11900,
+        mrp: 14000,
+        quantity: 1,
+        productName: "APRNA 140"
+      },
+      {
+        id: "item-2",
+        billId: "preview-bill-classic",
+        shopProductId: "sp-2",
+        unitPrice: 13600,
+        mrp: 16000,
+        quantity: 1,
+        productName: "APRNA 160"
+      }
+    ]
+  };
+
+  const templatesList = [
+    {
+      id: "onbillo-invoice-3inch",
+      name: "Onbillo Tax Invoice (3-Inch)",
+      folder: "3InchPrints",
+      description: "Space-efficient multi-line item table, logo placeholder, original S.Rate/Discount fields, and full GST table.",
+      isAvailable: true,
+      component: <OnbilloInvoice bill={previewBill} shop={previewShop} />
+    },
+    {
+      id: "onbillo-bill-3inch",
+      name: "Onbillo Classic Bill (3-Inch)",
+      folder: "3InchPrints",
+      description: "Classical POS layout with boxed table, unit PCS indicator, green savings banner, and red borders.",
+      isAvailable: true,
+      component: <OnbilloBill bill={previewBillClassic} shop={previewShop} />
+    },
+    {
+      id: "onbillo-3inch",
+      name: "Onbillo 3-Inch Receipt",
+      folder: "3InchPrints",
+      description: "GST tax details table, Tender box summary, Code 39 barcode, and clean blue headings.",
+      isAvailable: true,
+      component: <OnbilloReceipt bill={previewBill} shop={previewShop} />
+    },
+    {
+      id: "raintech-3inch",
+      name: "Raintech 3-Inch Bill",
+      folder: "3InchPrints",
+      description: "High-contrast POS receipt template featuring Hindi labels, blue header title, double-column metadata, and shaded columns.",
+      isAvailable: true,
+      component: <RaintechBill bill={previewBill} shop={previewShop} />
+    },
+    {
+      id: "raintech-receipt-3inch",
+      name: "Raintech Classic POS (English)",
+      folder: "3InchPrints",
+      description: "Classic English POS layout with top/bottom scroll ornaments, gray boxed header, logo placeholder, and double-bar savings indicator.",
+      isAvailable: true,
+      component: <RaintechReceipt bill={previewBill} shop={previewShop} />
+    },
+    {
+      id: "standard-3inch",
+      name: "Standard Compact Receipt",
+      folder: "3InchPrints",
+      description: "Simple thermal receipt template with basic items table, subtotal, and tax calculations.",
+      isAvailable: true,
+      component: <ThermalReceipt bill={previewBill} shop={previewShop} />
+    },
+    {
+      id: "a4-default",
+      name: "Raintech A4 Invoice",
+      folder: "A4Prints",
+      description: "Full-page A4 print invoice featuring centered company profile, Logo placeholder, detailed Billed To section, structured products table, Rupees in Words, Bank Details, tax calculations table, and signature sections.",
+      isAvailable: true,
+      component: <RaintechA4Invoice bill={previewBill} shop={previewShop} />
+    },
+    {
+      id: "a5-default",
+      name: "A5 Compact Invoice",
+      folder: "A5Prints",
+      description: "Half-page invoice layout for dot-matrix or receipt printers (Coming soon).",
+      isAvailable: false,
+      component: null
+    },
+    {
+      id: "catalogue-default",
+      name: "Visual Billing Catalogue",
+      folder: "Catalogues",
+      description: "Visual product catalogue sheet layout with photos and pricing grid (Coming soon).",
+      isAvailable: false,
+      component: null
+    }
+  ];
+
+  const isA4Preview = previewTemplate !== null && templatesList.find(t => t.id === previewTemplate)?.folder === "A4Prints";
 
   return (
     <Skeleton name="shop-settings" loading={loading}>
@@ -617,10 +802,12 @@ export default function ShopSettings({
                 className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
               >
                 <option value="1">Standard Compact (80mm / 3 inch)</option>
-                <option value="2">Mini Roll (58mm / 2 inch)</option>
-                <option value="3">Full Detail (Itemized with discount rows)</option>
-                <option value="4">Clean Border (High contrast)</option>
-                <option value="5">Elegant Sans (Modern branding)</option>
+                <option value="2">Onbillo Classic Bill (3-inch)</option>
+                <option value="3">Onbillo Tax Invoice (3-inch)</option>
+                <option value="4">Onbillo 3-Inch Receipt</option>
+                <option value="5">Raintech 3-Inch Bill (Hindi)</option>
+                <option value="6">Raintech Classic POS (English)</option>
+                <option value="7">Raintech A4 Invoice</option>
               </select>
             </div>
 
@@ -684,6 +871,121 @@ export default function ShopSettings({
           </button>
         </div>
       </form>
+
+      {/* Available Bill Templates Showcase Section */}
+      <div className="bg-canvas border border-hairline rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-mute mb-2 font-mono">
+            Available Bill & Receipt Templates
+          </h3>
+          <p className="text-xs text-mute leading-relaxed">
+            Here are the templates available in your project's folders under <code className="bg-canvas-soft px-1 rounded text-foreground font-mono">frontend/app/components/templates/</code>. You can preview active layouts or see folders for creating new ones.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {templatesList.map((tmpl) => (
+            <div
+              key={tmpl.id}
+              className={`p-4 border rounded-xl flex flex-col justify-between transition-all duration-200 ${
+                tmpl.isAvailable
+                  ? "bg-canvas hover:border-hairline-strong border-hairline"
+                  : "bg-canvas-soft/40 border-hairline/30 opacity-70"
+              }`}
+            >
+              <div>
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="text-xs font-bold text-foreground font-sans">
+                    {tmpl.name}
+                  </h4>
+                  <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-bold ${
+                    tmpl.isAvailable
+                      ? "bg-brand-primary/10 text-brand-primary"
+                      : "bg-zinc-500/10 text-zinc-500"
+                  }`}>
+                    {tmpl.folder}
+                  </span>
+                </div>
+                <p className="text-[11px] text-mute leading-relaxed mb-4">
+                  {tmpl.description}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-hairline/50 pt-3 mt-2 shrink-0">
+                <span className="text-[10px] text-mute font-mono flex items-center gap-1">
+                  {tmpl.isAvailable ? (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Ready to Use
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-3 h-3 text-zinc-500" />
+                      Folder Created
+                    </>
+                  )}
+                </span>
+
+                {tmpl.isAvailable ? (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTemplate(tmpl.id)}
+                    className="h-8 px-3.5 bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary font-bold text-[10px] rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5" /> Preview
+                  </button>
+                ) : (
+                  <span className="text-[10px] text-mute font-medium italic">
+                    Waiting for code
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Template Preview Modal */}
+      {previewTemplate !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+          <div className={`relative bg-white border border-hairline rounded-2xl p-6 shadow-2xl w-full my-8 flex flex-col max-h-[90vh] transition-all duration-300 ${
+            isA4Preview ? "max-w-[900px]" : "max-w-[420px]"
+          }`}>
+            <div className="flex justify-between items-center pb-3 border-b border-hairline mb-4 shrink-0">
+              <div>
+                <h3 className="text-xs font-extrabold text-foreground font-sans uppercase tracking-wide">
+                  {templatesList.find(t => t.id === previewTemplate)?.name}
+                </h3>
+                <p className="text-[9px] text-mute font-mono mt-0.5">
+                  Path: app/components/templates/{templatesList.find(t => t.id === previewTemplate)?.folder}/
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewTemplate(null)}
+                className="p-1.5 text-mute hover:text-foreground rounded-lg hover:bg-canvas-soft transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Scrollable Receipt Area */}
+            <div className="flex-1 overflow-y-auto overflow-x-auto bg-zinc-100 border border-hairline rounded-xl p-4 flex justify-center items-start min-h-[350px] shadow-inner select-none">
+              {templatesList.find(t => t.id === previewTemplate)?.component}
+            </div>
+
+            <div className="pt-4 border-t border-hairline flex justify-end shrink-0 mt-4">
+              <button
+                type="button"
+                onClick={() => setPreviewTemplate(null)}
+                className="h-9 px-4 bg-foreground text-background font-bold text-xs rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </Skeleton>
   );

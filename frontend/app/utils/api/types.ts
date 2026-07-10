@@ -77,6 +77,7 @@ export interface BillItem {
   quantity: number;
   productName?: string;
   barcode?: string;
+  mrp?: number;
 }
 
 export interface Bill {
