@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { shopsApi, usersApi } from "../utils/api";
+import { mockUser } from "../utils/api/mockData";
 
 export default function HomeRedirect() {
   const { isSignedIn, getToken } = useAuth();
@@ -15,8 +16,23 @@ export default function HomeRedirect() {
       setLoading(true);
       async function redirectUser() {
         try {
+          const isBoneyard = typeof window !== "undefined" && 
+            ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+          
+          if (isBoneyard) {
+            if (mockUser.role === "app_admin") {
+              router.push("/admin/dashboard");
+              return;
+            }
+          }
+
           const token = await getToken();
           const me = await usersApi.getMe(token);
+          if (me.role === "app_admin") {
+            router.push("/admin/dashboard");
+            return;
+          }
+
           const list = await shopsApi.getUserShops(token);
           if (list && list.length > 0) {
             // Check if there is an owner role

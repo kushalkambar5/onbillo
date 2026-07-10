@@ -23,7 +23,7 @@ export default function ShopSettings({
   const [message, setMessage] = useState({ text: "", type: "" });
   const [formData, setFormData] = useState({
     name: "",
-    phone: "",
+    phone: "+91",
     email: "",
     gstNumber: "",
     addressLine1: "",
@@ -42,9 +42,23 @@ export default function ShopSettings({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
+  const formatPhoneInput = (val: string) => {
+    if (!val.startsWith("+91")) {
+      if (val.length < 3) {
+        val = "+91";
+      } else {
+        val = "+91" + val.replace(/\D/g, "");
+      }
+    }
+    const prefix = "+91";
+    const rest = val.slice(3);
+    const cleanRest = rest.replace(/\D/g, "").slice(0, 10);
+    return prefix + cleanRest;
+  };
+
   const validateField = (name: string, value: string) => {
     const optionalFields = ["gstNumber", "addressLine2", "phone", "email", "taxRate", "invoicePrefix", "footerText", "logoUrl"];
-    if (optionalFields.includes(name) && !value.trim()) {
+    if (optionalFields.includes(name) && (!value.trim() || value === "+91")) {
       return "";
     }
 
@@ -65,9 +79,10 @@ export default function ShopSettings({
   };
 
   const handleFieldChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const updatedValue = name === "phone" ? formatPhoneInput(value) : value;
+    setFormData(prev => ({ ...prev, [name]: updatedValue }));
     if (touched[name]) {
-      setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+      setErrors(prev => ({ ...prev, [name]: validateField(name, updatedValue) }));
     }
   };
 
@@ -100,9 +115,13 @@ export default function ShopSettings({
       try {
         if (isBoneyard) {
           const shop = mockShops.find(s => s.id === shopId) || mockShops[0];
+          let loadedPhone = shop.phone || "+91";
+          if (loadedPhone && !loadedPhone.startsWith("+91")) {
+            loadedPhone = "+91" + loadedPhone.replace(/\D/g, "");
+          }
           setFormData({
             name: shop.name,
-            phone: shop.phone || "",
+            phone: loadedPhone,
             email: shop.email || "",
             gstNumber: shop.gstNumber || "",
             addressLine1: shop.addressLine1,
@@ -123,9 +142,13 @@ export default function ShopSettings({
 
         const token = await getToken();
         const shop = await shopsApi.getShop(token, shopId);
+        let loadedPhone = shop.phone || "+91";
+        if (loadedPhone && !loadedPhone.startsWith("+91")) {
+          loadedPhone = "+91" + loadedPhone.replace(/\D/g, "");
+        }
         setFormData({
           name: shop.name,
-          phone: shop.phone || "",
+          phone: loadedPhone,
           email: shop.email || "",
           gstNumber: shop.gstNumber || "",
           addressLine1: shop.addressLine1,
@@ -325,7 +348,7 @@ export default function ShopSettings({
                   Business Phone
                 </label>
                 <span className="text-[10px] text-mute font-mono">
-                  {formData.phone.length}/20 chars
+                  {formData.phone.length === 0 ? 0 : Math.max(0, formData.phone.length - 3)}/10 digits
                 </span>
               </div>
               <input

@@ -9,9 +9,7 @@ export const PhoneSchema = z.preprocess((val) => {
   const digitsOnly = cleaned.replace(/\D/g, '');
   return startsWithPlus ? `+${digitsOnly}` : digitsOnly;
 }, z.string()
-  .min(7, 'Phone number must be at least 7 characters')
-  .max(20, 'Phone number must be at most 20 characters')
-  .regex(/^\+?\d+$/, 'Phone number must contain only digits and optional leading +')
+  .regex(/^\+91\d{10}$/, 'Phone number must be +91 followed by exactly 10 digits')
 ) as unknown as z.ZodType<string>;
 
 // Email: Standard email validation, max 255 chars

@@ -1,6 +1,26 @@
 # Onbillo
 
-Onbillo is a modern billing & POS system built for Indian retail shops — from kirana stores to restaurants and wholesale dealers.
+Onbillo is a modern, community-powered billing & POS system built for Indian retail shops — from kirana stores to restaurants, supermarkets, and wholesale dealers.
 
 ## Details & Docs
-- [Home Page](/index.md): The main landing page copy including product description, core capabilities (barcode scanning, printing, offline resilience), interactive setup steps, and FAQs.
+- [Home Page](/index.md): The main landing page copy including product description, core capabilities (interactive POS checkout, mobile camera/hardware barcode scanning, dynamic GST compliance, thermal printer support, sales reports, inventory management, role-based staff management, settings, admin moderation, and offline-first resilience), setup guide, and FAQs.
+
+## Feature Overview
+
+### Interactive POS & Billing
+- Real-time cart management and checkout.
+- Text search and barcode lookup.
+- Integrated camera scanning (WebAssembly + ZXing) with flash and camera facing controls.
+- Dynamic GST calculation (Inclusive/Exclusive/No Tax modes).
+- Optimized 3″ thermal receipt printing layout.
+
+### Inventory & Global DB
+- Shop inventory control with custom pricing.
+- Community-powered global product barcode database.
+- Curation pipeline for platform administrators.
+
+### Roles & Admin
+- Owner vs. Shop Worker (Cashier) permissions.
+- Staff email invitation system.
+- Administrative Console (`/admin`) for platform-level management of users, shops, and database approvals.
+- Enforced `+91` 10-digit phone prefix validation.

@@ -31,6 +31,24 @@ export const productsApi = {
       data
     }, token);
   },
+  updateGlobalProduct: async (
+    token: string | null,
+    productId: string,
+    data: {
+      barcode?: string | null;
+      name?: string;
+      brand?: string | null;
+      category?: string | null;
+      mrp?: number;
+      imageUrl?: string | null;
+    }
+  ): Promise<Product> => {
+    return await apiCall<Product>({
+      url: `/api/products/${productId}`,
+      method: "PUT",
+      data
+    }, token);
+  },
   requestNewGlobalProduct: async (token: string | null, data: { barcode: string; name: string; brand: string; category: string; mrp: number }): Promise<Product> => {
     return await apiCall<Product>({
       url: "/api/products",

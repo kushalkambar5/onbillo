@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const nullableString = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((val) => {
-    if (val === "" || val === null || val === undefined) return null;
+    if (val === "" || val === null || val === undefined || val === "+91") return null;
     if (typeof val === "string") return val.trim();
     return val;
   }, schema.nullable().optional()) as unknown as z.ZodType<z.infer<T> | null>;
@@ -27,9 +27,7 @@ export const PhoneSchema = z.preprocess((val) => {
   const digitsOnly = cleaned.replace(/\D/g, "");
   return startsWithPlus ? `+${digitsOnly}` : digitsOnly;
 }, z.string()
-  .min(7, "Phone number must be at least 7 characters")
-  .max(20, "Phone number must be at most 20 characters")
-  .regex(/^\+?\d+$/, "Phone number must contain only digits and optional leading +")
+  .regex(/^\+91\d{10}$/, "Phone number must be +91 followed by exactly 10 digits")
 ) as unknown as z.ZodType<string>;
 
 export const EmailSchema = z

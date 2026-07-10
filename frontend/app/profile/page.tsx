@@ -19,11 +19,25 @@ export default function ProfilePage() {
 
   const [formData, setFormData] = useState({
     name: "",
-    phone: "",
+    phone: "+91",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const formatPhoneInput = (val: string) => {
+    if (!val.startsWith("+91")) {
+      if (val.length < 3) {
+        val = "+91";
+      } else {
+        val = "+91" + val.replace(/\D/g, "");
+      }
+    }
+    const prefix = "+91";
+    const rest = val.slice(3);
+    const cleanRest = rest.replace(/\D/g, "").slice(0, 10);
+    return prefix + cleanRest;
+  };
 
   const validateField = (name: string, value: string) => {
     if (name === "name") {
@@ -32,7 +46,7 @@ export default function ProfilePage() {
       return "";
     }
     if (name === "phone") {
-      if (!value.trim()) return "Phone number is required";
+      if (!value.trim() || value === "+91") return "Phone number is required";
       const res = PhoneSchema.safeParse(value);
       if (!res.success) return res.error.issues[0].message;
       return "";
@@ -46,9 +60,10 @@ export default function ProfilePage() {
   };
 
   const handleFieldChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const updatedValue = name === "phone" ? formatPhoneInput(value) : value;
+    setFormData(prev => ({ ...prev, [name]: updatedValue }));
     if (touched[name]) {
-      setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+      setErrors(prev => ({ ...prev, [name]: validateField(name, updatedValue) }));
     }
   };
 
@@ -73,9 +88,13 @@ export default function ProfilePage() {
         if (isBoneyard) {
           const profile = mockUser;
           setUser(profile);
+          let loadedPhone = profile.phone || "+91";
+          if (loadedPhone && !loadedPhone.startsWith("+91")) {
+            loadedPhone = "+91" + loadedPhone.replace(/\D/g, "");
+          }
           setFormData({
             name: profile.name,
-            phone: profile.phone || "",
+            phone: loadedPhone,
           });
           const hasNoShop = window.location.search.includes("no_shop=true") || 
                             window.location.pathname.startsWith("/invites");
@@ -90,9 +109,13 @@ export default function ProfilePage() {
           shopsApi.getUserShops(token)
         ]);
         setUser(profile);
+        let loadedPhone = profile.phone || "+91";
+        if (loadedPhone && !loadedPhone.startsWith("+91")) {
+          loadedPhone = "+91" + loadedPhone.replace(/\D/g, "");
+        }
         setFormData({
           name: profile.name,
-          phone: profile.phone || "",
+          phone: loadedPhone,
         });
         setShopsList(list);
       } catch (err) {
@@ -244,7 +267,7 @@ export default function ProfilePage() {
                   Phone Number <span className="text-error-deep">*</span>
                 </label>
                 <span className="text-[10px] text-mute font-mono">
-                  {formData.phone.length}/20 chars
+                  {formData.phone.length === 0 ? 0 : Math.max(0, formData.phone.length - 3)}/10 digits
                 </span>
               </div>
               <input

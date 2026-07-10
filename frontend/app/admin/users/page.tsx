@@ -135,13 +135,15 @@ export default function AdminUsers() {
                   <th className="py-3.5 px-5">User Profile Name</th>
                   <th className="py-3.5 px-5">Email Address</th>
                   <th className="py-3.5 px-5">Phone Number</th>
+                  <th className="py-3.5 px-5">Working Shop</th>
+                  <th className="py-3.5 px-5">Platform Role</th>
                   <th className="py-3.5 px-5 text-center">License Plan</th>
                   <th className="py-3.5 px-5 text-center">Status</th>
                   <th className="py-3.5 px-5 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800 text-xs">
-                {filteredUsers.map((u) => (
+                {filteredUsers.map((u: any) => (
                   <tr key={u.id} className="hover:bg-zinc-950/40 transition-colors">
                     <td className="py-3.5 px-5 font-mono text-zinc-500">
                       #{u.id}
@@ -159,6 +161,26 @@ export default function AdminUsers() {
                     </td>
                     <td className="py-3.5 px-5 text-zinc-500 font-mono">
                       {u.phone || "—"}
+                    </td>
+                    <td className="py-3.5 px-5 text-zinc-400 font-medium">
+                      {u.shopName || "—"}
+                    </td>
+                    <td className="py-3.5 px-5 text-zinc-400">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                        u.role === "app_admin" 
+                          ? "bg-purple-950/30 border border-purple-900/30 text-purple-400" 
+                          : u.role === "shop_owner"
+                          ? "bg-blue-950/30 border border-blue-900/30 text-blue-400"
+                          : "bg-zinc-950 border border-zinc-800 text-zinc-400"
+                      } uppercase tracking-wide`}>
+                        {u.role === "app_admin" 
+                          ? "Admin" 
+                          : u.role === "shop_owner" 
+                          ? "Owner" 
+                          : u.role === "shop_worker" 
+                          ? "Worker" 
+                          : "User"}
+                      </span>
                     </td>
                     <td className="py-3.5 px-5 text-center">
                       <button

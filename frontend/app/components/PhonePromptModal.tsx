@@ -10,7 +10,7 @@ export default function PhonePromptModal() {
   const { isSignedIn, getToken } = useAuth();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState("+91");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [profile, setProfile] = useState<User | null>(null);
@@ -21,7 +21,7 @@ export default function PhonePromptModal() {
   const lastCheckedPathname = useRef<string | null>(null);
 
   const validatePhone = (val: string) => {
-    if (!val.trim()) {
+    if (!val.trim() || val === "+91") {
       return "Phone number is required";
     }
     const validation = validateSchema(UpdateMeSchema, { phone: val });
@@ -32,10 +32,22 @@ export default function PhonePromptModal() {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setPhone(val);
+    let val = e.target.value;
+    if (!val.startsWith("+91")) {
+      if (val.length < 3) {
+        val = "+91";
+      } else {
+        val = "+91" + val.replace(/\D/g, "");
+      }
+    }
+    const prefix = "+91";
+    const rest = val.slice(3);
+    const cleanRest = rest.replace(/\D/g, "").slice(0, 10);
+    const finalVal = prefix + cleanRest;
+
+    setPhone(finalVal);
     if (touched) {
-      setInlineError(validatePhone(val));
+      setInlineError(validatePhone(finalVal));
     }
   };
 
@@ -44,7 +56,7 @@ export default function PhonePromptModal() {
     setInlineError(validatePhone(phone));
   };
 
-  const isFormValid = phone.trim() !== "" && !validatePhone(phone);
+  const isFormValid = phone.trim() !== "" && phone !== "+91" && !validatePhone(phone);
 
   const isAppPath =
     pathname.startsWith("/shop") ||
@@ -139,7 +151,7 @@ export default function PhonePromptModal() {
                 Phone Number <span className="text-red-500">*</span>
               </label>
               <span className="text-[10px] text-mute font-mono">
-                {phone.length}/20 chars
+                {phone.length === 0 ? 0 : Math.max(0, phone.length - 3)}/10 digits
               </span>
             </div>
             <input

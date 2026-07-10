@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { shopsApi } from "../utils/api";
-import { mockShops } from "../utils/api/mockData";
+import { shopsApi, usersApi } from "../utils/api";
+import { mockShops, mockUser } from "../utils/api/mockData";
 import DevMockModeIndicator from "./DevMockModeIndicator";
 import ThemeToggle from "./ThemeToggle";
 import { 
@@ -35,6 +35,10 @@ export default function NoShopLayout({
           ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
         
         if (isBoneyard) {
+          if (mockUser.role === "app_admin") {
+            router.push("/admin/dashboard");
+            return;
+          }
           // Allow explicitly mocking "no shop" status via query params or route
           const hasNoShop = window.location.search.includes("no_shop=true") || 
                             window.location.pathname.startsWith("/invites");
@@ -51,7 +55,14 @@ export default function NoShopLayout({
 
         const token = await getToken();
         if (token) {
-          const list = await shopsApi.getUserShops(token);
+          const [list, profile] = await Promise.all([
+            shopsApi.getUserShops(token),
+            usersApi.getMe(token)
+          ]);
+          if (profile.role === "app_admin") {
+            router.push("/admin/dashboard");
+            return;
+          }
           setShopsList(list);
         }
       } catch (err) {

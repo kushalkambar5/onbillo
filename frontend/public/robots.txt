@@ -1,4 +1,9 @@
 User-agent: *
+Disallow: /auth/login
+Disallow: /auth/register
+Disallow: /auth/forgot-password
+Disallow: /auth/reset-password
+Disallow: /auth/verify-email
 Allow: /
 
 Sitemap: https://onbillo.com/sitemap.xml

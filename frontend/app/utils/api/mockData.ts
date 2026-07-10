@@ -4,7 +4,7 @@ export const mockUser: User = {
   id: "99",
   clerkId: "mock_clerk_id",
   email: "kushal@onbillo.com",
-  phone: "+91 9876543210",
+  phone: "+919876543210",
   name: "Kushal Kambar",
   role: "app_admin",
   isPremium: true,
@@ -23,7 +23,7 @@ const initialMockShops: Shop[] = [
     city: "Bengaluru",
     state: "Karnataka",
     pincode: "560034",
-    phone: "+91 8023456789",
+    phone: "+918023456789",
     email: "info@kambargroceries.com",
     logoUrl: null,
     currency: "rupees",
@@ -46,7 +46,7 @@ const initialMockShops: Shop[] = [
     city: "Bengaluru",
     state: "Karnataka",
     pincode: "560102",
-    phone: "+91 8098765432",
+    phone: "+918098765432",
     email: "contact@cornercafe.com",
     logoUrl: null,
     currency: "rupees",
@@ -159,9 +159,9 @@ export const mockStaffRequests: StaffRequest[] = [
   { id: "4", shopId: "1", requestedBy: "99", requestedTo: "102", role: "shop_worker", status: "accepted", createdAt: new Date().toISOString(), shopName: "Kambar Groceries", requesterName: "Kushal Kambar", receiverEmail: "accepted-worker@test.com", receiverName: "Accepted Worker" }
 ];
 
-export const mockAdminUsers: User[] = [
-  mockUser,
-  { id: "101", clerkId: "clerk_101", email: "ananya@cornercafe.com", phone: "+91 9988776655", name: "Ananya Sharma", role: "user", isPremium: false, isBanned: false, createdAt: new Date().toISOString() },
-  { id: "102", clerkId: "clerk_102", email: "worker@kambar.com", phone: null, name: "Rahul Kumar", role: "user", isPremium: false, isBanned: false, createdAt: new Date().toISOString() },
-  { id: "103", clerkId: "clerk_103", email: "spammer@bad.com", phone: "+91 9000000000", name: "Suresh Spammer", role: "user", isPremium: false, isBanned: true, createdAt: new Date().toISOString() }
+export const mockAdminUsers: any[] = [
+  { ...mockUser, shopName: "Kambar Groceries" },
+  { id: "101", clerkId: "clerk_101", email: "ananya@cornercafe.com", phone: "+919988776655", name: "Ananya Sharma", role: "shop_owner", shopId: "2", shopName: "Corner Cafe", isPremium: false, isBanned: false, createdAt: new Date().toISOString() },
+  { id: "102", clerkId: "clerk_102", email: "worker@kambar.com", phone: null, name: "Rahul Kumar", role: "shop_worker", shopId: "1", shopName: "Kambar Groceries", isPremium: false, isBanned: false, createdAt: new Date().toISOString() },
+  { id: "103", clerkId: "clerk_103", email: "spammer@bad.com", phone: "+919000000000", name: "Suresh Spammer", role: "shop_worker", shopId: null, shopName: null, isPremium: false, isBanned: true, createdAt: new Date().toISOString() }
 ];

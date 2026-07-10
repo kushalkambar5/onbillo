@@ -8,6 +8,7 @@ import {
   ToggleBanSchema,
   RejectProductSchema,
   IdParamSchema,
+  UpdateProductSchema,
 } from '../common/validation/schemas';
 
 @Controller('api/admin')
@@ -55,8 +56,9 @@ export class AdminController {
   @Put('products/:id/approve')
   approveProduct(
     @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
+    @Body(new ZodValidationPipe(UpdateProductSchema)) body: any,
   ) {
-    return this.adminService.approveProduct(id);
+    return this.adminService.approveProduct(id, body);
   }
 
   @Put('products/:id/reject')

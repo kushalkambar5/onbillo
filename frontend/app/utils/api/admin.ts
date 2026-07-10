@@ -40,10 +40,11 @@ export const adminApi = {
       method: "GET"
     }, token);
   },
-  approveProduct: async (token: string | null, productId: string): Promise<Product> => {
+  approveProduct: async (token: string | null, productId: string, editData?: any): Promise<Product> => {
     return await apiCall<Product>({
       url: `/api/admin/products/${productId}/approve`,
-      method: "PUT"
+      method: "PUT",
+      data: editData
     }, token);
   },
   rejectProduct: async (token: string | null, productId: string, reason: string): Promise<Product> => {

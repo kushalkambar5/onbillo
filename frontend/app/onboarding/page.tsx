@@ -23,7 +23,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>("role");
   const [role, setRole] = useState<Role | null>(null);
   
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState("+91");
   const [phoneInitiallyPresent, setPhoneInitiallyPresent] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -33,7 +33,7 @@ export default function OnboardingPage() {
     city: "",
     state: "",
     pincode: "",
-    phone: "", // Business phone
+    phone: "+91", // Business phone
     email: "", // Business email
     taxType: "gst_inclusive",
     taxRate: "18.00",
@@ -43,16 +43,30 @@ export default function OnboardingPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
+  const formatPhoneInput = (val: string) => {
+    if (!val.startsWith("+91")) {
+      if (val.length < 3) {
+        val = "+91";
+      } else {
+        val = "+91" + val.replace(/\D/g, "");
+      }
+    }
+    const prefix = "+91";
+    const rest = val.slice(3);
+    const cleanRest = rest.replace(/\D/g, "").slice(0, 10);
+    return prefix + cleanRest;
+  };
+
   const validateField = (name: string, value: string) => {
     if (name === "personalPhone") {
-      if (!value.trim()) return "Personal phone number is required";
+      if (!value.trim() || value === "+91") return "Personal phone number is required";
       const res = PhoneSchema.safeParse(value);
       if (!res.success) return res.error.issues[0].message;
       return "";
     }
 
     const optionalFields = ["gstNumber", "addressLine2", "phone", "email", "taxRate", "logoUrl"];
-    if (optionalFields.includes(name) && !value.trim()) {
+    if (optionalFields.includes(name) && (!value.trim() || value === "+91")) {
       return "";
     }
 
@@ -75,9 +89,16 @@ export default function OnboardingPage() {
 
   const handleFieldChange = (name: string, value: string) => {
     if (name === "personalPhone") {
-      setPhone(value);
+      const formatted = formatPhoneInput(value);
+      setPhone(formatted);
       if (touched["personalPhone"]) {
-        setErrors(prev => ({ ...prev, personalPhone: validateField("personalPhone", value) }));
+        setErrors(prev => ({ ...prev, personalPhone: validateField("personalPhone", formatted) }));
+      }
+    } else if (name === "phone") {
+      const formatted = formatPhoneInput(value);
+      setFormData(prev => ({ ...prev, phone: formatted }));
+      if (touched["phone"]) {
+        setErrors(prev => ({ ...prev, phone: validateField("phone", formatted) }));
       }
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -140,7 +161,11 @@ export default function OnboardingPage() {
           // Skip role selection and show shop creation form directly.
           setRole("owner");
           setStep("details");
-          setPhone(me.phone);
+          let formattedPhone = me.phone;
+          if (!formattedPhone.startsWith("+91")) {
+            formattedPhone = "+91" + formattedPhone.replace(/\D/g, "");
+          }
+          setPhone(formattedPhone);
           setPhoneInitiallyPresent(true);
         }
       } catch (err) {
@@ -326,7 +351,7 @@ export default function OnboardingPage() {
                         Phone Number <span className="text-error-deep">*</span>
                       </label>
                       <span className="text-[10px] text-mute font-mono">
-                        {phone.length}/20 chars
+                        {phone.length === 0 ? 0 : Math.max(0, phone.length - 3)}/10 digits
                       </span>
                     </div>
                     <input
@@ -421,7 +446,7 @@ export default function OnboardingPage() {
                             Business Phone
                           </label>
                           <span className="text-[10px] text-mute font-mono">
-                            {formData.phone.length}/20 chars
+                            {formData.phone.length === 0 ? 0 : Math.max(0, formData.phone.length - 3)}/10 digits
                           </span>
                         </div>
                         <input

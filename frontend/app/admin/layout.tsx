@@ -16,7 +16,10 @@ import {
   FileCheck,
   ArrowLeft,
   Menu,
-  X
+  X,
+  PlusCircle,
+  Layers,
+  Settings
 } from "lucide-react";
 
 export default function AdminWorkspaceLayout({
@@ -70,24 +73,39 @@ export default function AdminWorkspaceLayout({
 
   const navItems = [
     {
-      name: "Admin Stats",
+      name: "Dashboard",
       href: "/admin/dashboard",
       icon: LayoutDashboard,
     },
     {
-      name: "Manage Users",
+      name: "Users",
       href: "/admin/users",
       icon: Users,
     },
     {
-      name: "Manage Shops",
+      name: "Shops",
       href: "/admin/shops",
       icon: Store,
     },
     {
-      name: "Pending Global DB",
+      name: "Add Products",
+      href: "/admin/products/add",
+      icon: PlusCircle,
+    },
+    {
+      name: "Approve Products",
       href: "/admin/products/pending",
       icon: FileCheck,
+    },
+    {
+      name: "Products",
+      href: "/admin/products",
+      icon: Layers,
+    },
+    {
+      name: "Settings",
+      href: "/admin/settings",
+      icon: Settings,
     },
   ];
 
