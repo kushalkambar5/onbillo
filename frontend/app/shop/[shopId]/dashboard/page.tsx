@@ -116,33 +116,44 @@ export default function ShopDashboard({
     avgBillTrendPercentage = 100;
   }
 
-  // Calculate daily sales trend dynamically for the last 7 days
+  // Calculate daily bills trend dynamically for the last 7 days
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - i);
     return d.toISOString().split("T")[0];
   }).reverse();
 
-  const salesTrendMap = new Map<string, number>();
-  last7Days.forEach(date => salesTrendMap.set(date, 0));
+  const billsTrendMap = new Map<string, number>();
+  last7Days.forEach(date => billsTrendMap.set(date, 0));
 
   activeBills.forEach(b => {
     const dateStr = new Date(b.createdAt).toISOString().split("T")[0];
-    if (salesTrendMap.has(dateStr)) {
-      salesTrendMap.set(dateStr, salesTrendMap.get(dateStr)! + b.totalPrice / 100);
+    if (billsTrendMap.has(dateStr)) {
+      billsTrendMap.set(dateStr, billsTrendMap.get(dateStr)! + 1);
     }
   });
 
-  const salesHistory = last7Days.map(date => salesTrendMap.get(date) || 0);
+  const billsHistory = last7Days.map(date => billsTrendMap.get(date) || 0);
 
-  const maxVal = Math.max(...salesHistory, 100); // Minimum scale height of 100 Rs
+  const maxBills = Math.max(...billsHistory, 4); // Minimum scale height of 4 bills
+  const maxVal = Math.ceil(maxBills / 4) * 4; // Multiple of 4 for nice integer Y-axis ticks
   const chartHeight = 120;
   const chartWidth = 500;
-  const points = salesHistory.map((val, idx) => {
-    const x = (idx / (salesHistory.length - 1)) * chartWidth;
-    const y = chartHeight - (val / maxVal) * (chartHeight - 20) - 10;
+  const points = billsHistory.map((val, idx) => {
+    const x = (idx / (billsHistory.length - 1)) * chartWidth;
+    const y = chartHeight - (val / maxVal) * chartHeight;
     return `${x},${y}`;
   }).join(" ");
+
+  const yTicks = Array.from({ length: 5 }, (_, i) => {
+    const val = (maxVal / 4) * (4 - i);
+    return Number.isInteger(val) ? val.toString() : val.toFixed(1);
+  });
+
+  const formattedDates = last7Days.map(dateStr => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  });
 
   // Calculate Top Selling Categories dynamically based on items sold
   const categorySalesMap = new Map<string, number>();
@@ -280,48 +291,86 @@ export default function ShopDashboard({
         <div className="bg-canvas border border-hairline rounded-2xl p-6 shadow-sm lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-foreground font-sans">Sales Trend</h3>
-              <p className="text-[10px] text-mute font-semibold">Weekly aggregate overview</p>
-            </div>
-            <div className="px-2.5 py-1 rounded bg-canvas-soft border border-hairline text-[10px] font-bold text-body uppercase font-mono">
-              Live Feed
+              <h3 className="text-sm font-bold text-foreground font-sans">Bills Generated</h3>
+              <p className="text-[10px] text-mute font-semibold">Weekly bill count overview</p>
             </div>
           </div>
 
-          {/* SVG Sparkline */}
-          <div className="w-full h-44 bg-canvas-soft rounded-xl border border-hairline flex items-center justify-center p-4 relative overflow-hidden">
-            <svg 
-              className="w-full h-full"
-              viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
-              preserveAspectRatio="none"
-            >
-              {/* Fill Gradient under the line */}
-              <defs>
-                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-brand-primary)" stopOpacity="0.2"/>
-                  <stop offset="100%" stopColor="var(--color-brand-primary)" stopOpacity="0.0"/>
-                </linearGradient>
-              </defs>
-              
-              {/* Background gridlines */}
-              <line x1="0" y1="30" x2={chartWidth} y2="30" stroke="var(--color-hairline)" strokeWidth="0.75" />
-              <line x1="0" y1="60" x2={chartWidth} y2="60" stroke="var(--color-hairline)" strokeWidth="0.75" />
-              <line x1="0" y1="90" x2={chartWidth} y2="90" stroke="var(--color-hairline)" strokeWidth="0.75" />
+          {/* SVG Sparkline with Axes and Labels */}
+          <div className="flex flex-col h-44 bg-canvas-soft rounded-xl border border-hairline p-4 select-none">
+            {/* Top row containing Y-axis labels and Chart */}
+            <div className="flex-1 flex gap-2 overflow-hidden">
+              {/* Y-axis labels */}
+              <div className="flex flex-col justify-between text-[9px] font-semibold text-mute font-sans h-full w-6 text-right pr-1.5">
+                {yTicks.map((label, idx) => (
+                  <div key={idx} className="leading-none flex items-center justify-end h-0">
+                    {label}
+                  </div>
+                ))}
+              </div>
 
-              {/* Area path */}
-              <path
-                d={`M 0,${chartHeight} L ${points} L ${chartWidth},${chartHeight} Z`}
-                fill="url(#chartGrad)"
-              />
-              
-              {/* Chart Line */}
-              <polyline
-                fill="none"
-                stroke="var(--color-brand-primary)"
-                strokeWidth="2"
-                points={points}
-              />
-            </svg>
+              {/* SVG container */}
+              <div className="flex-1 relative h-full">
+                <svg 
+                  className="w-full h-full overflow-visible"
+                  viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
+                  preserveAspectRatio="none"
+                >
+                  {/* Fill Gradient under the line */}
+                  <defs>
+                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-brand-primary)" stopOpacity="0.2"/>
+                      <stop offset="100%" stopColor="var(--color-brand-primary)" stopOpacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  
+                  {/* Background gridlines */}
+                  <line x1="0" y1="0" x2={chartWidth} y2="0" stroke="var(--color-hairline)" strokeWidth="0.75" strokeDasharray="4 4" />
+                  <line x1="0" y1="30" x2={chartWidth} y2="30" stroke="var(--color-hairline)" strokeWidth="0.75" strokeDasharray="4 4" />
+                  <line x1="0" y1="60" x2={chartWidth} y2="60" stroke="var(--color-hairline)" strokeWidth="0.75" strokeDasharray="4 4" />
+                  <line x1="0" y1="90" x2={chartWidth} y2="90" stroke="var(--color-hairline)" strokeWidth="0.75" strokeDasharray="4 4" />
+                  <line x1="0" y1="120" x2={chartWidth} y2="120" stroke="var(--color-hairline)" strokeWidth="1" />
+
+                  {/* Area path */}
+                  <path
+                    d={`M 0,${chartHeight} L ${points} L ${chartWidth},${chartHeight} Z`}
+                    fill="url(#chartGrad)"
+                  />
+                  
+                  {/* Chart Line */}
+                  <polyline
+                    fill="none"
+                    stroke="var(--color-brand-primary)"
+                    strokeWidth="2.5"
+                    points={points}
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* X-axis row */}
+            <div className="flex gap-2">
+              {/* Spacer matching the Y-axis label width */}
+              <div className="w-6 pr-1.5" />
+              {/* X-axis labels container */}
+              <div className="flex-1 relative h-4 mt-2 select-none">
+                {formattedDates.map((date, idx) => {
+                  const percent = (idx / (last7Days.length - 1)) * 100;
+                  return (
+                    <div 
+                      key={idx} 
+                      className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[9px] font-semibold text-mute font-sans"
+                      style={{ 
+                        left: `${percent}%`,
+                        transform: idx === 0 ? 'none' : idx === last7Days.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)'
+                      }}
+                    >
+                      {date}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
