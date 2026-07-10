@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { productsApi } from "../../../utils/api";
-import { ArrowLeft, Info, ScanBarcode } from "lucide-react";
+import { ArrowLeft, Info, ScanBarcode, Upload, X } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
@@ -16,6 +16,7 @@ const BarcodeScanner = dynamic(
 export default function AdminAddProduct() {
   const { getToken } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     barcode: "",
@@ -25,6 +26,8 @@ export default function AdminAddProduct() {
     mrp: ""
   });
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -36,6 +39,32 @@ export default function AdminAddProduct() {
       setForm((prev) => ({ ...prev, barcode: cleanBarcode }));
     }
     setScannerOpen(false);
+  };
+
+  const handleDeviceFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
+      alert("Invalid file format. Only PNG, JPG, JPEG, and WEBP images are allowed.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size exceeds 5MB limit.");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearSelectedImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,20 +79,32 @@ export default function AdminAddProduct() {
         throw new Error("MRP must be a valid positive number.");
       }
 
+      const isBoneyard = typeof window !== "undefined" && 
+        ((window as Window & { __BONEYARD_BUILD?: unknown }).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+
+      let uploadedImageUrl: string | null = null;
+      
+      if (imageFile && !isBoneyard) {
+        const token = await getToken();
+        const uploadRes = await productsApi.uploadImage(token, imageFile);
+        uploadedImageUrl = uploadRes.url;
+      } else if (imageFile && isBoneyard) {
+        uploadedImageUrl = imagePreview; // locally mocked image preview url
+      }
+
       const data = {
         barcode: form.barcode.trim() || "",
         brand: form.brand.trim() || "",
         name: form.name.trim(),
         category: form.category.trim() || "",
-        mrp: parsedMrp
+        mrp: parsedMrp,
+        imageUrl: uploadedImageUrl
       };
-
-      const isBoneyard = typeof window !== "undefined" && 
-        ((window as Window & { __BONEYARD_BUILD?: unknown }).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
 
       if (isBoneyard) {
         setSuccess(`Successfully added product "${data.name}" directly to the global database.`);
         setForm({ barcode: "", brand: "", name: "", category: "", mrp: "" });
+        clearSelectedImage();
         setTimeout(() => {
           router.push("/admin/products");
         }, 1500);
@@ -74,6 +115,7 @@ export default function AdminAddProduct() {
       await productsApi.requestNewGlobalProduct(token, data);
       setSuccess(`Successfully added product "${data.name}" directly to the global database.`);
       setForm({ barcode: "", brand: "", name: "", category: "", mrp: "" });
+      clearSelectedImage();
       setTimeout(() => {
         router.push("/admin/products");
       }, 1500);
@@ -140,6 +182,46 @@ export default function AdminAddProduct() {
           <span className="text-[9px] text-zinc-500 mt-1 block leading-normal">
             Optional. Leaving this empty makes it a non-barcoded catalog item.
           </span>
+        </div>
+
+        {/* Product Image Option */}
+        <div>
+          <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 font-mono">
+            Product Image
+          </label>
+          <div className="flex items-center gap-4">
+            {imagePreview ? (
+              <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-zinc-800 shrink-0">
+                <img src={imagePreview} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={clearSelectedImage}
+                  className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-16 h-16 rounded-lg border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-950 flex flex-col items-center justify-center text-zinc-500 hover:text-zinc-400 transition-colors cursor-pointer"
+              >
+                <Upload className="w-4 h-4 mb-1" />
+                <span className="text-[8px] font-bold uppercase tracking-wider">Upload</span>
+              </button>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleDeviceFileUpload}
+              accept="image/*"
+              className="hidden"
+            />
+            <div className="text-[9px] text-zinc-500 leading-normal">
+              Optional. PNG, JPG or WEBP format. Max size 5MB.
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

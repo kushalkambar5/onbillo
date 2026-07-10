@@ -55,6 +55,8 @@ export interface Product {
   status: "pending" | "approved" | "rejected";
   rejectionReason?: string | null;
   createdBy?: string | null;
+  creatorName?: string | null;
+  creatorShopName?: string | null;
   createdAt: string;
 }
 

@@ -53,6 +53,11 @@ export class AdminController {
     return this.adminService.listPendingProducts();
   }
 
+  @Get('products/rejected')
+  listRejectedProducts() {
+    return this.adminService.listRejectedProducts();
+  }
+
   @Put('products/:id/approve')
   approveProduct(
     @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
@@ -67,5 +72,12 @@ export class AdminController {
     @Body(new ZodValidationPipe(RejectProductSchema)) body: any,
   ) {
     return this.adminService.rejectProduct(id, body.reason);
+  }
+
+  @Put('products/:id/pending')
+  makeProductPending(
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
+  ) {
+    return this.adminService.makeProductPending(id);
   }
 }

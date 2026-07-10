@@ -19,7 +19,8 @@ import {
   X,
   PlusCircle,
   Layers,
-  Settings
+  Settings,
+  FileX
 } from "lucide-react";
 
 export default function AdminWorkspaceLayout({
@@ -96,6 +97,11 @@ export default function AdminWorkspaceLayout({
       name: "Approve Products",
       href: "/admin/products/pending",
       icon: FileCheck,
+    },
+    {
+      name: "Rejected Products",
+      href: "/admin/products/rejected",
+      icon: FileX,
     },
     {
       name: "Products",

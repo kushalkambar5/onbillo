@@ -242,8 +242,25 @@ export class AdminService {
 
   async listPendingProducts() {
     return await this.dbService.db
-      .select()
+      .select({
+        id: products.id,
+        barcode: products.barcode,
+        name: products.name,
+        brand: products.brand,
+        category: products.category,
+        imageUrl: products.imageUrl,
+        mrp: products.mrp,
+        status: products.status,
+        rejectionReason: products.rejectionReason,
+        createdBy: products.createdBy,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+        creatorName: users.name,
+        creatorShopName: shops.name,
+      })
       .from(products)
+      .leftJoin(users, eq(products.createdBy, users.id))
+      .leftJoin(shops, eq(users.shopId, shops.id))
       .where(eq(products.status, 'pending'));
   }
 
@@ -277,6 +294,44 @@ export class AdminService {
       .set({
         status: 'rejected',
         rejectionReason: reason,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, id))
+      .returning();
+    if (!product) throw new NotFoundException('Product not found');
+    return product;
+  }
+
+  async listRejectedProducts() {
+    return await this.dbService.db
+      .select({
+        id: products.id,
+        barcode: products.barcode,
+        name: products.name,
+        brand: products.brand,
+        category: products.category,
+        imageUrl: products.imageUrl,
+        mrp: products.mrp,
+        status: products.status,
+        rejectionReason: products.rejectionReason,
+        createdBy: products.createdBy,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+        creatorName: users.name,
+        creatorShopName: shops.name,
+      })
+      .from(products)
+      .leftJoin(users, eq(products.createdBy, users.id))
+      .leftJoin(shops, eq(users.shopId, shops.id))
+      .where(eq(products.status, 'rejected'));
+  }
+
+  async makeProductPending(id: string) {
+    const [product] = await this.dbService.db
+      .update(products)
+      .set({
+        status: 'pending',
+        rejectionReason: null,
         updatedAt: new Date(),
       })
       .where(eq(products.id, id))

@@ -53,5 +53,17 @@ export const adminApi = {
       method: "PUT",
       data: { reason }
     }, token);
+  },
+  listRejectedProducts: async (token: string | null): Promise<Product[]> => {
+    return await apiCall<Product[]>({
+      url: "/api/admin/products/rejected",
+      method: "GET"
+    }, token);
+  },
+  makeProductPending: async (token: string | null, productId: string): Promise<Product> => {
+    return await apiCall<Product>({
+      url: `/api/admin/products/${productId}/pending`,
+      method: "PUT"
+    }, token);
   }
 };

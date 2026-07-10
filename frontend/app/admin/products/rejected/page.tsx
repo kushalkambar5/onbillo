@@ -2,33 +2,54 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { productsApi, Product } from "../../utils/api";
+import { adminApi, productsApi, Product } from "../../../utils/api";
 import { Skeleton } from "boneyard-js/react";
 import { 
-  Layers, 
-  Search, 
+  FileX, 
   Edit3, 
-  PlusCircle, 
-  Tag, 
+  Check, 
+  RotateCcw, 
   AlertCircle,
   X,
-  Plus
+  ShieldAlert
 } from "lucide-react";
-import Link from "next/link";
 
-const mockApprovedProducts: Product[] = [
-  { id: "1", barcode: "8901030818279", name: "Red Label Tea 500g", brand: "Brooke Bond", category: "Beverages", mrp: 19500, status: "approved", rejectionReason: null, createdBy: "99", createdAt: new Date().toISOString() },
-  { id: "2", barcode: "8901719101036", name: "Dettol Liquid Handwash 200ml", brand: "Dettol", category: "Personal Care", mrp: 9900, status: "approved", rejectionReason: null, createdBy: "99", createdAt: new Date().toISOString() },
-  { id: "3", barcode: "8901058002490", name: "Britannia Marie Gold 250g", brand: "Britannia", category: "Biscuits", mrp: 4000, status: "approved", rejectionReason: null, createdBy: "101", createdAt: new Date().toISOString() },
-  { id: "4", barcode: "8901207040510", name: "Tata Salt 1kg", brand: "Tata", category: "Grocery", mrp: 2800, status: "approved", rejectionReason: null, createdBy: "101", createdAt: new Date().toISOString() }
+const mockRejectedProducts: Product[] = [
+  { 
+    id: "r1", 
+    barcode: "8901030818270", 
+    name: "Duplicate Tea Pack 250g", 
+    brand: "Brooke Bond", 
+    category: "Beverages", 
+    mrp: 9500, 
+    status: "rejected", 
+    rejectionReason: "Duplicate barcode request from another shop", 
+    createdBy: "99", 
+    creatorName: "Kushal Kambar",
+    creatorShopName: "Kambar Groceries",
+    createdAt: new Date().toISOString() 
+  },
+  { 
+    id: "r2", 
+    barcode: "8901207040515", 
+    name: "Tata Salt Lite 1kg (Typos)", 
+    brand: "Tata", 
+    category: "Grocery", 
+    mrp: 3500, 
+    status: "rejected", 
+    rejectionReason: "Incomplete/Incorrect details entered", 
+    createdBy: "102", 
+    creatorName: "Ananya Sharma",
+    creatorShopName: "Corner Cafe & Bakery",
+    createdAt: new Date().toISOString() 
+  }
 ];
 
-export default function AdminApprovedProducts() {
+export default function AdminRejectedProducts() {
   const { getToken } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [actioningId, setActioningId] = useState<string | null>(null);
@@ -50,15 +71,14 @@ export default function AdminApprovedProducts() {
         ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
       
       if (isBoneyard) {
-        setProducts(mockApprovedProducts);
+        setProducts(mockRejectedProducts);
         setLoading(false);
         return;
       }
 
       const token = await getToken();
-      // standard search with empty query returns all approved global products
-      const list = await productsApi.searchGlobalProducts(token, searchQuery);
-      setProducts(list.filter(p => p.status === "approved"));
+      const list = await adminApi.listRejectedProducts(token);
+      setProducts(list);
     } catch (err) {
       console.error(err);
     } finally {
@@ -67,12 +87,8 @@ export default function AdminApprovedProducts() {
   }
 
   useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      loadProducts();
-    }, 300);
-
-    return () => clearTimeout(delayDebounce);
-  }, [searchQuery, getToken]);
+    loadProducts();
+  }, [getToken]);
 
   const triggerEditDialog = (prod: Product) => {
     setEditingProduct(prod);
@@ -114,7 +130,7 @@ export default function AdminApprovedProducts() {
 
       if (isBoneyard) {
         setProducts(products.map(p => p.id === editingProduct.id ? { ...p, ...editData, mrp: parsedMrp } : p));
-        setSuccess(`Successfully updated product "${editData.name}".`);
+        setSuccess(`Successfully updated details for "${editData.name}".`);
         setEditingProduct(null);
         return;
       }
@@ -122,7 +138,7 @@ export default function AdminApprovedProducts() {
       const token = await getToken();
       const updated = await productsApi.updateGlobalProduct(token, editingProduct.id, editData);
       setProducts(products.map(p => p.id === editingProduct.id ? updated : p));
-      setSuccess(`Successfully updated product "${updated.name}" in the global database.`);
+      setSuccess(`Successfully updated product "${updated.name}" details.`);
       setEditingProduct(null);
     } catch (err: any) {
       setError(err.message || "Failed to update product details.");
@@ -131,40 +147,71 @@ export default function AdminApprovedProducts() {
     }
   };
 
+  const handleApprove = async (id: string, prodName: string) => {
+    if (!confirm(`Are you sure you want to approve "${prodName}" directly?`)) return;
+    
+    setActioningId(id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const isBoneyard = typeof window !== "undefined" && 
+        ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+
+      if (isBoneyard) {
+        setProducts(products.filter(p => p.id !== id));
+        setSuccess(`Successfully approved and published "${prodName}" to the global database.`);
+        return;
+      }
+
+      const token = await getToken();
+      await adminApi.approveProduct(token, id);
+      setProducts(products.filter(p => p.id !== id));
+      setSuccess(`Successfully approved and published "${prodName}" to the global database.`);
+    } catch (err: any) {
+      setError(err.message || "Failed to approve product.");
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const handleMakePending = async (id: string, prodName: string) => {
+    if (!confirm(`Are you sure you want to make "${prodName}" pending review again?`)) return;
+    
+    setActioningId(id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const isBoneyard = typeof window !== "undefined" && 
+        ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+
+      if (isBoneyard) {
+        setProducts(products.filter(p => p.id !== id));
+        setSuccess(`"${prodName}" has been moved back to the approval queue.`);
+        return;
+      }
+
+      const token = await getToken();
+      await adminApi.makeProductPending(token, id);
+      setProducts(products.filter(p => p.id !== id));
+      setSuccess(`"${prodName}" has been moved back to the approval queue.`);
+    } catch (err: any) {
+      setError(err.message || "Failed to move product back to pending.");
+    } finally {
+      setActioningId(null);
+    }
+  };
+
   return (
-    <Skeleton name="admin-approved-products" loading={loading}>
+    <Skeleton name="admin-rejected-products" loading={loading}>
       <div className="space-y-8 select-none">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800/80 pb-6">
-          <div>
-            <h1 className="text-xl font-bold text-white font-sans">Global Product Catalog</h1>
-            <p className="text-xs text-zinc-400 mt-1">
-              Browse, search, and edit verified products in the Onbillo global registry.
-            </p>
-          </div>
-
-          <div className="flex flex-row items-center gap-3">
-            <Link
-              href="/admin/products/add"
-              className="h-10 px-4 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" /> Add Product
-            </Link>
-          </div>
-        </div>
-
-        {/* Search & Feedback */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="relative w-full sm:w-80 shrink-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <input
-              type="text"
-              placeholder="Search by barcode, name or brand..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 border border-zinc-800 bg-zinc-900 hover:border-zinc-700 focus:border-brand-primary rounded-lg text-xs h-10 text-white outline-none"
-            />
-          </div>
+        <div className="border-b border-zinc-800/80 pb-6">
+          <h1 className="text-xl font-bold text-white font-sans">Rejected Product Queue</h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            Browse global product requests that were previously rejected. You can edit details and either approve or reset their statuses.
+          </p>
         </div>
 
         {success && (
@@ -183,10 +230,10 @@ export default function AdminApprovedProducts() {
         <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-md">
           {products.length === 0 ? (
             <div className="p-12 text-center text-zinc-500">
-              <Layers className="w-10 h-10 mx-auto text-zinc-600 mb-3" />
-              <h4 className="text-xs font-bold text-white">No products found</h4>
+              <FileX className="w-10 h-10 mx-auto text-zinc-600 mb-3" />
+              <h4 className="text-xs font-bold text-white">No rejected products</h4>
               <p className="text-[10px] text-zinc-500 mt-1">
-                Try searching for a different barcode or product name.
+                There are no rejected product requests on the platform.
               </p>
             </div>
           ) : (
@@ -195,10 +242,11 @@ export default function AdminApprovedProducts() {
                 <thead>
                   <tr className="bg-zinc-950 border-b border-zinc-800 text-[9px] font-bold text-zinc-500 uppercase tracking-wider font-mono">
                     <th className="py-3.5 px-5">UPC Barcode</th>
-                    <th className="py-3.5 px-5">Brand</th>
-                    <th className="py-3.5 px-5">Product Name</th>
+                    <th className="py-3.5 px-5">Brand / Name</th>
+                    <th className="py-3.5 px-5">Submitted By</th>
                     <th className="py-3.5 px-5 text-right">MRP (₹)</th>
                     <th className="py-3.5 px-5">Category</th>
+                    <th className="py-3.5 px-5">Rejection Reason</th>
                     <th className="py-3.5 px-5 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -208,10 +256,10 @@ export default function AdminApprovedProducts() {
                       <td className="py-3.5 px-5 font-mono font-bold text-zinc-500 truncate max-w-[120px]">
                         {p.barcode || "N/A"}
                       </td>
-                      <td className="py-3.5 px-5 font-bold text-brand-primary truncate max-w-[100px]">
-                        {p.brand || "—"}
-                      </td>
-                      <td className="py-3.5 px-5 font-bold text-white truncate max-w-[240px]">
+                      <td className="py-3.5 px-5 truncate max-w-[220px]">
+                        <span className="font-bold text-brand-primary block text-[10px] mb-0.5">
+                          {p.brand || "—"}
+                        </span>
                         <div className="flex items-center gap-2.5">
                           {p.imageUrl ? (
                             <img src={p.imageUrl} className="w-8 h-8 rounded object-cover border border-zinc-850 shrink-0" />
@@ -220,8 +268,16 @@ export default function AdminApprovedProducts() {
                               —
                             </div>
                           )}
-                          <span className="truncate">{p.name}</span>
+                          <span className="font-bold text-white truncate">{p.name}</span>
                         </div>
+                      </td>
+                      <td className="py-3.5 px-5 truncate max-w-[160px]">
+                        <span className="text-white font-medium block">
+                          {p.creatorName || "Anonymous"}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono block">
+                          {p.creatorShopName || "Admin Console"}
+                        </span>
                       </td>
                       <td className="py-3.5 px-5 font-semibold text-white text-right font-mono">
                         ₹{(p.mrp / 100).toFixed(2)}
@@ -229,15 +285,38 @@ export default function AdminApprovedProducts() {
                       <td className="py-3.5 px-5 text-zinc-400 font-medium">
                         {p.category || "—"}
                       </td>
-                      <td className="py-3.5 px-5 text-center" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          disabled={actioningId !== null}
-                          onClick={() => triggerEditDialog(p)}
-                          className="h-8 px-2.5 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1.5"
-                          title="Edit Details"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" /> Edit
-                        </button>
+                      <td className="py-3.5 px-5 text-red-400 font-medium max-w-[220px] truncate" title={p.rejectionReason || ""}>
+                        {p.rejectionReason || "No reason provided"}
+                      </td>
+                      <td className="py-3.5 px-5" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            disabled={actioningId !== null}
+                            onClick={() => triggerEditDialog(p)}
+                            className="h-8 px-2 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
+                            title="Edit Details"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" /> Edit
+                          </button>
+                          
+                          <button
+                            disabled={actioningId !== null}
+                            onClick={() => handleMakePending(p.id, p.name)}
+                            className="h-8 px-2 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
+                            title="Make Pending"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 text-amber-500" /> Reset
+                          </button>
+
+                          <button
+                            disabled={actioningId !== null}
+                            onClick={() => handleApprove(p.id, p.name)}
+                            className="h-8 px-2 bg-emerald-950/20 border border-emerald-900/30 text-emerald-400 hover:bg-emerald-800 hover:text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
+                            title="Approve Directly"
+                          >
+                            <Check className="w-3.5 h-3.5" /> Approve
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -252,9 +331,9 @@ export default function AdminApprovedProducts() {
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
             <form onSubmit={handleEditSubmit} className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg max-w-md w-full p-6 space-y-4 text-white">
               <div>
-                <h3 className="text-sm font-bold font-sans">Edit Verified Product</h3>
+                <h3 className="text-sm font-bold font-sans">Edit Rejected Product</h3>
                 <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
-                  Modify details for this verified item. Changes take effect across all stores linking this barcode.
+                  Modify details for this rejected request before choosing to approve or move it back to the pending queue.
                 </p>
               </div>
 

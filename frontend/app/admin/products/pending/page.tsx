@@ -46,7 +46,20 @@ export default function AdminPendingProducts() {
       
       if (isBoneyard) {
         setPendingProducts([
-          { id: "11", barcode: "8901030818279", name: "Red Label Tea 500g", brand: "Brooke Bond", category: "Beverages", mrp: 19500, status: "pending", rejectionReason: null, createdBy: "99", createdAt: new Date().toISOString() }
+          { 
+            id: "11", 
+            barcode: "8901030818279", 
+            name: "Red Label Tea 500g", 
+            brand: "Brooke Bond", 
+            category: "Beverages", 
+            mrp: 19500, 
+            status: "pending", 
+            rejectionReason: null, 
+            createdBy: "99", 
+            creatorName: "Kushal Kambar", 
+            creatorShopName: "Kambar Groceries", 
+            createdAt: new Date().toISOString() 
+          }
         ]);
         setLoading(false);
         return;
@@ -201,7 +214,8 @@ export default function AdminPendingProducts() {
                     <th className="py-3.5 px-5">UPC Barcode</th>
                     <th className="py-3.5 px-5">Brand</th>
                     <th className="py-3.5 px-5">Product Name</th>
-                    <th className="py-3.5 px-5 font-right text-right">MRP (₹)</th>
+                    <th className="py-3.5 px-5">Submitted By</th>
+                    <th className="py-3.5 px-5 text-right">MRP (₹)</th>
                     <th className="py-3.5 px-5">Category</th>
                     <th className="py-3.5 px-5 text-center">Actions</th>
                   </tr>
@@ -215,8 +229,25 @@ export default function AdminPendingProducts() {
                       <td className="py-3.5 px-5 font-bold text-brand-primary truncate max-w-[100px]">
                         {p.brand || "—"}
                       </td>
-                      <td className="py-3.5 px-5 font-bold text-white truncate max-w-[220px]">
-                        {p.name}
+                      <td className="py-3.5 px-5 font-bold text-white truncate max-w-[240px]">
+                        <div className="flex items-center gap-2.5">
+                          {p.imageUrl ? (
+                            <img src={p.imageUrl} className="w-8 h-8 rounded object-cover border border-zinc-850 shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-zinc-950 border border-zinc-850 flex items-center justify-center text-[9px] text-zinc-600 font-bold shrink-0">
+                              —
+                            </div>
+                          )}
+                          <span className="truncate">{p.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-5 truncate max-w-[160px]">
+                        <span className="text-white font-medium block">
+                          {p.creatorName || "Anonymous"}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono block">
+                          {p.creatorShopName || "Admin Console"}
+                        </span>
                       </td>
                       <td className="py-3.5 px-5 font-semibold text-white text-right font-mono">
                         ₹{(p.mrp / 100).toFixed(2)}
