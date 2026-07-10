@@ -4,7 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { shopsApi, usersApi } from "../utils/api";
-import { CreateShopSchema, UpdateMeSchema, PhoneSchema, validateSchema } from "../utils/validation";
+import {
+  CreateShopSchema,
+  UpdateMeSchema,
+  PhoneSchema,
+  validateSchema,
+} from "../utils/validation";
 import DevMockModeIndicator from "../components/DevMockModeIndicator";
 import { Store, User, ArrowLeft } from "lucide-react";
 import LogoUploadAndCrop from "../components/LogoUploadAndCrop";
@@ -16,13 +21,13 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { getToken } = useAuth();
   const { user } = useUser();
-  
+
   const [loading, setLoading] = useState(false);
   const [checkingUser, setCheckingUser] = useState(true);
   const [error, setError] = useState("");
   const [step, setStep] = useState<Step>("role");
   const [role, setRole] = useState<Role | null>(null);
-  
+
   const [phone, setPhone] = useState("+91");
   const [phoneInitiallyPresent, setPhoneInitiallyPresent] = useState(false);
   const [formData, setFormData] = useState({
@@ -37,7 +42,7 @@ export default function OnboardingPage() {
     email: "", // Business email
     taxType: "gst_inclusive",
     taxRate: "18.00",
-    logoUrl: ""
+    logoUrl: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,13 +64,21 @@ export default function OnboardingPage() {
 
   const validateField = (name: string, value: string) => {
     if (name === "personalPhone") {
-      if (!value.trim() || value === "+91") return "Personal phone number is required";
+      if (!value.trim() || value === "+91")
+        return "Personal phone number is required";
       const res = PhoneSchema.safeParse(value);
       if (!res.success) return res.error.issues[0].message;
       return "";
     }
 
-    const optionalFields = ["gstNumber", "addressLine2", "phone", "email", "taxRate", "logoUrl"];
+    const optionalFields = [
+      "gstNumber",
+      "addressLine2",
+      "phone",
+      "email",
+      "taxRate",
+      "logoUrl",
+    ];
     if (optionalFields.includes(name) && (!value.trim() || value === "+91")) {
       return "";
     }
@@ -82,9 +95,9 @@ export default function OnboardingPage() {
   };
 
   const handleFieldBlur = (name: string, value: string) => {
-    setTouched(prev => ({ ...prev, [name]: true }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
     const errorMsg = validateField(name, value);
-    setErrors(prev => ({ ...prev, [name]: errorMsg }));
+    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
   };
 
   const handleFieldChange = (name: string, value: string) => {
@@ -92,39 +105,46 @@ export default function OnboardingPage() {
       const formatted = formatPhoneInput(value);
       setPhone(formatted);
       if (touched["personalPhone"]) {
-        setErrors(prev => ({ ...prev, personalPhone: validateField("personalPhone", formatted) }));
+        setErrors((prev) => ({
+          ...prev,
+          personalPhone: validateField("personalPhone", formatted),
+        }));
       }
     } else if (name === "phone") {
       const formatted = formatPhoneInput(value);
-      setFormData(prev => ({ ...prev, phone: formatted }));
+      setFormData((prev) => ({ ...prev, phone: formatted }));
       if (touched["phone"]) {
-        setErrors(prev => ({ ...prev, phone: validateField("phone", formatted) }));
+        setErrors((prev) => ({
+          ...prev,
+          phone: validateField("phone", formatted),
+        }));
       }
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
       if (touched[name]) {
-        setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+        setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
       }
     }
   };
 
   const getMissingOrInvalidFields = () => {
     const list: string[] = [];
-    
+
     // Check personal phone
     const personalPhoneErr = validateField("personalPhone", phone);
     if (personalPhoneErr) {
       list.push("Personal Profile - Phone: " + personalPhoneErr);
     }
-    
+
     if (role === "owner") {
       // Check required fields are not empty
       if (!formData.name.trim()) list.push("Shop Name is required");
-      if (!formData.addressLine1.trim()) list.push("Address Line 1 is required");
+      if (!formData.addressLine1.trim())
+        list.push("Address Line 1 is required");
       if (!formData.city.trim()) list.push("City is required");
       if (!formData.state.trim()) list.push("State is required");
       if (!formData.pincode.trim()) list.push("Pincode is required");
-      
+
       // Check all validation rules
       Object.keys(formData).forEach((key) => {
         const err = validateField(key, (formData as any)[key]);
@@ -133,7 +153,7 @@ export default function OnboardingPage() {
         }
       });
     }
-    
+
     return Array.from(new Set(list));
   };
 
@@ -144,7 +164,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (user) {
       const email = user.primaryEmailAddress?.emailAddress || "";
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         email: prev.email || email,
       }));
@@ -177,7 +197,9 @@ export default function OnboardingPage() {
     checkUserOnboarding();
   }, [getToken]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     handleFieldChange(e.target.name, e.target.value);
   };
 
@@ -212,7 +234,7 @@ export default function OnboardingPage() {
 
     try {
       const token = await getToken();
-      
+
       // 1. Save personal phone number in users table
       await usersApi.updateProfile(token, "", cleanedPersonalPhone);
 
@@ -225,7 +247,9 @@ export default function OnboardingPage() {
         router.push("/invites");
       }
     } catch (err: any) {
-      setError(err.message || "Failed to complete onboarding. Please try again.");
+      setError(
+        err.message || "Failed to complete onboarding. Please try again.",
+      );
       setLoading(false);
     }
   };
@@ -233,21 +257,35 @@ export default function OnboardingPage() {
   if (checkingUser) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background relative overflow-hidden">
-        
-        <svg className="animate-spin h-10 w-10 text-brand-primary" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        <svg
+          className="animate-spin h-10 w-10 text-brand-primary"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
         </svg>
-        <p className="mt-4 text-xs font-semibold text-mute">Checking onboarding status...</p>
+        <p className="mt-4 text-xs font-semibold text-mute">
+          Checking onboarding status...
+        </p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background relative overflow-hidden">
-      
       <div className="w-full max-w-2xl bg-canvas border border-hairline rounded-2xl shadow-level-4 p-8 z-10 relative transition-all duration-300">
-        
         {/* Back Button */}
         {step === "details" && !phoneInitiallyPresent && (
           <button
@@ -270,7 +308,8 @@ export default function OnboardingPage() {
                 Welcome to Onbillo
               </h1>
               <p className="mt-2 text-sm text-body">
-                Let's get your billing and store workspace set up. First, select your role:
+                Let's get your billing and store workspace set up. First, select
+                your role:
               </p>
             </div>
 
@@ -289,7 +328,8 @@ export default function OnboardingPage() {
                   Shop Owner
                 </h3>
                 <p className="mt-2 text-xs text-body leading-relaxed">
-                  Create a new shop workspace, manage inventory, add staff, and start billing your customers.
+                  Create a new shop workspace, manage inventory, add staff, and
+                  start billing your customers.
                 </p>
                 <div className="mt-6 inline-flex items-center gap-1 text-xs font-semibold text-brand-primary group-hover:translate-x-1 transition-transform duration-200">
                   Get Started &rarr;
@@ -310,7 +350,8 @@ export default function OnboardingPage() {
                   Shop Worker / Staff
                 </h3>
                 <p className="mt-2 text-xs text-body leading-relaxed">
-                  Join an existing shop workspace. You'll need to ask your shop owner to invite you to their workspace.
+                  Join an existing shop workspace. You'll need to ask your shop
+                  owner to invite you to their workspace.
                 </p>
                 <div className="mt-6 inline-flex items-center gap-1 text-xs font-semibold text-brand-secondary group-hover:translate-x-1 transition-transform duration-200">
                   Join Workspace &rarr;
@@ -322,10 +363,12 @@ export default function OnboardingPage() {
           <div>
             <div className="mb-8 text-center">
               <h1 className="text-3xl font-bold tracking-tight text-foreground font-sans animate-in fade-in slide-in-from-top-4 duration-200">
-                {role === "owner" ? "Set up your shop workspace" : "Complete your profile"}
+                {role === "owner"
+                  ? "Set up your shop workspace"
+                  : "Complete your profile"}
               </h1>
               <p className="mt-2 text-sm text-body animate-in fade-in slide-in-from-top-4 duration-200">
-                {role === "owner" 
+                {role === "owner"
                   ? "Create your billing workspace to get started with thermal printing, GST filing, and barcode scanning."
                   : "Please provide your contact information to finish joining Onbillo."}
               </p>
@@ -351,7 +394,8 @@ export default function OnboardingPage() {
                         Phone Number <span className="text-error-deep">*</span>
                       </label>
                       <span className="text-[10px] text-mute font-mono">
-                        {phone.length === 0 ? 0 : Math.max(0, phone.length - 3)}/10 digits
+                        {phone.length === 0 ? 0 : Math.max(0, phone.length - 3)}
+                        /10 digits
                       </span>
                     </div>
                     <input
@@ -360,15 +404,23 @@ export default function OnboardingPage() {
                       required
                       placeholder="e.g. +91 98765 43210"
                       value={phone}
-                      onChange={(e) => handleFieldChange("personalPhone", e.target.value)}
-                      onBlur={(e) => handleFieldBlur("personalPhone", e.target.value)}
+                      onChange={(e) =>
+                        handleFieldChange("personalPhone", e.target.value)
+                      }
+                      onBlur={(e) =>
+                        handleFieldBlur("personalPhone", e.target.value)
+                      }
                       disabled={phoneInitiallyPresent}
                       className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground disabled:opacity-60 disabled:cursor-not-allowed ${
-                        touched.personalPhone && errors.personalPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                        touched.personalPhone && errors.personalPhone
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                          : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                       }`}
                     />
                     {touched.personalPhone && errors.personalPhone && (
-                      <p className="text-xs text-red-500 mt-1">{errors.personalPhone}</p>
+                      <p className="text-xs text-red-500 mt-1">
+                        {errors.personalPhone}
+                      </p>
                     )}
                     {phoneInitiallyPresent && (
                       <p className="text-[10px] text-mute mt-1">
@@ -402,16 +454,22 @@ export default function OnboardingPage() {
                           type="text"
                           name="name"
                           required
-                          placeholder="e.g. Kambar Groceries"
+                          placeholder="e.g. OnbilloGroceries"
                           value={formData.name}
                           onChange={handleChange}
-                          onBlur={(e) => handleFieldBlur("name", e.target.value)}
+                          onBlur={(e) =>
+                            handleFieldBlur("name", e.target.value)
+                          }
                           className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                            touched.name && errors.name ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            touched.name && errors.name
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                              : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                           }`}
                         />
                         {touched.name && errors.name && (
-                          <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            {errors.name}
+                          </p>
                         )}
                       </div>
 
@@ -430,13 +488,19 @@ export default function OnboardingPage() {
                           placeholder="e.g. 29AAAAA0000A1Z1"
                           value={formData.gstNumber}
                           onChange={handleChange}
-                          onBlur={(e) => handleFieldBlur("gstNumber", e.target.value)}
+                          onBlur={(e) =>
+                            handleFieldBlur("gstNumber", e.target.value)
+                          }
                           className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                            touched.gstNumber && errors.gstNumber ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            touched.gstNumber && errors.gstNumber
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                              : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                           }`}
                         />
                         {touched.gstNumber && errors.gstNumber && (
-                          <p className="text-xs text-red-500 mt-1">{errors.gstNumber}</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            {errors.gstNumber}
+                          </p>
                         )}
                       </div>
 
@@ -446,7 +510,10 @@ export default function OnboardingPage() {
                             Business Phone
                           </label>
                           <span className="text-[10px] text-mute font-mono">
-                            {formData.phone.length === 0 ? 0 : Math.max(0, formData.phone.length - 3)}/10 digits
+                            {formData.phone.length === 0
+                              ? 0
+                              : Math.max(0, formData.phone.length - 3)}
+                            /10 digits
                           </span>
                         </div>
                         <input
@@ -455,13 +522,19 @@ export default function OnboardingPage() {
                           placeholder="e.g. +91 8023456789"
                           value={formData.phone}
                           onChange={handleChange}
-                          onBlur={(e) => handleFieldBlur("phone", e.target.value)}
+                          onBlur={(e) =>
+                            handleFieldBlur("phone", e.target.value)
+                          }
                           className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                            touched.phone && errors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            touched.phone && errors.phone
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                              : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                           }`}
                         />
                         {touched.phone && errors.phone && (
-                          <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            {errors.phone}
+                          </p>
                         )}
                       </div>
 
@@ -480,13 +553,19 @@ export default function OnboardingPage() {
                           placeholder="e.g. billing@mybusiness.com"
                           value={formData.email}
                           onChange={handleChange}
-                          onBlur={(e) => handleFieldBlur("email", e.target.value)}
+                          onBlur={(e) =>
+                            handleFieldBlur("email", e.target.value)
+                          }
                           className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                            touched.email && errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            touched.email && errors.email
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                              : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                           }`}
                         />
                         {touched.email && errors.email && (
-                          <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            {errors.email}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -503,7 +582,8 @@ export default function OnboardingPage() {
                       <div>
                         <div className="flex justify-between items-center mb-1.5">
                           <label className="block text-xs font-semibold text-foreground">
-                            Address Line 1 <span className="text-error-deep">*</span>
+                            Address Line 1{" "}
+                            <span className="text-error-deep">*</span>
                           </label>
                           <span className="text-[10px] text-mute font-mono">
                             {formData.addressLine1.length}/500 chars
@@ -516,13 +596,19 @@ export default function OnboardingPage() {
                           placeholder="Street name, Shop #, Building"
                           value={formData.addressLine1}
                           onChange={handleChange}
-                          onBlur={(e) => handleFieldBlur("addressLine1", e.target.value)}
+                          onBlur={(e) =>
+                            handleFieldBlur("addressLine1", e.target.value)
+                          }
                           className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                            touched.addressLine1 && errors.addressLine1 ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            touched.addressLine1 && errors.addressLine1
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                              : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                           }`}
                         />
                         {touched.addressLine1 && errors.addressLine1 && (
-                          <p className="text-xs text-red-500 mt-1">{errors.addressLine1}</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            {errors.addressLine1}
+                          </p>
                         )}
                       </div>
 
@@ -541,13 +627,19 @@ export default function OnboardingPage() {
                           placeholder="Locality, Sector, Landmark"
                           value={formData.addressLine2}
                           onChange={handleChange}
-                          onBlur={(e) => handleFieldBlur("addressLine2", e.target.value)}
+                          onBlur={(e) =>
+                            handleFieldBlur("addressLine2", e.target.value)
+                          }
                           className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                            touched.addressLine2 && errors.addressLine2 ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            touched.addressLine2 && errors.addressLine2
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                              : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                           }`}
                         />
                         {touched.addressLine2 && errors.addressLine2 && (
-                          <p className="text-xs text-red-500 mt-1">{errors.addressLine2}</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            {errors.addressLine2}
+                          </p>
                         )}
                       </div>
 
@@ -568,13 +660,19 @@ export default function OnboardingPage() {
                             placeholder="e.g. Bengaluru"
                             value={formData.city}
                             onChange={handleChange}
-                            onBlur={(e) => handleFieldBlur("city", e.target.value)}
+                            onBlur={(e) =>
+                              handleFieldBlur("city", e.target.value)
+                            }
                             className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                              touched.city && errors.city ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                              touched.city && errors.city
+                                ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                                : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                             }`}
                           />
                           {touched.city && errors.city && (
-                            <p className="text-xs text-red-500 mt-1">{errors.city}</p>
+                            <p className="text-xs text-red-500 mt-1">
+                              {errors.city}
+                            </p>
                           )}
                         </div>
 
@@ -594,13 +692,19 @@ export default function OnboardingPage() {
                             placeholder="e.g. Karnataka"
                             value={formData.state}
                             onChange={handleChange}
-                            onBlur={(e) => handleFieldBlur("state", e.target.value)}
+                            onBlur={(e) =>
+                              handleFieldBlur("state", e.target.value)
+                            }
                             className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                              touched.state && errors.state ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                              touched.state && errors.state
+                                ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                                : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                             }`}
                           />
                           {touched.state && errors.state && (
-                            <p className="text-xs text-red-500 mt-1">{errors.state}</p>
+                            <p className="text-xs text-red-500 mt-1">
+                              {errors.state}
+                            </p>
                           )}
                         </div>
 
@@ -620,13 +724,19 @@ export default function OnboardingPage() {
                             placeholder="e.g. 560034"
                             value={formData.pincode}
                             onChange={handleChange}
-                            onBlur={(e) => handleFieldBlur("pincode", e.target.value)}
+                            onBlur={(e) =>
+                              handleFieldBlur("pincode", e.target.value)
+                            }
                             className={`w-full border bg-canvas hover:border-hairline-strong rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                              touched.pincode && errors.pincode ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                              touched.pincode && errors.pincode
+                                ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                                : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                             }`}
                           />
                           {touched.pincode && errors.pincode && (
-                            <p className="text-xs text-red-500 mt-1">{errors.pincode}</p>
+                            <p className="text-xs text-red-500 mt-1">
+                              {errors.pincode}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -651,9 +761,15 @@ export default function OnboardingPage() {
                           onChange={handleChange}
                           className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground"
                         >
-                          <option value="gst_inclusive">GST Inclusive (Item prices include tax)</option>
-                          <option value="gst_exclusive">GST Exclusive (Tax added at checkout)</option>
-                          <option value="no_tax">No Tax (Zero-rated / Exempt)</option>
+                          <option value="gst_inclusive">
+                            GST Inclusive (Item prices include tax)
+                          </option>
+                          <option value="gst_exclusive">
+                            GST Exclusive (Tax added at checkout)
+                          </option>
+                          <option value="no_tax">
+                            No Tax (Zero-rated / Exempt)
+                          </option>
                         </select>
                       </div>
 
@@ -667,13 +783,19 @@ export default function OnboardingPage() {
                           name="taxRate"
                           value={formData.taxRate}
                           onChange={handleChange}
-                          onBlur={(e) => handleFieldBlur("taxRate", e.target.value)}
+                          onBlur={(e) =>
+                            handleFieldBlur("taxRate", e.target.value)
+                          }
                           className={`w-full border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-sm transition-all duration-200 h-10 px-3 text-foreground ${
-                            touched.taxRate && errors.taxRate ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
+                            touched.taxRate && errors.taxRate
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
+                              : "border-hairline focus:border-brand-primary focus:ring-brand-primary/30"
                           }`}
                         />
                         {touched.taxRate && errors.taxRate && (
-                          <p className="text-xs text-red-500 mt-1">{errors.taxRate}</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            {errors.taxRate}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -688,7 +810,9 @@ export default function OnboardingPage() {
                     </h3>
                     <LogoUploadAndCrop
                       value={formData.logoUrl}
-                      onChange={(url) => setFormData(prev => ({ ...prev, logoUrl: url || "" }))}
+                      onChange={(url) =>
+                        setFormData((prev) => ({ ...prev, logoUrl: url || "" }))
+                      }
                       getToken={getToken}
                     />
                   </div>
@@ -698,7 +822,9 @@ export default function OnboardingPage() {
               {/* Submit button blocker explainer */}
               {!isFormValid && (
                 <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs font-medium text-yellow-700 dark:text-yellow-400 space-y-1">
-                  <p className="font-bold">⚠️ Please resolve the following to enable submission:</p>
+                  <p className="font-bold">
+                    ⚠️ Please resolve the following to enable submission:
+                  </p>
                   <ul className="list-disc pl-4 space-y-0.5">
                     {missingOrInvalid.map((item, idx) => (
                       <li key={idx}>{item}</li>
@@ -714,14 +840,33 @@ export default function OnboardingPage() {
               >
                 {loading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
                     </svg>
-                    {role === "owner" ? "Initializing Workspace..." : "Saving Profile..."}
+                    {role === "owner"
+                      ? "Initializing Workspace..."
+                      : "Saving Profile..."}
                   </>
+                ) : role === "owner" ? (
+                  "Initialize Workspace & Shop"
                 ) : (
-                  role === "owner" ? "Initialize Workspace & Shop" : "Complete Onboarding"
+                  "Complete Onboarding"
                 )}
               </button>
             </form>

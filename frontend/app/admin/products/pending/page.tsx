@@ -4,18 +4,18 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { adminApi, Product } from "../../../utils/api";
 import { Skeleton } from "boneyard-js/react";
-import { 
-  FileCheck2, 
-  Check, 
-  X, 
-  Search, 
+import {
+  FileCheck2,
+  Check,
+  X,
+  Search,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
 } from "lucide-react";
 
 export default function AdminPendingProducts() {
   const { getToken } = useAuth();
-  
+
   const [loading, setLoading] = useState(true);
   const [pendingProducts, setPendingProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,42 +24,48 @@ export default function AdminPendingProducts() {
   const [actioningId, setActioningId] = useState<string | null>(null);
 
   // Rejection dialog state
-  const [rejectingProduct, setRejectingProduct] = useState<Product | null>(null);
+  const [rejectingProduct, setRejectingProduct] = useState<Product | null>(
+    null,
+  );
   const [rejectionReason, setRejectionReason] = useState("");
   const [rejectLoading, setRejectLoading] = useState(false);
 
   // Approval with editing dialog state
-  const [approvingProduct, setApprovingProduct] = useState<Product | null>(null);
+  const [approvingProduct, setApprovingProduct] = useState<Product | null>(
+    null,
+  );
   const [approveForm, setApproveForm] = useState({
     barcode: "",
     brand: "",
     name: "",
     category: "",
-    mrp: ""
+    mrp: "",
   });
   const [approveLoading, setApproveLoading] = useState(false);
 
   async function loadPending() {
     try {
-      const isBoneyard = typeof window !== "undefined" && 
-        ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
-      
+      const isBoneyard =
+        typeof window !== "undefined" &&
+        ((window as any).__BONEYARD_BUILD ||
+          window.location.search.includes("boneyard=true"));
+
       if (isBoneyard) {
         setPendingProducts([
-          { 
-            id: "11", 
-            barcode: "8901030818279", 
-            name: "Red Label Tea 500g", 
-            brand: "Brooke Bond", 
-            category: "Beverages", 
-            mrp: 19500, 
-            status: "pending", 
-            rejectionReason: null, 
-            createdBy: "99", 
-            creatorName: "Kushal Kambar", 
-            creatorShopName: "Kambar Groceries", 
-            createdAt: new Date().toISOString() 
-          }
+          {
+            id: "11",
+            barcode: "8901030818279",
+            name: "Red Label Tea 500g",
+            brand: "Brooke Bond",
+            category: "Beverages",
+            mrp: 19500,
+            status: "pending",
+            rejectionReason: null,
+            createdBy: "99",
+            creatorName: "Kushal Kambar",
+            creatorShopName: "OnbilloGroceries",
+            createdAt: new Date().toISOString(),
+          },
         ]);
         setLoading(false);
         return;
@@ -86,7 +92,7 @@ export default function AdminPendingProducts() {
       brand: prod.brand || "",
       name: prod.name || "",
       category: prod.category || "",
-      mrp: (prod.mrp / 100).toString()
+      mrp: (prod.mrp / 100).toString(),
     });
     setError("");
     setSuccess("");
@@ -111,13 +117,17 @@ export default function AdminPendingProducts() {
         brand: approveForm.brand.trim() || null,
         name: approveForm.name.trim(),
         category: approveForm.category.trim() || null,
-        mrp: parsedMrp
+        mrp: parsedMrp,
       };
 
       const token = await getToken();
       await adminApi.approveProduct(token, approvingProduct.id, editData);
-      setPendingProducts(pendingProducts.filter(p => p.id !== approvingProduct.id));
-      setSuccess(`Successfully approved and published "${editData.name}" to the global database.`);
+      setPendingProducts(
+        pendingProducts.filter((p) => p.id !== approvingProduct.id),
+      );
+      setSuccess(
+        `Successfully approved and published "${editData.name}" to the global database.`,
+      );
       setApprovingProduct(null);
     } catch (err: any) {
       setError(err.message || "Failed to approve product.");
@@ -144,8 +154,12 @@ export default function AdminPendingProducts() {
     try {
       const token = await getToken();
       await adminApi.rejectProduct(token, rejectingProduct.id, rejectionReason);
-      setPendingProducts(pendingProducts.filter(p => p.id !== rejectingProduct.id));
-      setSuccess(`Rejected global product submission for "${rejectingProduct.name}".`);
+      setPendingProducts(
+        pendingProducts.filter((p) => p.id !== rejectingProduct.id),
+      );
+      setSuccess(
+        `Rejected global product submission for "${rejectingProduct.name}".`,
+      );
       setRejectingProduct(null);
     } catch (err: any) {
       setError(err.message || "Failed to reject product.");
@@ -154,9 +168,13 @@ export default function AdminPendingProducts() {
     }
   };
 
-  const filteredPending = pendingProducts.filter(p => {
+  const filteredPending = pendingProducts.filter((p) => {
     const q = searchQuery.toLowerCase();
-    return p.name.toLowerCase().includes(q) || (p.brand && p.brand.toLowerCase().includes(q)) || (p.barcode && p.barcode.includes(q));
+    return (
+      p.name.toLowerCase().includes(q) ||
+      (p.brand && p.brand.toLowerCase().includes(q)) ||
+      (p.barcode && p.barcode.includes(q))
+    );
   });
 
   return (
@@ -165,9 +183,12 @@ export default function AdminPendingProducts() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-white font-sans">Global DB Request Queue</h1>
+            <h1 className="text-xl font-bold text-white font-sans">
+              Global DB Request Queue
+            </h1>
             <p className="text-xs text-zinc-400 mt-1">
-              Approve or reject retail product submissions to the Onbillo global registry.
+              Approve or reject retail product submissions to the Onbillo global
+              registry.
             </p>
           </div>
 
@@ -203,7 +224,8 @@ export default function AdminPendingProducts() {
               <FileCheck2 className="w-10 h-10 mx-auto text-zinc-600 mb-3" />
               <h4 className="text-xs font-bold text-white">Queue is clear</h4>
               <p className="text-[10px] text-zinc-500 mt-1">
-                There are no pending global database product requests from shop owners.
+                There are no pending global database product requests from shop
+                owners.
               </p>
             </div>
           ) : (
@@ -222,7 +244,10 @@ export default function AdminPendingProducts() {
                 </thead>
                 <tbody className="divide-y divide-zinc-800 text-xs">
                   {filteredPending.map((p) => (
-                    <tr key={p.id} className="hover:bg-zinc-950/40 transition-colors">
+                    <tr
+                      key={p.id}
+                      className="hover:bg-zinc-950/40 transition-colors"
+                    >
                       <td className="py-3.5 px-5 font-mono font-bold text-zinc-500 truncate max-w-[120px]">
                         {p.barcode || "N/A"}
                       </td>
@@ -232,7 +257,10 @@ export default function AdminPendingProducts() {
                       <td className="py-3.5 px-5 font-bold text-white truncate max-w-[240px]">
                         <div className="flex items-center gap-2.5">
                           {p.imageUrl ? (
-                            <img src={p.imageUrl} className="w-8 h-8 rounded object-cover border border-zinc-850 shrink-0" />
+                            <img
+                              src={p.imageUrl}
+                              className="w-8 h-8 rounded object-cover border border-zinc-850 shrink-0"
+                            />
                           ) : (
                             <div className="w-8 h-8 rounded bg-zinc-950 border border-zinc-850 flex items-center justify-center text-[9px] text-zinc-600 font-bold shrink-0">
                               —
@@ -255,7 +283,10 @@ export default function AdminPendingProducts() {
                       <td className="py-3.5 px-5 text-zinc-400 font-medium">
                         {p.category || "—"}
                       </td>
-                      <td className="py-3.5 px-5 text-center" onClick={(e) => e.stopPropagation()}>
+                      <td
+                        className="py-3.5 px-5 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="flex justify-center gap-3">
                           <button
                             disabled={actioningId !== null}
@@ -284,11 +315,17 @@ export default function AdminPendingProducts() {
         {/* Approve Product Modal (With Edit fields) */}
         {approvingProduct && (
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-            <form onSubmit={handleApproveConfirm} className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg max-w-md w-full p-6 space-y-4 text-white">
+            <form
+              onSubmit={handleApproveConfirm}
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg max-w-md w-full p-6 space-y-4 text-white"
+            >
               <div>
-                <h3 className="text-sm font-bold font-sans">Approve Global Registration</h3>
+                <h3 className="text-sm font-bold font-sans">
+                  Approve Global Registration
+                </h3>
                 <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
-                  Review and make changes to the product details before publishing to the platform catalog.
+                  Review and make changes to the product details before
+                  publishing to the platform catalog.
                 </p>
               </div>
 
@@ -300,7 +337,12 @@ export default function AdminPendingProducts() {
                   <input
                     type="text"
                     value={approveForm.barcode}
-                    onChange={(e) => setApproveForm({ ...approveForm, barcode: e.target.value })}
+                    onChange={(e) =>
+                      setApproveForm({
+                        ...approveForm,
+                        barcode: e.target.value,
+                      })
+                    }
                     className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
                     placeholder="e.g. 8901030818279"
                   />
@@ -314,7 +356,12 @@ export default function AdminPendingProducts() {
                     <input
                       type="text"
                       value={approveForm.brand}
-                      onChange={(e) => setApproveForm({ ...approveForm, brand: e.target.value })}
+                      onChange={(e) =>
+                        setApproveForm({
+                          ...approveForm,
+                          brand: e.target.value,
+                        })
+                      }
                       className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
                       placeholder="e.g. Brooke Bond"
                     />
@@ -326,7 +373,12 @@ export default function AdminPendingProducts() {
                     <input
                       type="text"
                       value={approveForm.category}
-                      onChange={(e) => setApproveForm({ ...approveForm, category: e.target.value })}
+                      onChange={(e) =>
+                        setApproveForm({
+                          ...approveForm,
+                          category: e.target.value,
+                        })
+                      }
                       className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
                       placeholder="e.g. Beverages"
                     />
@@ -341,7 +393,9 @@ export default function AdminPendingProducts() {
                     type="text"
                     required
                     value={approveForm.name}
-                    onChange={(e) => setApproveForm({ ...approveForm, name: e.target.value })}
+                    onChange={(e) =>
+                      setApproveForm({ ...approveForm, name: e.target.value })
+                    }
                     className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
                     placeholder="e.g. Red Label Tea 500g"
                   />
@@ -357,7 +411,9 @@ export default function AdminPendingProducts() {
                     required
                     min="0.01"
                     value={approveForm.mrp}
-                    onChange={(e) => setApproveForm({ ...approveForm, mrp: e.target.value })}
+                    onChange={(e) =>
+                      setApproveForm({ ...approveForm, mrp: e.target.value })
+                    }
                     className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white font-mono"
                     placeholder="e.g. 195.00"
                   />
@@ -389,9 +445,12 @@ export default function AdminPendingProducts() {
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg max-w-sm w-full p-6 space-y-4 text-white">
               <div>
-                <h3 className="text-sm font-bold font-sans">Reject Global Registration</h3>
+                <h3 className="text-sm font-bold font-sans">
+                  Reject Global Registration
+                </h3>
                 <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
-                  Specify why <strong>{rejectingProduct.name}</strong> cannot be approved for the platform DB.
+                  Specify why <strong>{rejectingProduct.name}</strong> cannot be
+                  approved for the platform DB.
                 </p>
               </div>
 

@@ -2,8 +2,8 @@
  
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { productsApi, ShopProduct, shopsApi } from "../../../utils/api";
-import { mockShopProducts } from "../../../utils/api/mockData";
+import { productsApi, ShopProduct, shopsApi, usersApi } from "../../../utils/api";
+import { mockShopProducts, mockUser } from "../../../utils/api/mockData";
 import { Skeleton } from "boneyard-js/react";
 import { 
   Search, 
@@ -30,6 +30,7 @@ export default function ShopInventory({
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const [isOwner, setIsOwner] = useState(false);
+  const [isAppAdmin, setIsAppAdmin] = useState(false);
   
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export default function ShopInventory({
       if (isBoneyard) {
         setProducts(mockShopProducts[shopId] || mockShopProducts["1"] || []);
         setIsOwner(true);
+        setIsAppAdmin(mockUser.role === "app_admin");
         setLoading(false);
         return;
       }
@@ -55,11 +57,16 @@ export default function ShopInventory({
       const token = await getToken();
       
       // Load user role to check if they are owner
-      const shopsList = await shopsApi.getUserShops(token);
+      const [shopsList, list, me] = await Promise.all([
+        shopsApi.getUserShops(token),
+        productsApi.getShopProducts(token, shopId),
+        usersApi.getMe(token).catch(() => null)
+      ]);
+      
       const membership = shopsList.find(m => m.shop.id === shopId);
       setIsOwner(membership?.role === "owner");
+      setIsAppAdmin(me?.role === "app_admin");
 
-      const list = await productsApi.getShopProducts(token, shopId);
       setProducts(list);
     } catch (err) {
       console.error(err);
@@ -197,15 +204,17 @@ export default function ShopInventory({
         
         <div className="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto">
           {/* Export Button */}
-          <button
-            onClick={handleExport}
-            disabled={products.length === 0}
-            className="h-10 px-4 border border-hairline hover:bg-canvas-soft text-foreground font-bold text-xs rounded-xl transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Export inventory to CSV"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-mute" />
-            <span>Export CSV</span>
-          </button>
+          {isAppAdmin && (
+            <button
+              onClick={handleExport}
+              disabled={products.length === 0}
+              className="h-10 px-4 border border-hairline hover:bg-canvas-soft text-foreground font-bold text-xs rounded-xl transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export inventory to CSV"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-mute" />
+              <span>Export CSV</span>
+            </button>
+          )}
  
           {/* Search */}
           <div className="relative flex-1 sm:w-64 sm:flex-none">

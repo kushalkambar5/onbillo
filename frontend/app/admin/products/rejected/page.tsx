@@ -4,50 +4,50 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { adminApi, productsApi, Product } from "../../../utils/api";
 import { Skeleton } from "boneyard-js/react";
-import { 
-  FileX, 
-  Edit3, 
-  Check, 
-  RotateCcw, 
+import {
+  FileX,
+  Edit3,
+  Check,
+  RotateCcw,
   AlertCircle,
   X,
-  ShieldAlert
+  ShieldAlert,
 } from "lucide-react";
 
 const mockRejectedProducts: Product[] = [
-  { 
-    id: "r1", 
-    barcode: "8901030818270", 
-    name: "Duplicate Tea Pack 250g", 
-    brand: "Brooke Bond", 
-    category: "Beverages", 
-    mrp: 9500, 
-    status: "rejected", 
-    rejectionReason: "Duplicate barcode request from another shop", 
-    createdBy: "99", 
+  {
+    id: "r1",
+    barcode: "8901030818270",
+    name: "Duplicate Tea Pack 250g",
+    brand: "Brooke Bond",
+    category: "Beverages",
+    mrp: 9500,
+    status: "rejected",
+    rejectionReason: "Duplicate barcode request from another shop",
+    createdBy: "99",
     creatorName: "Kushal Kambar",
-    creatorShopName: "Kambar Groceries",
-    createdAt: new Date().toISOString() 
+    creatorShopName: "OnbilloGroceries",
+    createdAt: new Date().toISOString(),
   },
-  { 
-    id: "r2", 
-    barcode: "8901207040515", 
-    name: "Tata Salt Lite 1kg (Typos)", 
-    brand: "Tata", 
-    category: "Grocery", 
-    mrp: 3500, 
-    status: "rejected", 
-    rejectionReason: "Incomplete/Incorrect details entered", 
-    createdBy: "102", 
+  {
+    id: "r2",
+    barcode: "8901207040515",
+    name: "Tata Salt Lite 1kg (Typos)",
+    brand: "Tata",
+    category: "Grocery",
+    mrp: 3500,
+    status: "rejected",
+    rejectionReason: "Incomplete/Incorrect details entered",
+    createdBy: "102",
     creatorName: "Ananya Sharma",
     creatorShopName: "Corner Cafe & Bakery",
-    createdAt: new Date().toISOString() 
-  }
+    createdAt: new Date().toISOString(),
+  },
 ];
 
 export default function AdminRejectedProducts() {
   const { getToken } = useAuth();
-  
+
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState("");
@@ -61,15 +61,17 @@ export default function AdminRejectedProducts() {
     brand: "",
     name: "",
     category: "",
-    mrp: ""
+    mrp: "",
   });
   const [saveLoading, setSaveLoading] = useState(false);
 
   async function loadProducts() {
     try {
-      const isBoneyard = typeof window !== "undefined" && 
-        ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
-      
+      const isBoneyard =
+        typeof window !== "undefined" &&
+        ((window as any).__BONEYARD_BUILD ||
+          window.location.search.includes("boneyard=true"));
+
       if (isBoneyard) {
         setProducts(mockRejectedProducts);
         setLoading(false);
@@ -97,7 +99,7 @@ export default function AdminRejectedProducts() {
       brand: prod.brand || "",
       name: prod.name || "",
       category: prod.category || "",
-      mrp: (prod.mrp / 100).toString()
+      mrp: (prod.mrp / 100).toString(),
     });
     setError("");
     setSuccess("");
@@ -122,22 +124,36 @@ export default function AdminRejectedProducts() {
         brand: editForm.brand.trim() || null,
         name: editForm.name.trim(),
         category: editForm.category.trim() || null,
-        mrp: parsedMrp
+        mrp: parsedMrp,
       };
 
-      const isBoneyard = typeof window !== "undefined" && 
-        ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+      const isBoneyard =
+        typeof window !== "undefined" &&
+        ((window as any).__BONEYARD_BUILD ||
+          window.location.search.includes("boneyard=true"));
 
       if (isBoneyard) {
-        setProducts(products.map(p => p.id === editingProduct.id ? { ...p, ...editData, mrp: parsedMrp } : p));
+        setProducts(
+          products.map((p) =>
+            p.id === editingProduct.id
+              ? { ...p, ...editData, mrp: parsedMrp }
+              : p,
+          ),
+        );
         setSuccess(`Successfully updated details for "${editData.name}".`);
         setEditingProduct(null);
         return;
       }
 
       const token = await getToken();
-      const updated = await productsApi.updateGlobalProduct(token, editingProduct.id, editData);
-      setProducts(products.map(p => p.id === editingProduct.id ? updated : p));
+      const updated = await productsApi.updateGlobalProduct(
+        token,
+        editingProduct.id,
+        editData,
+      );
+      setProducts(
+        products.map((p) => (p.id === editingProduct.id ? updated : p)),
+      );
       setSuccess(`Successfully updated product "${updated.name}" details.`);
       setEditingProduct(null);
     } catch (err: any) {
@@ -148,26 +164,33 @@ export default function AdminRejectedProducts() {
   };
 
   const handleApprove = async (id: string, prodName: string) => {
-    if (!confirm(`Are you sure you want to approve "${prodName}" directly?`)) return;
-    
+    if (!confirm(`Are you sure you want to approve "${prodName}" directly?`))
+      return;
+
     setActioningId(id);
     setError("");
     setSuccess("");
 
     try {
-      const isBoneyard = typeof window !== "undefined" && 
-        ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+      const isBoneyard =
+        typeof window !== "undefined" &&
+        ((window as any).__BONEYARD_BUILD ||
+          window.location.search.includes("boneyard=true"));
 
       if (isBoneyard) {
-        setProducts(products.filter(p => p.id !== id));
-        setSuccess(`Successfully approved and published "${prodName}" to the global database.`);
+        setProducts(products.filter((p) => p.id !== id));
+        setSuccess(
+          `Successfully approved and published "${prodName}" to the global database.`,
+        );
         return;
       }
 
       const token = await getToken();
       await adminApi.approveProduct(token, id);
-      setProducts(products.filter(p => p.id !== id));
-      setSuccess(`Successfully approved and published "${prodName}" to the global database.`);
+      setProducts(products.filter((p) => p.id !== id));
+      setSuccess(
+        `Successfully approved and published "${prodName}" to the global database.`,
+      );
     } catch (err: any) {
       setError(err.message || "Failed to approve product.");
     } finally {
@@ -176,25 +199,32 @@ export default function AdminRejectedProducts() {
   };
 
   const handleMakePending = async (id: string, prodName: string) => {
-    if (!confirm(`Are you sure you want to make "${prodName}" pending review again?`)) return;
-    
+    if (
+      !confirm(
+        `Are you sure you want to make "${prodName}" pending review again?`,
+      )
+    )
+      return;
+
     setActioningId(id);
     setError("");
     setSuccess("");
 
     try {
-      const isBoneyard = typeof window !== "undefined" && 
-        ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+      const isBoneyard =
+        typeof window !== "undefined" &&
+        ((window as any).__BONEYARD_BUILD ||
+          window.location.search.includes("boneyard=true"));
 
       if (isBoneyard) {
-        setProducts(products.filter(p => p.id !== id));
+        setProducts(products.filter((p) => p.id !== id));
         setSuccess(`"${prodName}" has been moved back to the approval queue.`);
         return;
       }
 
       const token = await getToken();
       await adminApi.makeProductPending(token, id);
-      setProducts(products.filter(p => p.id !== id));
+      setProducts(products.filter((p) => p.id !== id));
       setSuccess(`"${prodName}" has been moved back to the approval queue.`);
     } catch (err: any) {
       setError(err.message || "Failed to move product back to pending.");
@@ -208,9 +238,12 @@ export default function AdminRejectedProducts() {
       <div className="space-y-8 select-none">
         {/* Header */}
         <div className="border-b border-zinc-800/80 pb-6">
-          <h1 className="text-xl font-bold text-white font-sans">Rejected Product Queue</h1>
+          <h1 className="text-xl font-bold text-white font-sans">
+            Rejected Product Queue
+          </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Browse global product requests that were previously rejected. You can edit details and either approve or reset their statuses.
+            Browse global product requests that were previously rejected. You
+            can edit details and either approve or reset their statuses.
           </p>
         </div>
 
@@ -231,7 +264,9 @@ export default function AdminRejectedProducts() {
           {products.length === 0 ? (
             <div className="p-12 text-center text-zinc-500">
               <FileX className="w-10 h-10 mx-auto text-zinc-600 mb-3" />
-              <h4 className="text-xs font-bold text-white">No rejected products</h4>
+              <h4 className="text-xs font-bold text-white">
+                No rejected products
+              </h4>
               <p className="text-[10px] text-zinc-500 mt-1">
                 There are no rejected product requests on the platform.
               </p>
@@ -252,7 +287,10 @@ export default function AdminRejectedProducts() {
                 </thead>
                 <tbody className="divide-y divide-zinc-800 text-xs">
                   {products.map((p) => (
-                    <tr key={p.id} className="hover:bg-zinc-950/40 transition-colors">
+                    <tr
+                      key={p.id}
+                      className="hover:bg-zinc-950/40 transition-colors"
+                    >
                       <td className="py-3.5 px-5 font-mono font-bold text-zinc-500 truncate max-w-[120px]">
                         {p.barcode || "N/A"}
                       </td>
@@ -262,13 +300,18 @@ export default function AdminRejectedProducts() {
                         </span>
                         <div className="flex items-center gap-2.5">
                           {p.imageUrl ? (
-                            <img src={p.imageUrl} className="w-8 h-8 rounded object-cover border border-zinc-850 shrink-0" />
+                            <img
+                              src={p.imageUrl}
+                              className="w-8 h-8 rounded object-cover border border-zinc-850 shrink-0"
+                            />
                           ) : (
                             <div className="w-8 h-8 rounded bg-zinc-950 border border-zinc-850 flex items-center justify-center text-[9px] text-zinc-600 font-bold shrink-0">
                               —
                             </div>
                           )}
-                          <span className="font-bold text-white truncate">{p.name}</span>
+                          <span className="font-bold text-white truncate">
+                            {p.name}
+                          </span>
                         </div>
                       </td>
                       <td className="py-3.5 px-5 truncate max-w-[160px]">
@@ -285,10 +328,16 @@ export default function AdminRejectedProducts() {
                       <td className="py-3.5 px-5 text-zinc-400 font-medium">
                         {p.category || "—"}
                       </td>
-                      <td className="py-3.5 px-5 text-red-400 font-medium max-w-[220px] truncate" title={p.rejectionReason || ""}>
+                      <td
+                        className="py-3.5 px-5 text-red-400 font-medium max-w-[220px] truncate"
+                        title={p.rejectionReason || ""}
+                      >
                         {p.rejectionReason || "No reason provided"}
                       </td>
-                      <td className="py-3.5 px-5" onClick={(e) => e.stopPropagation()}>
+                      <td
+                        className="py-3.5 px-5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="flex items-center justify-center gap-2">
                           <button
                             disabled={actioningId !== null}
@@ -298,14 +347,15 @@ export default function AdminRejectedProducts() {
                           >
                             <Edit3 className="w-3.5 h-3.5" /> Edit
                           </button>
-                          
+
                           <button
                             disabled={actioningId !== null}
                             onClick={() => handleMakePending(p.id, p.name)}
                             className="h-8 px-2 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
                             title="Make Pending"
                           >
-                            <RotateCcw className="w-3.5 h-3.5 text-amber-500" /> Reset
+                            <RotateCcw className="w-3.5 h-3.5 text-amber-500" />{" "}
+                            Reset
                           </button>
 
                           <button
@@ -329,11 +379,17 @@ export default function AdminRejectedProducts() {
         {/* Edit Product Modal */}
         {editingProduct && (
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-            <form onSubmit={handleEditSubmit} className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg max-w-md w-full p-6 space-y-4 text-white">
+            <form
+              onSubmit={handleEditSubmit}
+              className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg max-w-md w-full p-6 space-y-4 text-white"
+            >
               <div>
-                <h3 className="text-sm font-bold font-sans">Edit Rejected Product</h3>
+                <h3 className="text-sm font-bold font-sans">
+                  Edit Rejected Product
+                </h3>
                 <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
-                  Modify details for this rejected request before choosing to approve or move it back to the pending queue.
+                  Modify details for this rejected request before choosing to
+                  approve or move it back to the pending queue.
                 </p>
               </div>
 
@@ -345,7 +401,9 @@ export default function AdminRejectedProducts() {
                   <input
                     type="text"
                     value={editForm.barcode}
-                    onChange={(e) => setEditForm({ ...editForm, barcode: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, barcode: e.target.value })
+                    }
                     className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
                     placeholder="e.g. 8901030818279"
                   />
@@ -359,7 +417,9 @@ export default function AdminRejectedProducts() {
                     <input
                       type="text"
                       value={editForm.brand}
-                      onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, brand: e.target.value })
+                      }
                       className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
                       placeholder="e.g. Brooke Bond"
                     />
@@ -371,7 +431,9 @@ export default function AdminRejectedProducts() {
                     <input
                       type="text"
                       value={editForm.category}
-                      onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, category: e.target.value })
+                      }
                       className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
                       placeholder="e.g. Beverages"
                     />
@@ -386,7 +448,9 @@ export default function AdminRejectedProducts() {
                     type="text"
                     required
                     value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, name: e.target.value })
+                    }
                     className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
                     placeholder="e.g. Red Label Tea 500g"
                   />
@@ -402,7 +466,9 @@ export default function AdminRejectedProducts() {
                     required
                     min="0.01"
                     value={editForm.mrp}
-                    onChange={(e) => setEditForm({ ...editForm, mrp: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, mrp: e.target.value })
+                    }
                     className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white font-mono"
                     placeholder="e.g. 195.00"
                   />

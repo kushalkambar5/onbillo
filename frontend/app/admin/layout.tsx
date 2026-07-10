@@ -14,7 +14,6 @@ import {
   Users, 
   Store, 
   FileCheck,
-  ArrowLeft,
   Menu,
   X,
   PlusCircle,
@@ -180,16 +179,6 @@ export default function AdminWorkspaceLayout({
           })}
         </nav>
 
-        {/* Exit back link */}
-        <div className="px-3 pb-2">
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 shrink-0 text-zinc-500" />
-            Exit Admin Panel
-          </Link>
-        </div>
 
         {/* Sidebar Footer */}
         <div className="p-5 border-t border-zinc-800/60 flex items-center justify-between gap-3">
@@ -259,17 +248,7 @@ export default function AdminWorkspaceLayout({
               })}
             </nav>
 
-            {/* Exit back link */}
-            <div className="pb-4">
-              <Link
-                href="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4 shrink-0 text-zinc-500" />
-                Exit Admin Panel
-              </Link>
-            </div>
+
 
             {/* Drawer Footer */}
             <div className="pt-4 border-t border-zinc-800 flex items-center justify-between gap-3 mt-auto">

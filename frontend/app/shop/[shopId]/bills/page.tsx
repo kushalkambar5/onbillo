@@ -2,8 +2,8 @@
  
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { billsApi, shopsApi, Bill, Shop } from "../../../utils/api";
-import { mockShops, mockBills } from "../../../utils/api/mockData";
+import { billsApi, shopsApi, usersApi, Bill, Shop } from "../../../utils/api";
+import { mockShops, mockBills, mockUser } from "../../../utils/api/mockData";
 import { Skeleton } from "boneyard-js/react";
 import { 
   Search, 
@@ -34,6 +34,7 @@ export default function ShopBills({
   const [voidingId, setVoidingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [userRole, setUserRole] = useState<"owner" | "shop_worker">("shop_worker");
+  const [isAppAdmin, setIsAppAdmin] = useState(false);
 
   // CSV Export state
   const [exporting, setExporting] = useState(false);
@@ -48,18 +49,21 @@ export default function ShopBills({
         setShop(mockShops[0]);
         setBills(mockBills[shopId] || mockBills["1"] || []);
         setUserRole("owner");
+        setIsAppAdmin(mockUser.role === "app_admin");
         setLoading(false);
         return;
       }
  
       const token = await getToken();
-      const [shopDetail, billsList, userShops] = await Promise.all([
+      const [shopDetail, billsList, userShops, me] = await Promise.all([
         shopsApi.getShop(token, shopId),
         billsApi.getShopBills(token, shopId),
-        shopsApi.getUserShops(token)
+        shopsApi.getUserShops(token),
+        usersApi.getMe(token).catch(() => null)
       ]);
       setShop(shopDetail);
       setBills(billsList);
+      setIsAppAdmin(me?.role === "app_admin");
 
       const activeMembership = userShops.find((m) => m.shop.id === shopId);
       if (activeMembership) {
@@ -155,15 +159,17 @@ export default function ShopBills({
         
         <div className="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto">
           {/* Export Button */}
-          <button
-            onClick={handleExport}
-            disabled={bills.length === 0}
-            className="h-10 px-4 border border-hairline hover:bg-canvas-soft text-foreground font-bold text-xs rounded-xl transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Export sales ledger to CSV"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-mute" />
-            <span>Export CSV</span>
-          </button>
+          {isAppAdmin && (
+            <button
+              onClick={handleExport}
+              disabled={bills.length === 0}
+              className="h-10 px-4 border border-hairline hover:bg-canvas-soft text-foreground font-bold text-xs rounded-xl transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export sales ledger to CSV"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-mute" />
+              <span>Export CSV</span>
+            </button>
+          )}
  
           {/* Search */}
           <div className="relative flex-1 sm:w-64 sm:flex-none">
