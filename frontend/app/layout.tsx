@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import PhonePromptModal from "./components/PhonePromptModal";
+import PremiumBlockModal from "./components/PremiumBlockModal";
 import "./globals.css";
 import "./bones/registry";
 
@@ -65,6 +66,7 @@ export default function RootLayout({
         <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200">
           {children}
           <PhonePromptModal />
+          <PremiumBlockModal />
         </body>
       </html>
     </ClerkProvider>

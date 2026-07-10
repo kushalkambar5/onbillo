@@ -29,6 +29,13 @@
       "when": 1783616283662,
       "tag": "0003_bored_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783674958118,
+      "tag": "0004_noisy_arachne",
+      "breakpoints": true
     }
   ]
 }

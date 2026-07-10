@@ -60,7 +60,7 @@ export const users = pgTable('users', {
   shopId: uuid('shop_id').references(() => shops.id, {
     onDelete: 'set null',
   }),
-  isPremium: boolean('is_premium').default(false).notNull(),
+  isPremium: boolean('is_premium').default(true).notNull(),
   isBanned: boolean('is_banned').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

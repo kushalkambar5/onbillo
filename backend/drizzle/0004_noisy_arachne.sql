@@ -1,0 +1,1 @@
+ALTER TABLE "users" ALTER COLUMN "is_premium" SET DEFAULT true;

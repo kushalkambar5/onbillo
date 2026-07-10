@@ -2,6 +2,10 @@ import axios, { AxiosRequestConfig } from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+if (typeof window !== "undefined") {
+  console.log("[Onbillo API] Initialized with Base URL:", API_BASE_URL);
+}
+
 export function isMockMode(): boolean {
   return false;
 }

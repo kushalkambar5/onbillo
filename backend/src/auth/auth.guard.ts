@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { verifyToken } from '@clerk/backend';
 import { DbService } from '../db/db.service';
@@ -45,6 +46,18 @@ export class AuthGuard implements CanActivate {
       // Attach the internal user object to the request
       request.user = user;
       request.clerkId = clerkId;
+
+      // Allow fetching profile details even if not premium or banned
+      const urlPath = request.url.split('?')[0];
+      const isGetMe = (urlPath === '/api/users/me' || urlPath === '/api/users/me/') && request.method === 'GET';
+
+      if (user.isBanned && !isGetMe) {
+        throw new ForbiddenException('Your account has been banned. Please contact support.');
+      }
+
+      if (!user.isPremium && !isGetMe) {
+        throw new ForbiddenException('Premium subscription required. Please contact +919035035884');
+      }
 
       return true;
     } catch (error) {
