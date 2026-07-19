@@ -48,6 +48,14 @@ export default function ShopSettings({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [initialFormData, setInitialFormData] = useState<typeof formData | null>(null);
+  const [previewingTemplate, setPreviewingTemplate] = useState<any>(null);
+
+  const isDirty = initialFormData
+    ? Object.keys(formData).some(
+        (key) => (formData as any)[key] !== (initialFormData as any)[key]
+      )
+    : false;
 
   const formatPhoneInput = (val: string) => {
     if (!val.startsWith("+91")) {
@@ -126,7 +134,7 @@ export default function ShopSettings({
           if (loadedPhone && !loadedPhone.startsWith("+91")) {
             loadedPhone = "+91" + loadedPhone.replace(/\D/g, "");
           }
-          setFormData({
+          const loadedData = {
             name: shop.name,
             phone: loadedPhone,
             email: shop.email || "",
@@ -142,7 +150,9 @@ export default function ShopSettings({
             invoiceTemplet: shop.invoiceTemplet,
             footerText: shop.footerText || "",
             logoUrl: shop.logoUrl || ""
-          });
+          };
+          setFormData(loadedData);
+          setInitialFormData(loadedData);
           setLoading(false);
           return;
         }
@@ -153,7 +163,7 @@ export default function ShopSettings({
         if (loadedPhone && !loadedPhone.startsWith("+91")) {
           loadedPhone = "+91" + loadedPhone.replace(/\D/g, "");
         }
-        setFormData({
+        const loadedData = {
           name: shop.name,
           phone: loadedPhone,
           email: shop.email || "",
@@ -169,7 +179,9 @@ export default function ShopSettings({
           invoiceTemplet: shop.invoiceTemplet,
           footerText: shop.footerText || "",
           logoUrl: shop.logoUrl || ""
-        });
+        };
+        setFormData(loadedData);
+        setInitialFormData(loadedData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -215,11 +227,13 @@ export default function ShopSettings({
           localStorage.setItem("mock_shops", JSON.stringify(mockShops));
         }
         setMessage({ text: "Shop configurations saved successfully!", type: "success" });
+        setInitialFormData(formData);
         return;
       }
       const token = await getToken();
       await shopsApi.updateShop(token, shopId, validation.data);
       setMessage({ text: "Shop configurations saved successfully!", type: "success" });
+      setInitialFormData(formData);
     } catch (err: any) {
       setMessage({ text: err.message || "Failed to save settings.", type: "error" });
     } finally {
@@ -432,6 +446,7 @@ export default function ShopSettings({
                     text: url ? "Shop logo updated successfully!" : "Shop logo removed successfully!",
                     type: "success"
                   });
+                  setInitialFormData(prev => prev ? { ...prev, logoUrl: url || "" } : null);
                 } else {
                   try {
                     const token = await getToken();
@@ -442,6 +457,7 @@ export default function ShopSettings({
                         text: url ? "Shop logo updated successfully!" : "Shop logo removed successfully!",
                         type: "success"
                       });
+                      setInitialFormData(prev => prev ? { ...prev, logoUrl: url || "" } : null);
                     } else {
                       setMessage({ text: validation.error, type: "error" });
                     }
@@ -554,6 +570,69 @@ export default function ShopSettings({
               {touched.email && errors.email && (
                 <p className="text-xs text-red-500 mt-1">{errors.email}</p>
               )}
+            </div>
+          </div>
+
+          {/* Available Bill Templates Showcase Section */}
+          <div className="mt-6 bg-canvas-soft p-4 md:p-6 rounded-xl border border-hairline space-y-6">
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-mute mb-2 font-mono">
+                Available Bill & Receipt Templates
+              </h4>
+              <p className="text-[11px] text-mute">
+                Select your preferred layout for printed bills and receipts.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {templatesList.map((tmpl) => {
+                const isA4 = tmpl.folder === "A4Prints";
+                const isActive = formData.invoiceTemplet === tmpl.id;
+                return (
+                  <div
+                    key={tmpl.id}
+                    onClick={() => setFormData((prev) => ({ ...prev, invoiceTemplet: tmpl.id }))}
+                    className={`p-3 border rounded-xl flex flex-col gap-3 transition-all duration-200 bg-canvas hover:border-brand-primary/40 cursor-pointer shadow-xs ${
+                      isActive
+                        ? "border-2 border-brand-primary ring-2 ring-brand-primary/15"
+                        : "border-hairline"
+                    }`}
+                  >
+                    {/* Preview Container at the top */}
+                    <div className="w-full bg-zinc-50 dark:bg-zinc-900/30 border border-hairline/80 rounded-lg p-2 flex justify-center items-start h-[220px] overflow-hidden shadow-inner select-none">
+                      <div className={`origin-top transform transition-transform duration-200 ${isA4 ? "scale-[0.18]" : "scale-[0.4]"}`}>
+                        {tmpl.component}
+                      </div>
+                    </div>
+
+                    {/* Metadata details at the bottom */}
+                    <div className="space-y-1.5">
+                      <h4 className="text-[11px] font-bold text-foreground font-sans line-clamp-1">
+                        {tmpl.name}
+                      </h4>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold bg-brand-primary/10 text-brand-primary">
+                          {tmpl.folder}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewingTemplate(tmpl);
+                          }}
+                          className="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold border border-hairline bg-canvas hover:bg-canvas-soft text-foreground hover:border-hairline-strong transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                        >
+                          <svg className="w-2.5 h-2.5 text-mute" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>Preview</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -817,12 +896,16 @@ export default function ShopSettings({
         <div className="pt-4 border-t border-hairline flex justify-end">
           <button
             type="submit"
-            disabled={saving || !isFormValid}
-            className="h-10 px-6 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-xl transition-all duration-200 shadow-sm shadow-brand-primary/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            disabled={saving || !isFormValid || !isDirty}
+            className={`h-10 px-6 font-bold text-xs rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 ${
+              isDirty && isFormValid && !saving
+                ? "bg-brand-primary hover:bg-brand-secondary text-white shadow-sm shadow-brand-primary/10 cursor-pointer"
+                : "bg-canvas-soft-2 text-mute border border-hairline cursor-not-allowed shadow-none"
+            }`}
           >
             {saving ? (
               <>
-                <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                <svg className={`animate-spin h-3.5 w-3.5 ${isDirty && isFormValid && !saving ? "text-white" : "text-mute"}`} fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
@@ -835,60 +918,63 @@ export default function ShopSettings({
         </div>
       </form>
 
-      {/* Available Bill Templates Showcase Section */}
-      <div className="bg-canvas border border-hairline rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-mute mb-2 font-mono">
-            Available Bill & Receipt Templates
-          </h3>
-          <p className="text-xs text-mute leading-relaxed">
-            Here are the templates available in your project's folders under <code className="bg-canvas-soft px-1 rounded text-foreground font-mono">frontend/app/components/templates/</code>. You can preview active layouts or see folders for creating new ones.
-          </p>
-        </div>
+    </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {templatesList.map((tmpl) => {
-            const isA4 = tmpl.folder === "A4Prints";
-            const isActive = formData.invoiceTemplet === tmpl.id;
-            return (
-              <div
-                key={tmpl.id}
-                onClick={() => setFormData((prev) => ({ ...prev, invoiceTemplet: tmpl.id }))}
-                className={`p-4 border rounded-xl flex flex-col justify-between transition-all duration-200 bg-canvas hover:border-brand-primary/40 cursor-pointer shadow-xs ${
-                  isActive
-                    ? "border-2 border-brand-primary ring-2 ring-brand-primary/15"
-                    : "border-hairline"
-                }`}
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <h4 className="text-xs font-bold text-foreground font-sans">
-                      {tmpl.name}
-                    </h4>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold bg-brand-primary/10 text-brand-primary">
-                        {tmpl.folder}
-                      </span>
-                      {isActive && (
-                        <span className="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                          ✓ Active
-                        </span>
-                      )}
-                    </div>
-                  </div>
+    {previewingTemplate && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-black/60 backdrop-blur-xs select-none">
+        {/* Close click-handler backdrop */}
+        <div className="absolute inset-0" onClick={() => setPreviewingTemplate(null)} />
+        
+        <div className="relative bg-canvas border border-hairline rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-level-4 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          {/* Header */}
+          <div className="flex justify-between items-center p-4 border-b border-hairline bg-canvas">
+            <div>
+              <h3 className="text-sm font-bold text-foreground font-sans">
+                {previewingTemplate.name}
+              </h3>
+              <p className="text-[10px] text-mute mt-0.5">
+                {previewingTemplate.description}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPreviewingTemplate(null)}
+              className="p-1.5 rounded-lg border border-hairline bg-canvas hover:bg-canvas-soft text-mute hover:text-foreground cursor-pointer transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-                  <div className="w-full bg-zinc-50 dark:bg-zinc-900/30 border border-hairline/80 rounded-xl p-4 flex justify-center items-start h-[360px] overflow-y-auto overflow-x-auto shadow-inner select-none">
-                    <div className={`origin-top transform transition-transform duration-200 ${isA4 ? "scale-[0.45]" : "scale-[0.9]"}`}>
-                      {tmpl.component}
-                    </div>
-                  </div>
-                </div>
+          {/* Content Area */}
+          <div className="flex-1 overflow-y-auto p-6 md:p-8 flex justify-center items-start bg-zinc-50 dark:bg-zinc-950/60 min-h-[400px]">
+            <div className="relative bg-white dark:bg-zinc-900 border border-hairline/80 rounded-xl p-6 shadow-md select-none origin-top max-w-full overflow-x-auto">
+              <div className={previewingTemplate.folder === "A4Prints" ? "scale-[0.8] origin-top md:scale-100" : "scale-100"}>
+                {previewingTemplate.component}
               </div>
-            );
-          })}
+            </div>
+          </div>
+          
+          {/* Footer */}
+          <div className="flex justify-between items-center p-4 border-t border-hairline bg-canvas">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold bg-brand-primary/10 text-brand-primary">
+              {previewingTemplate.folder}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData((prev) => ({ ...prev, invoiceTemplet: previewingTemplate.id }));
+                setPreviewingTemplate(null);
+              }}
+              className="h-9 px-4 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              Select Template
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    )}
     </Skeleton>
   );
 }
