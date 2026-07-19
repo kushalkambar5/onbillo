@@ -51,6 +51,7 @@ export class ShopsController {
     @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
     @Body(new ZodValidationPipe(UpdateShopSchema)) body: any,
   ) {
+    console.log('[ShopsController] updateShop body:', body);
     return this.shopsService.updateShop(id, body);
   }
 

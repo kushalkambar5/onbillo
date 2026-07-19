@@ -201,6 +201,7 @@ export default function ShopSettings({
       setMessage({ text: validation.error, type: "error" });
       return;
     }
+    console.log('[ShopSettings] validation.data to be saved:', validation.data);
 
     setSaving(true);
     setMessage({ text: "", type: "" });
