@@ -387,6 +387,9 @@ export default function AddProducts({
       const token = await getToken();
       const pricePaise = Math.round(priceFloat * 100);
       await productsApi.addGlobalProductToShop(token, shopId, addingProduct.id, pricePaise);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`shop_products_${shopId}`);
+      }
       
       setMessage({ 
         text: `Successfully added ${addingProduct.name} to your shop inventory!`, 
@@ -453,6 +456,10 @@ export default function AddProducts({
         unitPrice: cleanedData.unitPrice,
         imageUrl: uploadedImageUrl
       });
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`shop_products_${shopId}`);
+      }
 
       setMessage({ 
         text: `Successfully added "${requestForm.name}" to your shop! It has also been submitted as pending to the global registry.`, 

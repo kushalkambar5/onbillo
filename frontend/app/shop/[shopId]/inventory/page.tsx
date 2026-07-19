@@ -86,6 +86,9 @@ export default function ShopInventory({
       const token = await getToken();
       await productsApi.deleteShopProduct(token, shopId, shopProductId);
       setProducts(prev => prev.filter(p => p.id !== shopProductId));
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`shop_products_${shopId}`);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to delete product.");
     }
@@ -107,6 +110,9 @@ export default function ShopInventory({
       });
       // Synchronize with the exact response from the server
       setProducts(prev => prev.map(p => p.id === shopProductId ? updated : p));
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`shop_products_${shopId}`);
+      }
     } catch (err: any) {
       // Rollback on network failure
       setProducts(originalProducts);
@@ -137,6 +143,9 @@ export default function ShopInventory({
       });
       setProducts(products.map(p => p.id === shopProductId ? updated : p));
       setEditingId(null);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`shop_products_${shopId}`);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to update unit price.");
     } finally {

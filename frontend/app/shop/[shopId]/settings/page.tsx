@@ -232,6 +232,9 @@ export default function ShopSettings({
       }
       const token = await getToken();
       await shopsApi.updateShop(token, shopId, validation.data);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`shop_${shopId}`);
+      }
       setMessage({ text: "Shop configurations saved successfully!", type: "success" });
       setInitialFormData(formData);
     } catch (err: any) {
@@ -453,6 +456,9 @@ export default function ShopSettings({
                     const validation = validateSchema(UpdateShopSchema, { logoUrl: url });
                     if (validation.success) {
                       await shopsApi.updateShop(token, shopId, { logoUrl: url });
+                      if (typeof window !== "undefined") {
+                        localStorage.removeItem(`shop_${shopId}`);
+                      }
                       setMessage({
                         text: url ? "Shop logo updated successfully!" : "Shop logo removed successfully!",
                         type: "success"

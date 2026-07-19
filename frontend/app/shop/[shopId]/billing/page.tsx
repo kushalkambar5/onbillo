@@ -192,13 +192,39 @@ export default function ShopPosRegister({
           setShop(mockShops[0]);
           setProducts((mockShopProducts[shopId] || mockShopProducts["1"] || []).filter(p => p.isActive));
         } else {
+          // Try to load cached data from localStorage first
+          if (typeof window !== "undefined") {
+            try {
+              const cachedShop = localStorage.getItem(`shop_${shopId}`);
+              const cachedProducts = localStorage.getItem(`shop_products_${shopId}`);
+              if (cachedShop && cachedProducts) {
+                setShop(JSON.parse(cachedShop));
+                setProducts(JSON.parse(cachedProducts));
+                setLoading(false);
+              }
+            } catch (e) {
+              console.error("Failed to load cached POS data", e);
+            }
+          }
+
           const token = await getToken();
           const [shopDetail, productsList] = await Promise.all([
             shopsApi.getShop(token, shopId),
             productsApi.getShopProducts(token, shopId)
           ]);
+          const activeProducts = productsList.filter(p => p.isActive);
           setShop(shopDetail);
-          setProducts(productsList.filter(p => p.isActive));
+          setProducts(activeProducts);
+
+          // Update local storage cache
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(`shop_${shopId}`, JSON.stringify(shopDetail));
+              localStorage.setItem(`shop_products_${shopId}`, JSON.stringify(activeProducts));
+            } catch (e) {
+              console.error("Failed to save POS data cache", e);
+            }
+          }
         }
       } catch (err) {
         console.error(err);
