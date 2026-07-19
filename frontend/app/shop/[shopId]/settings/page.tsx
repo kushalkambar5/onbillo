@@ -15,7 +15,6 @@ import OnbilloInvoice from "../../../components/templates/3InchPrints/OnbilloInv
 import RaintechBill from "../../../components/templates/3InchPrints/RaintechBill";
 import RaintechReceipt from "../../../components/templates/3InchPrints/RaintechReceipt";
 import RaintechA4Invoice from "../../../components/templates/A4Prints/RaintechA4Invoice";
-import { Eye, FileText, Printer, Lock, X } from "lucide-react";
 
 export default function ShopSettings({
   params: paramsPromise,
@@ -49,7 +48,6 @@ export default function ShopSettings({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
 
   const formatPhoneInput = (val: string) => {
     if (!val.startsWith("+91")) {
@@ -329,7 +327,7 @@ export default function ShopSettings({
 
   const templatesList = [
     {
-      id: "onbillo-invoice-3inch",
+      id: "3",
       name: "Onbillo Tax Invoice (3-Inch)",
       folder: "3InchPrints",
       description: "Space-efficient multi-line item table, logo placeholder, original S.Rate/Discount fields, and full GST table.",
@@ -337,7 +335,7 @@ export default function ShopSettings({
       component: <OnbilloInvoice bill={previewBill} shop={previewShop} />
     },
     {
-      id: "onbillo-bill-3inch",
+      id: "2",
       name: "Onbillo Classic Bill (3-Inch)",
       folder: "3InchPrints",
       description: "Classical POS layout with boxed table, unit PCS indicator, green savings banner, and red borders.",
@@ -345,7 +343,7 @@ export default function ShopSettings({
       component: <OnbilloBill bill={previewBillClassic} shop={previewShop} />
     },
     {
-      id: "onbillo-3inch",
+      id: "4",
       name: "Onbillo 3-Inch Receipt",
       folder: "3InchPrints",
       description: "GST tax details table, Tender box summary, Code 39 barcode, and clean blue headings.",
@@ -353,7 +351,7 @@ export default function ShopSettings({
       component: <OnbilloReceipt bill={previewBill} shop={previewShop} />
     },
     {
-      id: "raintech-3inch",
+      id: "5",
       name: "Raintech 3-Inch Bill",
       folder: "3InchPrints",
       description: "High-contrast POS receipt template featuring Hindi labels, blue header title, double-column metadata, and shaded columns.",
@@ -361,7 +359,7 @@ export default function ShopSettings({
       component: <RaintechBill bill={previewBill} shop={previewShop} />
     },
     {
-      id: "raintech-receipt-3inch",
+      id: "6",
       name: "Raintech Classic POS (English)",
       folder: "3InchPrints",
       description: "Classic English POS layout with top/bottom scroll ornaments, gray boxed header, logo placeholder, and double-bar savings indicator.",
@@ -369,7 +367,7 @@ export default function ShopSettings({
       component: <RaintechReceipt bill={previewBill} shop={previewShop} />
     },
     {
-      id: "standard-3inch",
+      id: "1",
       name: "Standard Compact Receipt",
       folder: "3InchPrints",
       description: "Simple thermal receipt template with basic items table, subtotal, and tax calculations.",
@@ -377,32 +375,14 @@ export default function ShopSettings({
       component: <ThermalReceipt bill={previewBill} shop={previewShop} />
     },
     {
-      id: "a4-default",
+      id: "7",
       name: "Raintech A4 Invoice",
       folder: "A4Prints",
       description: "Full-page A4 print invoice featuring centered company profile, Logo placeholder, detailed Billed To section, structured products table, Rupees in Words, Bank Details, tax calculations table, and signature sections.",
       isAvailable: true,
       component: <RaintechA4Invoice bill={previewBill} shop={previewShop} />
-    },
-    {
-      id: "a5-default",
-      name: "A5 Compact Invoice",
-      folder: "A5Prints",
-      description: "Half-page invoice layout for dot-matrix or receipt printers (Coming soon).",
-      isAvailable: false,
-      component: null
-    },
-    {
-      id: "catalogue-default",
-      name: "Visual Billing Catalogue",
-      folder: "Catalogues",
-      description: "Visual product catalogue sheet layout with photos and pricing grid (Coming soon).",
-      isAvailable: false,
-      component: null
     }
   ];
-
-  const isA4Preview = previewTemplate !== null && templatesList.find(t => t.id === previewTemplate)?.folder === "A4Prints";
 
   return (
     <Skeleton name="shop-settings" loading={loading}>
@@ -791,25 +771,7 @@ export default function ShopSettings({
               )}
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Receipt Thermal Template
-              </label>
-              <select
-                name="invoiceTemplet"
-                value={formData.invoiceTemplet}
-                onChange={handleChange}
-                className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground"
-              >
-                <option value="1">Standard Compact (80mm / 3 inch)</option>
-                <option value="2">Onbillo Classic Bill (3-inch)</option>
-                <option value="3">Onbillo Tax Invoice (3-inch)</option>
-                <option value="4">Onbillo 3-Inch Receipt</option>
-                <option value="5">Raintech 3-Inch Bill (Hindi)</option>
-                <option value="6">Raintech Classic POS (English)</option>
-                <option value="7">Raintech A4 Invoice</option>
-              </select>
-            </div>
+
 
             <div className="md:col-span-2">
               <div className="flex justify-between items-center mb-1.5">
@@ -883,109 +845,48 @@ export default function ShopSettings({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {templatesList.map((tmpl) => (
-            <div
-              key={tmpl.id}
-              className={`p-4 border rounded-xl flex flex-col justify-between transition-all duration-200 ${
-                tmpl.isAvailable
-                  ? "bg-canvas hover:border-hairline-strong border-hairline"
-                  : "bg-canvas-soft/40 border-hairline/30 opacity-70"
-              }`}
-            >
-              <div>
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-xs font-bold text-foreground font-sans">
-                    {tmpl.name}
-                  </h4>
-                  <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-bold ${
-                    tmpl.isAvailable
-                      ? "bg-brand-primary/10 text-brand-primary"
-                      : "bg-zinc-500/10 text-zinc-500"
-                  }`}>
-                    {tmpl.folder}
-                  </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {templatesList.map((tmpl) => {
+            const isA4 = tmpl.folder === "A4Prints";
+            const isActive = formData.invoiceTemplet === tmpl.id;
+            return (
+              <div
+                key={tmpl.id}
+                onClick={() => setFormData((prev) => ({ ...prev, invoiceTemplet: tmpl.id }))}
+                className={`p-4 border rounded-xl flex flex-col justify-between transition-all duration-200 bg-canvas hover:border-brand-primary/40 cursor-pointer shadow-xs ${
+                  isActive
+                    ? "border-2 border-brand-primary ring-2 ring-brand-primary/15"
+                    : "border-hairline"
+                }`}
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="text-xs font-bold text-foreground font-sans">
+                      {tmpl.name}
+                    </h4>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold bg-brand-primary/10 text-brand-primary">
+                        {tmpl.folder}
+                      </span>
+                      {isActive && (
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          ✓ Active
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-zinc-50 dark:bg-zinc-900/30 border border-hairline/80 rounded-xl p-4 flex justify-center items-start h-[360px] overflow-y-auto overflow-x-auto shadow-inner select-none">
+                    <div className={`origin-top transform transition-transform duration-200 ${isA4 ? "scale-[0.45]" : "scale-[0.9]"}`}>
+                      {tmpl.component}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[11px] text-mute leading-relaxed mb-4">
-                  {tmpl.description}
-                </p>
               </div>
-
-              <div className="flex items-center justify-between border-t border-hairline/50 pt-3 mt-2 shrink-0">
-                <span className="text-[10px] text-mute font-mono flex items-center gap-1">
-                  {tmpl.isAvailable ? (
-                    <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Ready to Use
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-3 h-3 text-zinc-500" />
-                      Folder Created
-                    </>
-                  )}
-                </span>
-
-                {tmpl.isAvailable ? (
-                  <button
-                    type="button"
-                    onClick={() => setPreviewTemplate(tmpl.id)}
-                    className="h-8 px-3.5 bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary font-bold text-[10px] rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-                  >
-                    <Eye className="w-3.5 h-3.5" /> Preview
-                  </button>
-                ) : (
-                  <span className="text-[10px] text-mute font-medium italic">
-                    Waiting for code
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
-
-      {/* Template Preview Modal */}
-      {previewTemplate !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className={`relative bg-white border border-hairline rounded-2xl p-6 shadow-2xl w-full my-8 flex flex-col max-h-[90vh] transition-all duration-300 ${
-            isA4Preview ? "max-w-[900px]" : "max-w-[420px]"
-          }`}>
-            <div className="flex justify-between items-center pb-3 border-b border-hairline mb-4 shrink-0">
-              <div>
-                <h3 className="text-xs font-extrabold text-foreground font-sans uppercase tracking-wide">
-                  {templatesList.find(t => t.id === previewTemplate)?.name}
-                </h3>
-                <p className="text-[9px] text-mute font-mono mt-0.5">
-                  Path: app/components/templates/{templatesList.find(t => t.id === previewTemplate)?.folder}/
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPreviewTemplate(null)}
-                className="p-1.5 text-mute hover:text-foreground rounded-lg hover:bg-canvas-soft transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            
-            {/* Scrollable Receipt Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-auto bg-zinc-100 border border-hairline rounded-xl p-4 flex justify-center items-start min-h-[350px] shadow-inner select-none">
-              {templatesList.find(t => t.id === previewTemplate)?.component}
-            </div>
-
-            <div className="pt-4 border-t border-hairline flex justify-end shrink-0 mt-4">
-              <button
-                type="button"
-                onClick={() => setPreviewTemplate(null)}
-                className="h-9 px-4 bg-foreground text-background font-bold text-xs rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
     </Skeleton>
   );
