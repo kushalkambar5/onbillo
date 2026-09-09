@@ -262,7 +262,6 @@ export default function Home() {
             
             {/* Section Header */}
             <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
-              <span className="text-xs font-mono text-brand-primary uppercase tracking-widest block">Core Capabilities</span>
               <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
                 Everything you need to run your store.
               </h2>
@@ -325,8 +324,13 @@ export default function Home() {
       </main>
 
       {/* 8. Footer */}
-      <footer className="bg-canvas border-t border-hairline py-16 transition-colors duration-200">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <footer
+        className="relative overflow-hidden border-t border-hairline transition-colors duration-200 bg-cover bg-no-repeat bg-bottom flex flex-col justify-end min-h-[720px] md:min-h-[840px] pt-64 md:pt-80 pb-10"
+        style={{ backgroundImage: "url('/footer_bg.png')", backgroundSize: "cover", backgroundPosition: "center bottom" }}
+      >
+        {/* Readability overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/50 to-white/75 dark:from-black/20 dark:via-black/60 dark:to-black/80 pointer-events-none" />
+        <div className="relative z-10 max-w-[1400px] mx-auto px-4 md:px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
           
           <div className="space-y-4 col-span-2 md:col-span-1">
             <div className="flex items-center gap-2">
@@ -385,7 +389,7 @@ export default function Home() {
 
         </div>
 
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 mt-12 pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative z-10 max-w-[1400px] mx-auto px-4 md:px-6 mt-12 pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-[10px] font-mono text-mute">
             &copy; 2026 Onbillo. All rights reserved.
           </span>
