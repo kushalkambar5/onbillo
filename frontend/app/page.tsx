@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ScanBarcode, BarChart3, Calculator, TrendingUp, Printer, WifiOff, Zap, ShieldCheck, HelpCircle, Store, ShoppingBag, Menu, X } from "lucide-react";
 import ThemeToggle from "./components/ThemeToggle";
+import SpecularButton from "./components/SpecularButton";
 import GlobalDatabaseMockup from "./components/GlobalDatabaseMockup";
 import HomeRedirect from "./components/HomeRedirect";
 import InteractiveSteps from "./components/InteractiveSteps";
@@ -11,6 +13,7 @@ import FaqAccordion from "./components/FaqAccordion";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors duration-200">
@@ -63,12 +66,27 @@ export default function Home() {
             >
               Login
             </Link>
-            <Link
-              href="/sign-up"
-              className="h-8 px-4 rounded-md bg-brand-primary hover:bg-brand-primary/90 text-xs font-medium text-white shadow-sm transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
+            <SpecularButton
+              size="sm"
+              radius={8}
+              tint="var(--color-brand-primary)"
+              tintOpacity={1}
+              blur={0}
+              textColor="#ffffff"
+              lineColor="#ffffff"
+              baseColor="#ffffff"
+              intensity={1}
+              shineSize={10}
+              shineFade={40}
+              thickness={1}
+              speed={0.35}
+              followMouse
+              proximity={250}
+              autoAnimate={false}
+              onClick={() => router.push("/sign-up")}
             >
               Get Started
-            </Link>
+            </SpecularButton>
             <ThemeToggle />
           </div>
 
@@ -126,13 +144,31 @@ export default function Home() {
               >
                 Login
               </Link>
-              <Link
-                href="/sign-up"
-                onClick={() => setMobileMenuOpen(false)}
-                className="h-10 w-full rounded-xl bg-brand-primary hover:bg-brand-primary/95 text-xs font-semibold text-white flex items-center justify-center transition-colors"
+              <SpecularButton
+                size="md"
+                radius={12}
+                tint="var(--color-brand-primary)"
+                tintOpacity={1}
+                blur={0}
+                textColor="#ffffff"
+                lineColor="#ffffff"
+                baseColor="#ffffff"
+                intensity={1}
+                shineSize={10}
+                shineFade={40}
+                thickness={1}
+                speed={0.35}
+                followMouse
+                proximity={250}
+                autoAnimate={false}
+                className="w-full"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  router.push("/sign-up");
+                }}
               >
                 Get Started
-              </Link>
+              </SpecularButton>
             </div>
           </nav>
         </div>
@@ -159,12 +195,27 @@ export default function Home() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Link
-                href="/sign-up"
-                className="h-12 px-8 rounded-full bg-brand-primary hover:bg-brand-primary/95 text-white font-medium text-sm transition-all duration-200 flex items-center justify-center cursor-pointer shadow-md shadow-brand-primary/10 outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
+              <SpecularButton
+                size="lg"
+                radius={100}
+                tint="var(--color-brand-primary)"
+                tintOpacity={1}
+                blur={0}
+                textColor="#ffffff"
+                lineColor="#ffffff"
+                baseColor="#ffffff"
+                intensity={1}
+                shineSize={10}
+                shineFade={40}
+                thickness={1}
+                speed={0.35}
+                followMouse
+                proximity={250}
+                autoAnimate={false}
+                onClick={() => router.push("/sign-up")}
               >
                 Get Started
-              </Link>
+              </SpecularButton>
               <Link
                 href="/sign-in"
                 className="h-12 px-8 rounded-full bg-canvas hover:bg-canvas-soft border border-hairline text-foreground font-medium text-sm transition-all duration-200 flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
