@@ -84,6 +84,29 @@ body {
   transition-duration: 200ms;
 }
 
+/* Step-change enter animation (How it Works detail card + mock URL pill).
+   Mockup panels themselves crossfade via stacked transitions. */
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-step-in {
+  animation: step-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-step-in {
+    animation: none;
+  }
+}
+
 /* Custom subtle linear gradient background utility */
 .mesh-gradient-bg {
   background-image: linear-gradient(to bottom, var(--color-canvas-soft), var(--color-background));

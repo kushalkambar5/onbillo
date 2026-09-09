@@ -41,8 +41,20 @@ const STEPS: Step[] = [
 export default function InteractiveSteps() {
   const [activeStep, setActiveStep] = useState(1);
   const [scrollProgress, setScrollProgress] = useState(0);
+  // Slide direction of the last step change — drives enter/exit animation.
+  const [direction, setDirection] = useState(1);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const tickingRef = useRef(false);
+  const activeRef = useRef(1);
+
+  // Single place to change steps so direction-aware transitions stay in sync.
+  const setStep = useCallback((next: number) => {
+    const clamped = Math.min(Math.max(next, 1), STEPS.length);
+    if (clamped === activeRef.current) return;
+    setDirection(clamped > activeRef.current ? 1 : -1);
+    activeRef.current = clamped;
+    setActiveStep(clamped);
+  }, []);
 
   const isDesktopPinned = useCallback(() => {
     if (typeof window === "undefined") return false;
@@ -64,7 +76,7 @@ export default function InteractiveSteps() {
       const progress = Math.min(Math.max(raw, 0), 1);
       const index = Math.min(STEPS.length - 1, Math.floor(progress * STEPS.length));
       setScrollProgress(progress);
-      setActiveStep((prev) => (prev === index + 1 ? prev : index + 1));
+      setStep(index + 1);
     };
 
     const onScroll = () => {
@@ -80,7 +92,7 @@ export default function InteractiveSteps() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, [isDesktopPinned]);
+  }, [isDesktopPinned, setStep]);
 
   // Explicit navigation (arrows / dots) moves the page scroll so the
   // pinned position and the wheel stay in sync. On mobile just set state.
@@ -89,16 +101,16 @@ export default function InteractiveSteps() {
       const clamped = Math.min(Math.max(stepIndex, 0), STEPS.length - 1);
       const el = containerRef.current;
       if (!el || !isDesktopPinned()) {
-        setActiveStep(clamped + 1);
+        setStep(clamped + 1);
         return;
       }
       const top = el.getBoundingClientRect().top + window.scrollY;
       const scrollable = el.offsetHeight - window.innerHeight;
       const y = top + (clamped / STEPS.length) * scrollable + 2;
       window.scrollTo({ top: y, behavior: "smooth" });
-      setActiveStep(clamped + 1);
+      setStep(clamped + 1);
     },
-    [isDesktopPinned]
+    [isDesktopPinned, setStep]
   );
 
   const goToStep = (step: number) => {
@@ -107,13 +119,28 @@ export default function InteractiveSteps() {
 
   // Direct wheel interaction (click / drag) updates the UI immediately.
   // Page scroll remains the source of truth and re-syncs on next scroll.
-  const handleWheelChange = useCallback((index: number) => {
-    setActiveStep((prev) => (prev === index + 1 ? prev : index + 1));
-  }, []);
+  const handleWheelChange = useCallback(
+    (index: number) => {
+      setStep(index + 1);
+    },
+    [setStep]
+  );
 
   const activeIndex = activeStep - 1;
   const active = STEPS[activeIndex];
   const ActiveIcon = active.icon;
+
+  // Shared crossfade classes for the stacked mockup panels — every panel
+  // stays mounted and eases between hidden/shown for a smooth handoff.
+  const panelClass = (stepId: number) => {
+    const isActive = activeStep === stepId;
+    const offset = direction >= 0 ? "translate-y-8" : "-translate-y-8";
+    return `absolute inset-0 p-6 overflow-y-auto transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+      isActive
+        ? "opacity-100 translate-y-0 scale-100 z-10"
+        : `opacity-0 ${offset} scale-[0.98] z-0 pointer-events-none`
+    }`;
+  };
 
   return (
     <div ref={containerRef} className="relative lg:h-[400vh]">
@@ -138,7 +165,7 @@ export default function InteractiveSteps() {
                   return (
                     <div key={step.id} className="h-1 flex-1 rounded-full bg-hairline overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-brand-primary transition-[width] duration-150"
+                        className="h-full rounded-full bg-brand-primary transition-[width] duration-300 ease-out"
                         style={{ width: `${filled * 100}%` }}
                       />
                     </div>
@@ -164,7 +191,7 @@ export default function InteractiveSteps() {
                 blur={1.2}
                 fade={0.45}
                 minOpacity={0.12}
-                smoothing={180}
+                smoothing={260}
                 inset={20}
                 loop={false}
                 draggable
@@ -181,15 +208,17 @@ export default function InteractiveSteps() {
             {/* Active step detail */}
             <div className="w-full max-w-xl rounded-xl border border-hairline bg-canvas p-4 shadow-level-3" aria-live="polite">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-brand-primary text-white flex items-center justify-center">
-                  <ActiveIcon className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-mono text-mute uppercase tracking-wider block">
-                    Step {active.id} of {STEPS.length}
-                  </span>
-                  <h4 className="text-base font-semibold text-foreground">{active.title}</h4>
-                  <p className="text-xs text-mute mt-1 leading-relaxed">{active.description}</p>
+                <div key={active.id} className="flex items-start gap-3 flex-1 min-w-0 animate-step-in">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-brand-primary text-white flex items-center justify-center">
+                    <ActiveIcon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-mono text-mute uppercase tracking-wider block">
+                      Step {active.id} of {STEPS.length}
+                    </span>
+                    <h4 className="text-base font-semibold text-foreground">{active.title}</h4>
+                    <p className="text-xs text-mute mt-1 leading-relaxed">{active.description}</p>
+                  </div>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-1">
                   <button
@@ -224,7 +253,7 @@ export default function InteractiveSteps() {
                   <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
                   <div className="w-3 h-3 rounded-full bg-green-400/80" />
                 </div>
-                <span className="text-[11px] font-mono text-mute bg-canvas-soft-2 px-3 py-1 rounded border border-hairline">
+                <span key={activeStep} className="animate-step-in text-[11px] font-mono text-mute bg-canvas-soft-2 px-3 py-1 rounded border border-hairline">
                   {activeStep === 1 && "onbillo.com/setup"}
                   {activeStep === 2 && "onbillo.com/inventory"}
                   {activeStep === 3 && "onbillo.com/billing"}
@@ -233,10 +262,10 @@ export default function InteractiveSteps() {
                 <div className="w-8" /> {/* Spacer */}
               </div>
 
-              {/* Body Content */}
-              <div className="flex-1 p-6 overflow-y-auto">
-                {activeStep === 1 && (
-                  <div className="space-y-4 max-w-sm mx-auto animate-fade-in">
+              {/* Body Content — all panels stay mounted and crossfade */}
+              <div className="relative flex-1 overflow-hidden">
+                <div className={panelClass(1)} aria-hidden={activeStep !== 1}>
+                  <div className="space-y-4 max-w-sm mx-auto">
                     <div className="text-center space-y-1">
                       <h5 className="text-sm font-semibold text-foreground">Welcome to Onbillo</h5>
                       <p className="text-xs text-mute">Let&apos;s create your business profile</p>
@@ -278,10 +307,10 @@ export default function InteractiveSteps() {
                       Complete Registration
                     </button>
                   </div>
-                )}
+                </div>
 
-                {activeStep === 2 && (
-                  <div className="space-y-4 animate-fade-in">
+                <div className={panelClass(2)} aria-hidden={activeStep !== 2}>
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between pb-3 border-b border-hairline">
                       <h5 className="text-xs font-mono text-zinc-500 uppercase tracking-wider">Inventory Setup</h5>
                       <button className="flex items-center gap-1 text-[11px] text-brand-primary font-medium">
@@ -331,10 +360,10 @@ export default function InteractiveSteps() {
                       Point camera at any barcode to pull details instantly.
                     </div>
                   </div>
-                )}
+                </div>
 
-                {activeStep === 3 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in h-full">
+                <div className={panelClass(3)} aria-hidden={activeStep !== 3}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
                     {/* Cart list */}
                     <div className="space-y-3 flex flex-col justify-between h-[300px]">
                       <div className="space-y-2">
@@ -402,10 +431,10 @@ export default function InteractiveSteps() {
                       </span>
                     </div>
                   </div>
-                )}
+                </div>
 
-                {activeStep === 4 && (
-                  <div className="space-y-4 animate-fade-in">
+                <div className={panelClass(4)} aria-hidden={activeStep !== 4}>
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between pb-3 border-b border-hairline">
                       <div>
                         <h5 className="text-xs font-mono text-zinc-500 uppercase tracking-wider">Sales Dashboard</h5>
@@ -442,7 +471,7 @@ export default function InteractiveSteps() {
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
