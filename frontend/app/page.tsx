@@ -245,7 +245,7 @@ export default function Home() {
             <AccordionGallery
               items={SHOP_GALLERY_ITEMS}
               defaultIndex={2}
-              expandRatio={0.52}
+              expandRatio={0.3}
               trigger="hover"
               height={460}
               gap={10}

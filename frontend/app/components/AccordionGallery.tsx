@@ -194,7 +194,7 @@ export default function AccordionGallery({
       if (lockRatio && parsedRatio) {
         // Active panel occupies fraction `r` of the usable row width, so derive
         // the row height that makes the active card exactly `ratio` (w/h).
-        const target = Math.round(Math.min(Math.max((usable * r) / parsedRatio.ratio, 300), 820));
+        const target = Math.round(Math.min(Math.max((usable * r) / parsedRatio.ratio, 220), 640));
         if (autoHeightRef.current == null || Math.abs(autoHeightRef.current - target) > 1) {
           autoHeightRef.current = target;
           setAutoHeight(target);
