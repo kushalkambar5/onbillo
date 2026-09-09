@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Menu, Send, X } from "lucide-react";
@@ -23,14 +23,46 @@ const SHOP_GALLERY_ITEMS = [
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
   const router = useRouter();
+
+  useEffect(() => {
+    const ids = ["home", "shops", "features", "database", "how-it-works", "faqs"];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        }
+      },
+      { rootMargin: "-40% 0px -55% 0px", threshold: 0 }
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const desktopLinkClass = (id: string) =>
+    `text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-200 ${
+      activeSection === id
+        ? "text-foreground bg-white/90 dark:bg-white/15 shadow-sm"
+        : "text-body hover:text-foreground hover:bg-white/80 dark:hover:bg-white/10"
+    }`;
+
+  const mobileLinkClass = (id: string) =>
+    `text-sm font-semibold py-3 border-b border-hairline transition-colors flex items-center justify-between ${
+      activeSection === id ? "text-brand-primary" : "text-foreground"
+    }`;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors duration-200">
       <HomeRedirect />
       
       {/* 1. Header/Navigation */}
-      <header className="sticky top-0 z-50 h-16 w-full border-b border-hairline bg-canvas transition-colors duration-200">
+      <header className="sticky top-0 z-50 h-16 -mb-16 w-full bg-transparent border-b border-transparent transition-colors duration-200">
         <div className="max-w-[1400px] h-full mx-auto px-4 md:px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 outline-none group focus-visible:ring-2 focus-visible:ring-brand-primary/50 rounded-lg">
@@ -41,29 +73,23 @@ export default function Home() {
           </Link>
 
           {/* Navigation Links (Desktop) */}
-          <nav className="hidden md:flex items-center gap-1">
-            <a
-              href="#features"
-              className="text-xs font-medium text-body hover:text-foreground px-3 py-1.5 rounded-full hover:bg-canvas-soft-2 transition-all duration-200"
-            >
+          <nav className="hidden md:flex items-center gap-1 rounded-full border border-white/30 dark:border-white/10 bg-white/60 dark:bg-black/30 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] px-1.5 py-1">
+            <a href="#home" className={desktopLinkClass("home")}>
+              Home
+            </a>
+            <a href="#shops" className={desktopLinkClass("shops")}>
+              Shops
+            </a>
+            <a href="#features" className={desktopLinkClass("features")}>
               Features
             </a>
-            <a
-              href="#database"
-              className="text-xs font-medium text-body hover:text-foreground px-3 py-1.5 rounded-full hover:bg-canvas-soft-2 transition-all duration-200"
-            >
+            <a href="#database" className={desktopLinkClass("database")}>
               Global DB
             </a>
-            <a
-              href="#how-it-works"
-              className="text-xs font-medium text-body hover:text-foreground px-3 py-1.5 rounded-full hover:bg-canvas-soft-2 transition-all duration-200"
-            >
+            <a href="#how-it-works" className={desktopLinkClass("how-it-works")}>
               How it Works
             </a>
-            <a
-              href="#faqs"
-              className="text-xs font-medium text-body hover:text-foreground px-3 py-1.5 rounded-full hover:bg-canvas-soft-2 transition-all duration-200"
-            >
+            <a href="#faqs" className={desktopLinkClass("faqs")}>
               FAQs
             </a>
           </nav>
@@ -105,7 +131,7 @@ export default function Home() {
             <ThemeToggle />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 rounded-lg border border-hairline bg-canvas text-body hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer"
+              className="p-1.5 rounded-lg border border-white/30 dark:border-white/10 bg-white/60 dark:bg-black/30 backdrop-blur-xl text-body hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer"
               aria-label="Toggle Menu"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -116,8 +142,22 @@ export default function Home() {
 
       {/* Mobile Drawer Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-16 bottom-0 z-40 bg-background border-b border-hairline animate-in fade-in slide-in-from-top-5 duration-200 overflow-y-auto">
+        <div className="md:hidden fixed inset-x-0 top-16 bottom-0 z-40 bg-white/80 dark:bg-black/60 backdrop-blur-xl border-b border-hairline animate-in fade-in slide-in-from-top-5 duration-200 overflow-y-auto">
           <nav className="flex flex-col p-6 space-y-4">
+            <a
+              href="#home"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-foreground py-3 border-b border-hairline"
+            >
+              Home
+            </a>
+            <a
+              href="#shops"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-foreground py-3 border-b border-hairline"
+            >
+              Shops
+            </a>
             <a
               href="#features"
               onClick={() => setMobileMenuOpen(false)}
@@ -188,7 +228,7 @@ export default function Home() {
       <main className="flex-1">
         
         {/* 2. Hero Section */}
-        <section className="relative overflow-hidden mesh-gradient-bg border-b border-hairline py-20 lg:py-32">
+        <section id="home" className="relative overflow-hidden mesh-gradient-bg border-b border-hairline pt-36 pb-20 lg:pt-48 lg:pb-32 scroll-mt-16">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
             
             
@@ -238,7 +278,7 @@ export default function Home() {
         </section>
 
         {/* 3. Shop Category Strip (Accordion Gallery) */}
-        <section className="bg-canvas border-b border-hairline py-12 md:py-16 transition-colors duration-200">
+        <section id="shops" className="bg-canvas border-b border-hairline py-12 md:py-16 transition-colors duration-200 scroll-mt-16">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6">
             <span className="text-center text-[10px] font-mono text-mute uppercase tracking-widest block mb-8">
               Supporting shops of all shapes and sizes
@@ -257,7 +297,7 @@ export default function Home() {
         </section>
 
         {/* 4. Features Grid */}
-        <section id="features" className="py-20 lg:py-32 bg-canvas-soft transition-colors duration-200">
+        <section id="features" className="py-20 lg:py-32 bg-canvas-soft transition-colors duration-200 scroll-mt-16">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6">
             
             {/* Section Header */}
@@ -287,7 +327,7 @@ export default function Home() {
         </section>
 
         {/* 5. Strongest Feature: Global Barcode Database (Polartiy-Flipped Section) */}
-        <section id="database" className="py-20 lg:py-32 bg-canvas-soft border-t border-b border-hairline relative">
+        <section id="database" className="py-20 lg:py-32 bg-canvas-soft border-t border-b border-hairline relative scroll-mt-16">
           {/* Subtle background highlight for the spotlight */}
           <div className="absolute inset-0 bg-brand-primary/[0.02] dark:bg-brand-primary/[0.04] pointer-events-none" />
           <div className="max-w-[1400px] mx-auto px-4 md:px-6 relative z-10">
@@ -296,14 +336,14 @@ export default function Home() {
         </section>
 
         {/* 6. How it Works (Interactive Steps) */}
-        <section id="how-it-works" className="py-20 lg:py-32 bg-canvas transition-colors duration-200">
+        <section id="how-it-works" className="py-20 lg:py-32 bg-canvas transition-colors duration-200 scroll-mt-16">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6">
             <InteractiveSteps />
           </div>
         </section>
 
         {/* 7. FAQs */}
-        <section id="faqs" className="py-20 lg:py-32 bg-canvas-soft border-t border-hairline transition-colors duration-200">
+        <section id="faqs" className="py-20 lg:py-32 bg-canvas-soft border-t border-hairline transition-colors duration-200 scroll-mt-16">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6">
             
             {/* Section Header */}
