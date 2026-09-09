@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, type ComponentType } from "react";
-import { Store, ShoppingBag, ReceiptIndianRupee, BarChart3, Plus, Printer, Check, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Store, ShoppingBag, ReceiptIndianRupee, BarChart3, Plus, Printer, Check, TrendingUp, ChevronLeft, ChevronRight, Barcode } from "lucide-react";
 import OptionWheel from "./OptionWheel";
 
 interface Step {
@@ -322,8 +322,8 @@ export default function InteractiveSteps() {
                       {/* Item 1 */}
                       <div className="flex items-center justify-between p-2.5 rounded-lg bg-canvas-soft border border-hairline">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-brand-primary/10 flex items-center justify-center text-brand-primary text-xs font-mono">
-                            Barcode
+                          <div className="w-8 h-8 rounded bg-brand-primary/10 flex items-center justify-center text-brand-primary">
+                            <Barcode className="w-4 h-4" />
                           </div>
                           <div>
                             <h6 className="text-xs font-semibold text-foreground">Aashirvaad Shudh Chakki Atta 5kg</h6>
@@ -340,8 +340,8 @@ export default function InteractiveSteps() {
                       {/* Item 2 */}
                       <div className="flex items-center justify-between p-2.5 rounded-lg bg-canvas-soft border border-hairline">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-brand-primary/10 flex items-center justify-center text-brand-primary text-xs font-mono">
-                            Barcode
+                          <div className="w-8 h-8 rounded bg-brand-primary/10 flex items-center justify-center text-brand-primary">
+                            <Barcode className="w-4 h-4" />
                           </div>
                           <div>
                             <h6 className="text-xs font-semibold text-foreground">Fortune Soya Health Oil 1L</h6>
