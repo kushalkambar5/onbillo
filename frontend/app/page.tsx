@@ -330,9 +330,9 @@ export default function Home() {
       >
         {/* Readability overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/50 to-white/75 dark:from-black/20 dark:via-black/60 dark:to-black/80 pointer-events-none" />
-        <div className="relative z-10 max-w-[1400px] mx-auto px-4 md:px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="relative z-10 w-full px-8 md:px-16 lg:px-24 flex flex-col md:flex-row md:items-start justify-between gap-12">
           
-          <div className="space-y-4 col-span-2 md:col-span-1">
+          <div className="space-y-4 shrink-0">
             <div className="flex items-center gap-2">
               <img src="/favicon.svg" alt="Onbillo Logo" className="w-6 h-6 rounded" />
               <span className="font-bold tracking-tight text-foreground text-sm">Onbillo</span>
@@ -342,6 +342,7 @@ export default function Home() {
             </p>
           </div>
 
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-10 md:gap-16 lg:gap-24">
           <div className="space-y-3">
             <h4 className="text-[10px] font-mono text-foreground font-semibold uppercase tracking-wider">Product</h4>
             <ul className="space-y-1.5 text-xs text-body font-medium">
@@ -386,16 +387,40 @@ export default function Home() {
               </li>
             </ul>
           </div>
+          </div>
 
         </div>
 
-        <div className="relative z-10 max-w-[1400px] mx-auto px-4 md:px-6 mt-12 pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative z-10 w-full px-8 md:px-16 lg:px-24 mt-12 pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-[10px] font-mono text-mute">
             &copy; 2026 Onbillo. All rights reserved.
           </span>
           <span className="text-[10px] font-mono text-mute">
             Built for Kiranas, Wholesalers & Retailers across India.
           </span>
+        </div>
+
+        <div className="relative z-10 w-full px-8 md:px-16 lg:px-24 mt-6">
+          <p className="text-[10px] leading-relaxed text-mute text-center max-w-5xl mx-auto">
+            <span className="font-semibold text-body">Business Ownership &amp; Identity Disclosure:</span>{" "}
+            This website is owned and operated by Onbillo, a billing &amp; POS software product for Indian retail.
+            Onbillo is owned by Kushal Kambar, an entrepreneur and software developer. Kushal Kambar is the owner
+            and the individual associated with the Onbillo brand and services presented on this website. We operate
+            this website and provide the services described herein under our own business identity. Unless expressly
+            stated otherwise, we are not affiliated with, endorsed by, or acting on behalf of any government agency,
+            public authority, or unrelated third-party organization referenced on this website. For questions
+            regarding our company, ownership, or services, please contact us at{" "}
+            <a href="mailto:support@onbillo.com" className="underline hover:text-brand-primary transition-colors">
+              support@onbillo.com
+            </a>
+            .<br />
+            <span className="font-semibold text-body">Disclaimer:</span> Onbillo provides billing, inventory, and
+            GST-compliant invoicing tools for educational and business-management purposes only. Bills, invoices, tax
+            calculations, and reports are generated from user-entered data and shop settings, and should be verified
+            independently. They should not be considered legal, tax, or accounting advice. Please consult a qualified
+            Chartered Accountant or tax professional for GST filing and compliance. This service is not affiliated
+            with or endorsed by any government tax authority.
+          </p>
         </div>
       </footer>
 
