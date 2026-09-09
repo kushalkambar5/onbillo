@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Store, ShoppingBag, ReceiptIndianRupee, BarChart3, Plus, Printer, Check, TrendingUp } from "lucide-react";
+import { useState, type ComponentType } from "react";
+import { Store, ShoppingBag, ReceiptIndianRupee, BarChart3, Plus, Printer, Check, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import OptionWheel from "./OptionWheel";
 
 interface Step {
   id: number;
   title: string;
   description: string;
-  icon: any;
+  icon: ComponentType<{ className?: string }>;
 }
 
 const STEPS: Step[] = [
@@ -39,6 +40,13 @@ const STEPS: Step[] = [
 
 export default function InteractiveSteps() {
   const [activeStep, setActiveStep] = useState(1);
+  const activeIndex = activeStep - 1;
+  const active = STEPS[activeIndex];
+  const ActiveIcon = active.icon;
+
+  const goToStep = (step: number) => {
+    setActiveStep(Math.min(Math.max(step, 1), STEPS.length));
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -49,47 +57,86 @@ export default function InteractiveSteps() {
           <h3 className="text-3xl font-semibold tracking-tight font-sans text-foreground">
             Simple setup. Powerful results.
           </h3>
+          <p className="text-[11px] font-mono text-mute uppercase tracking-wider">
+            Scroll, drag, click, or use arrow keys
+          </p>
         </div>
 
-        <div className="space-y-4 relative">
-          {/* Vertical connector line */}
-          <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-hairline" />
+        {/* OptionWheel step selector */}
+        <div className="relative h-[280px] md:h-[300px] rounded-xl border border-hairline bg-canvas shadow-level-3 overflow-hidden">
+          <OptionWheel
+            items={STEPS.map((step) => step.title)}
+            defaultSelected={0}
+            selected={activeIndex}
+            onChange={(index) => setActiveStep(index + 1)}
+            textColor="var(--color-mute)"
+            activeColor="var(--color-brand-primary)"
+            side="left"
+            fontSize={1.55}
+            spacing={1.5}
+            curve={1}
+            tilt={9}
+            blur={1.2}
+            fade={0.45}
+            minOpacity={0.12}
+            smoothing={180}
+            inset={20}
+            loop={false}
+            draggable
+          />
+          {/* Edge fade for depth */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-[var(--color-canvas)] to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[var(--color-canvas)] to-transparent" />
+        </div>
 
-          {STEPS.map((step) => {
-            const Icon = step.icon;
-            const isActive = activeStep === step.id;
-            return (
+        {/* Active step detail */}
+        <div className="rounded-xl border border-hairline bg-canvas p-4 shadow-level-3" aria-live="polite">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-brand-primary text-white flex items-center justify-center">
+              <ActiveIcon className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-mono text-mute uppercase tracking-wider block">
+                Step {active.id} of {STEPS.length}
+              </span>
+              <h4 className="text-base font-semibold text-foreground">{active.title}</h4>
+              <p className="text-xs text-mute mt-1 leading-relaxed">{active.description}</p>
+            </div>
+            <div className="flex flex-shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => goToStep(activeStep - 1)}
+                disabled={activeStep === 1}
+                aria-label="Previous step"
+                className="w-8 h-8 rounded-lg border border-hairline bg-canvas-soft flex items-center justify-center text-body hover:text-foreground hover:bg-canvas-soft-2 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => goToStep(activeStep + 1)}
+                disabled={activeStep === STEPS.length}
+                aria-label="Next step"
+                className="w-8 h-8 rounded-lg border border-hairline bg-canvas-soft flex items-center justify-center text-body hover:text-foreground hover:bg-canvas-soft-2 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-hairline flex items-center gap-2">
+            {STEPS.map((step) => (
               <button
                 key={step.id}
-                onClick={() => setActiveStep(step.id)}
-                className={`w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all duration-300 cursor-pointer outline-none ${
-                  isActive
-                    ? "bg-canvas border-brand-primary/40 shadow-level-3"
-                    : "bg-transparent border-transparent hover:bg-canvas-soft/50"
+                type="button"
+                onClick={() => goToStep(step.id)}
+                aria-label={`Go to step ${step.id}: ${step.title}`}
+                aria-current={activeStep === step.id ? "step" : undefined}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 ${
+                  activeStep === step.id ? "w-8 bg-brand-primary" : "w-4 bg-hairline hover:bg-hairline-strong"
                 }`}
-              >
-                <div
-                  className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                    isActive
-                      ? "bg-brand-primary text-white scale-110"
-                      : "bg-canvas-soft border border-hairline text-body"
-                  } z-10`}
-                >
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4
-                    className={`text-base font-medium transition-colors duration-300 ${
-                      isActive ? "text-foreground font-semibold" : "text-body"
-                    }`}
-                  >
-                    Step {step.id}: {step.title}
-                  </h4>
-                  <p className="text-xs text-mute mt-1 leading-relaxed">{step.description}</p>
-                </div>
-              </button>
-            );
-          })}
+              />
+            ))}
+          </div>
         </div>
       </div>
 

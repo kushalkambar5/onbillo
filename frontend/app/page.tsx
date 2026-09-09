@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ScanBarcode, BarChart3, Calculator, TrendingUp, Printer, WifiOff, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import ThemeToggle from "./components/ThemeToggle";
 import SpecularButton from "./components/SpecularButton";
 import GlobalDatabaseMockup from "./components/GlobalDatabaseMockup";
@@ -11,6 +11,7 @@ import HomeRedirect from "./components/HomeRedirect";
 import InteractiveSteps from "./components/InteractiveSteps";
 import FaqAccordion from "./components/FaqAccordion";
 import AccordionGallery from "./components/AccordionGallery";
+import MagicBento from "./components/MagicBento";
 
 const SHOP_GALLERY_ITEMS = [
   { image: "/supportings/Kirana_&_Grocery.png", label: "Kirana & Grocery", alt: "Kirana and grocery store" },
@@ -270,184 +271,19 @@ export default function Home() {
               </p>
             </div>
 
-            {/* 3x2 Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              
-              {/* Feature 1: Barcode Scanner */}
-              <div className="bg-canvas rounded-xl p-6 border border-hairline hover:border-brand-primary/30 transition-all duration-300 shadow-level-3 flex flex-col justify-between group">
-                <div className="space-y-4">
-                  <div className="w-10 h-10 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover:scale-110 transition-transform duration-300">
-                    <ScanBarcode className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground">Barcode Scanner</h3>
-                    <p className="text-xs text-body mt-2 leading-relaxed">
-                      Scan any barcode using your phone camera or a barcode scanner. Product details are filled automatically, helping you create bills in seconds and reducing manual entry errors.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-hairline">
-                  <span className="text-[10px] font-mono text-mute uppercase tracking-wider block mb-2">Benefits:</span>
-                  <ul className="text-xs text-foreground font-medium space-y-1">
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Faster checkout
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Fewer typing mistakes
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Better customer experience
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Feature 2: Reports */}
-              <div className="bg-canvas rounded-xl p-6 border border-hairline hover:border-brand-primary/30 transition-all duration-300 shadow-level-3 flex flex-col justify-between group">
-                <div className="space-y-4">
-                  <div className="w-10 h-10 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover:scale-110 transition-transform duration-300">
-                    <BarChart3 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground">Reports</h3>
-                    <p className="text-xs text-body mt-2 leading-relaxed">
-                      View daily, weekly, and monthly sales reports. Track your revenue, top-selling products, and employee performance from one dashboard.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-hairline">
-                  <span className="text-[10px] font-mono text-mute uppercase tracking-wider block mb-2">Benefits:</span>
-                  <ul className="text-xs text-foreground font-medium space-y-1">
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Sales tracking
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Profit analysis
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Better business decisions
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Feature 3: GST */}
-              <div className="bg-canvas rounded-xl p-6 border border-hairline hover:border-brand-primary/30 transition-all duration-300 shadow-level-3 flex flex-col justify-between group">
-                <div className="space-y-4">
-                  <div className="w-10 h-10 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover:scale-110 transition-transform duration-300">
-                    <Calculator className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground">GST Compliance</h3>
-                    <p className="text-xs text-body mt-2 leading-relaxed">
-                      Generate professional GST-compliant invoices with tax calculations handled automatically, reducing billing mistakes and simplifying filing.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-hairline">
-                  <span className="text-[10px] font-mono text-mute uppercase tracking-wider block mb-2">Benefits:</span>
-                  <ul className="text-xs text-foreground font-medium space-y-1">
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Professional invoices
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Automatic tax calculation
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Easier accounting
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Feature 4: Analytics */}
-              <div className="bg-canvas rounded-xl p-6 border border-hairline hover:border-brand-primary/30 transition-all duration-300 shadow-level-3 flex flex-col justify-between group">
-                <div className="space-y-4">
-                  <div className="w-10 h-10 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover:scale-110 transition-transform duration-300">
-                    <TrendingUp className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground">Analytics</h3>
-                    <p className="text-xs text-body mt-2 leading-relaxed">
-                      Discover your best-selling products, busiest hours, and overall business trends through easy-to-read charts and statistics.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-hairline">
-                  <span className="text-[10px] font-mono text-mute uppercase tracking-wider block mb-2">Benefits:</span>
-                  <ul className="text-xs text-foreground font-medium space-y-1">
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Track business growth
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Identify popular products
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Improve purchasing decisions
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Feature 5: Printer Support */}
-              <div className="bg-canvas rounded-xl p-6 border border-hairline hover:border-brand-primary/30 transition-all duration-300 shadow-level-3 flex flex-col justify-between group">
-                <div className="space-y-4">
-                  <div className="w-10 h-10 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover:scale-110 transition-transform duration-300">
-                    <Printer className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground">Printer Support</h3>
-                    <p className="text-xs text-body mt-2 leading-relaxed">
-                      Connect thermal printers and print professional receipts immediately after billing with just one click. Supports most Bluetooth and USB POS printers.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-hairline">
-                  <span className="text-[10px] font-mono text-mute uppercase tracking-wider block mb-2">Benefits:</span>
-                  <ul className="text-xs text-foreground font-medium space-y-1">
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Fast receipt printing
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Supports common POS printers
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Better customer service
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Feature 6: Offline Support */}
-              <div className="bg-canvas rounded-xl p-6 border border-hairline hover:border-brand-primary/30 transition-all duration-300 shadow-level-3 flex flex-col justify-between group">
-                <div className="space-y-4">
-                  <div className="w-10 h-10 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary group-hover:scale-110 transition-transform duration-300">
-                    <WifiOff className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground">Offline Support</h3>
-                    <p className="text-xs text-body mt-2 leading-relaxed">
-                      Even if your internet connection goes down, continue creating bills and managing your shop. Everything syncs automatically once you&apos;re back online.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-hairline">
-                  <span className="text-[10px] font-mono text-mute uppercase tracking-wider block mb-2">Benefits:</span>
-                  <ul className="text-xs text-foreground font-medium space-y-1">
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> No downtime
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Reliable billing
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" /> Automatic synchronization
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-            </div>
+            {/* MagicBento Grid */}
+            <MagicBento
+              textAutoHide={true}
+              enableStars={true}
+              enableSpotlight={true}
+              enableBorderGlow={true}
+              enableTilt={true}
+              enableMagnetism={true}
+              clickEffect={true}
+              spotlightRadius={300}
+              particleCount={12}
+              glowColor="0, 82, 255"
+            />
           </div>
         </section>
 
