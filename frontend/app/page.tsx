@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { ArrowRight, Menu, Send, X } from "lucide-react";
 import ThemeToggle from "./components/ThemeToggle";
 import SpecularButton from "./components/SpecularButton";
 import GlobalDatabaseMockup from "./components/GlobalDatabaseMockup";
@@ -325,24 +325,63 @@ export default function Home() {
 
       {/* 8. Footer */}
       <footer
-        className="relative overflow-hidden border-t border-hairline transition-colors duration-200 bg-cover bg-no-repeat bg-bottom flex flex-col justify-end min-h-[720px] md:min-h-[840px] pt-64 md:pt-80 pb-10"
-        style={{ backgroundImage: "url('/footer_bg.png')", backgroundSize: "cover", backgroundPosition: "center bottom" }}
+        className="relative overflow-hidden border-t border-hairline transition-colors duration-200 bg-[url('/footer_bg.png')] dark:bg-[url('/footer_dark_bg.png')] bg-cover bg-no-repeat bg-bottom flex flex-col justify-end pt-20 md:pt-28 pb-10"
       >
         {/* Readability overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/50 to-white/75 dark:from-black/20 dark:via-black/60 dark:to-black/80 pointer-events-none" />
-        <div className="relative z-10 w-full px-8 md:px-16 lg:px-24 flex flex-col md:flex-row md:items-start justify-between gap-12">
-          
-          <div className="space-y-4 shrink-0">
-            <div className="flex items-center gap-2">
-              <img src="/favicon.svg" alt="Onbillo Logo" className="w-6 h-6 rounded" />
-              <span className="font-bold tracking-tight text-foreground text-sm">Onbillo</span>
-            </div>
-            <p className="text-xs text-mute leading-relaxed max-w-[200px]">
-              The premium, community-powered billing & POS system for Indian retail shops.
-            </p>
-          </div>
+        {/* CTA — Ready to bill smarter */}
+        <div className="relative z-10 w-full px-8 md:px-16 lg:px-24 mb-12 flex flex-col items-center text-center">
+          <h2 className="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground leading-[1.1] mb-4">
+            Ready to bill smarter &amp; grow your retail store?
+          </h2>
+          <p className="max-w-xl text-body text-sm md:text-base leading-relaxed mb-8">
+            Streamline billing with barcode scanning, GST-compliant invoices, thermal printing, and real-time
+            analytics — built for kiranas, supermarkets, cafes &amp; wholesalers across India.
+          </p>
+          <SpecularButton
+            size="lg"
+            radius={100}
+            tint="var(--color-brand-primary)"
+            tintOpacity={1}
+            blur={0}
+            textColor="#ffffff"
+            lineColor="#ffffff"
+            baseColor="#ffffff"
+            intensity={1}
+            shineSize={10}
+            shineFade={40}
+            thickness={1}
+            speed={0.35}
+            followMouse
+            proximity={250}
+            autoAnimate={false}
+            onClick={() => router.push("/sign-up")}
+          >
+            <span className="inline-flex items-center gap-2">
+              Get Started Now
+              <ArrowRight className="w-5 h-5" />
+            </span>
+          </SpecularButton>
+        </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-10 md:gap-16 lg:gap-24">
+        {/* Highlighted brand block — centered logo + name + support email (top) */}
+        <div className="relative z-10 w-full px-8 md:px-16 lg:px-24 mb-12 flex flex-col items-center text-center gap-4">
+          <div className="flex items-center gap-3">
+            <img src="/favicon.svg" alt="Onbillo Logo" className="w-10 h-10 rounded-xl shadow-sm shadow-brand-primary/20" />
+            <span className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              Onbillo
+            </span>
+          </div>
+          <a
+            href="mailto:support@onbillo.com"
+            className="flex items-center gap-2 text-sm font-medium text-body hover:text-brand-primary transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 rounded-md px-1"
+          >
+            <Send className="w-4 h-4" />
+            support@onbillo.com
+          </a>
+        </div>
+
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-8 md:px-16 grid grid-cols-2 md:grid-cols-3 gap-10 justify-items-center text-center">
           <div className="space-y-3">
             <h4 className="text-[10px] font-mono text-foreground font-semibold uppercase tracking-wider">Product</h4>
             <ul className="space-y-1.5 text-xs text-body font-medium">
@@ -386,7 +425,6 @@ export default function Home() {
                 <a href="#" className="hover:text-brand-primary transition-colors">GST Compliance Info</a>
               </li>
             </ul>
-          </div>
           </div>
 
         </div>
