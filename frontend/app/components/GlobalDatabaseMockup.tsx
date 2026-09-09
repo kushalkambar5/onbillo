@@ -122,27 +122,6 @@ export default function GlobalDatabaseMockup() {
             </div>
           </div>
         </div>
-
-        {/* Demo trigger buttons */}
-        <div className="space-y-3 pt-2">
-          <span className="text-xs font-mono text-mute uppercase tracking-wider block">Click a product to test scanning:</span>
-          <div className="flex flex-wrap gap-2">
-            {DEMO_PRODUCTS.map((prod) => (
-              <button
-                key={prod.barcode}
-                onClick={() => handleScan(prod)}
-                disabled={isScanning}
-                className={`px-4 py-2 text-xs font-medium rounded-full border transition-all duration-200 cursor-pointer ${
-                  selectedProduct?.barcode === prod.barcode && scanComplete
-                    ? "bg-brand-primary border-brand-primary text-white shadow-sm"
-                    : "bg-canvas hover:bg-canvas-soft-2 border-hairline text-foreground"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {prod.name.split(" ")[0]} {prod.name.split(" ")[1]}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Right Mockup Screen */}

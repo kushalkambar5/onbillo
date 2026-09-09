@@ -34,7 +34,7 @@ export default function Home() {
         <div className="max-w-[1400px] h-full mx-auto px-4 md:px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 outline-none group focus-visible:ring-2 focus-visible:ring-brand-primary/50 rounded-lg">
-            <img src="/favicon.svg" alt="Onbillo Logo" className="w-8 h-8 rounded-lg shadow-sm shadow-brand-primary/20" />
+            <img src="/favicon.svg" alt="Onbillo Logo" className="w-8 h-8" />
             <span className="text-xl font-bold tracking-tight font-sans text-foreground">
               Onbillo
             </span>
@@ -364,7 +364,7 @@ export default function Home() {
         {/* Highlighted brand block — centered logo + name + support email (top) */}
         <div className="relative z-10 w-full px-8 md:px-16 lg:px-24 mb-12 flex flex-col items-center text-center gap-4">
           <div className="flex items-center gap-3">
-            <img src="/favicon.svg" alt="Onbillo Logo" className="w-10 h-10 rounded-xl shadow-sm shadow-brand-primary/20" />
+            <img src="/favicon.svg" alt="Onbillo Logo" className="w-10 h-10" />
             <span className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
               Onbillo
             </span>
