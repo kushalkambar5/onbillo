@@ -3,13 +3,22 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ScanBarcode, BarChart3, Calculator, TrendingUp, Printer, WifiOff, Zap, ShieldCheck, HelpCircle, Store, ShoppingBag, Menu, X } from "lucide-react";
+import { ScanBarcode, BarChart3, Calculator, TrendingUp, Printer, WifiOff, Menu, X } from "lucide-react";
 import ThemeToggle from "./components/ThemeToggle";
 import SpecularButton from "./components/SpecularButton";
 import GlobalDatabaseMockup from "./components/GlobalDatabaseMockup";
 import HomeRedirect from "./components/HomeRedirect";
 import InteractiveSteps from "./components/InteractiveSteps";
 import FaqAccordion from "./components/FaqAccordion";
+import AccordionGallery from "./components/AccordionGallery";
+
+const SHOP_GALLERY_ITEMS = [
+  { image: "/supportings/Kirana_&_Grocery.png", label: "Kirana & Grocery", alt: "Kirana and grocery store" },
+  { image: "/supportings/Supermarkets.png", label: "Supermarkets", alt: "Supermarket" },
+  { image: "/supportings/Restaurants_&_Cafes.png", label: "Restaurants & Cafes", alt: "Restaurant and cafe" },
+  { image: "/supportings/Wholesale_Dealers.png", label: "Wholesale Dealers", alt: "Wholesale dealer" },
+  { image: "/supportings/Boutiques_&_Apparel.png", label: "Boutiques & Apparel", alt: "Boutique and apparel store" }
+];
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -227,34 +236,22 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 3. Shop Category Strip (Logo Strip) */}
-        <section className="bg-canvas border-b border-hairline py-8 transition-colors duration-200">
+        {/* 3. Shop Category Strip (Accordion Gallery) */}
+        <section className="bg-canvas border-b border-hairline py-12 md:py-16 transition-colors duration-200">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6">
-            <span className="text-center text-[10px] font-mono text-mute uppercase tracking-widest block mb-6">
+            <span className="text-center text-[10px] font-mono text-mute uppercase tracking-widest block mb-8">
               Supporting shops of all shapes and sizes
             </span>
-            <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 opacity-80">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-canvas-soft border border-hairline text-xs font-semibold text-body">
-                <Store className="w-4 h-4 text-brand-primary" />
-                <span>Kirana & Grocery</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-canvas-soft border border-hairline text-xs font-semibold text-body">
-                <ShieldCheck className="w-4 h-4 text-brand-primary" />
-                <span>Wholesale Dealers</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-canvas-soft border border-hairline text-xs font-semibold text-body">
-                <Zap className="w-4 h-4 text-brand-primary" />
-                <span>Restaurants & Cafes</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-canvas-soft border border-hairline text-xs font-semibold text-body">
-                <Store className="w-4 h-4 text-brand-primary" />
-                <span>Supermarkets</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-canvas-soft border border-hairline text-xs font-semibold text-body">
-                <ShoppingBag className="w-4 h-4 text-brand-primary" />
-                <span>Boutiques & Apparel</span>
-              </div>
-            </div>
+            <AccordionGallery
+              items={SHOP_GALLERY_ITEMS}
+              defaultIndex={2}
+              expandRatio={0.52}
+              trigger="hover"
+              height={460}
+              gap={10}
+              radius={16}
+              aspectRatio="6/7"
+            />
           </div>
         </section>
 
