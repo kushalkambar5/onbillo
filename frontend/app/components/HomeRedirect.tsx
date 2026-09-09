@@ -7,57 +7,75 @@ import { shopsApi, usersApi } from "../utils/api";
 import { mockUser } from "../utils/api/mockData";
 
 export default function HomeRedirect() {
-  const { isSignedIn, getToken } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isSignedIn) {
-      setLoading(true);
-      async function redirectUser() {
-        try {
-          const isBoneyard = typeof window !== "undefined" && 
-            ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
-          
-          if (isBoneyard) {
-            if (mockUser.role === "app_admin") {
-              router.push("/admin/dashboard");
-              return;
-            }
-          }
-
-          const token = await getToken();
-          const me = await usersApi.getMe(token);
-          if (me.role === "app_admin") {
+    if (!isLoaded || !isSignedIn) {
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    async function redirectUser() {
+      try {
+        const isBoneyard = typeof window !== "undefined" && 
+          ((window as any).__BONEYARD_BUILD || window.location.search.includes("boneyard=true"));
+        
+        if (isBoneyard) {
+          if (mockUser.role === "app_admin") {
             router.push("/admin/dashboard");
             return;
           }
-
-          const list = await shopsApi.getUserShops(token);
-          if (list && list.length > 0) {
-            // Check if there is an owner role
-            const ownerShop = list.find(s => s.role === "owner");
-            if (ownerShop) {
-              router.push(`/shop/${ownerShop.shop.id}/dashboard`);
-            } else {
-              router.push(`/shop/${list[0].shop.id}/billing`);
-            }
-          } else {
-            // If user has no shops, check onboarding status
-            if (me.phone) {
-              router.push("/invites");
-            } else {
-              router.push("/onboarding");
-            }
-          }
-        } catch (error) {
-          console.error("Error during home redirect:", error);
-          setLoading(false);
         }
+
+        const token = await getToken();
+        if (!token) {
+          // Clerk session not ready yet — stay on landing page quietly.
+          if (!cancelled) setLoading(false);
+          return;
+        }
+        const me = await usersApi.getMe(token);
+        if (me.role === "app_admin") {
+          router.push("/admin/dashboard");
+          return;
+        }
+
+        const list = await shopsApi.getUserShops(token);
+        if (list && list.length > 0) {
+          // Check if there is an owner role
+          const ownerShop = list.find(s => s.role === "owner");
+          if (ownerShop) {
+            router.push(`/shop/${ownerShop.shop.id}/dashboard`);
+          } else {
+            router.push(`/shop/${list[0].shop.id}/billing`);
+          }
+        } else {
+          // If user has no shops, check onboarding status
+          if (me.phone) {
+            router.push("/invites");
+          } else {
+            router.push("/onboarding");
+          }
+        }
+      } catch (error: any) {
+        // 401 = Clerk session is valid but the backend has no matching user
+        // (webhook sync lag or misconfigured CLERK_WEBHOOK_SECRET). Stay on
+        // the landing page quietly instead of spamming the console.
+        const status = error?.response?.status ?? error?.status;
+        if (status === 401) {
+          if (!cancelled) setLoading(false);
+          return;
+        }
+        console.error("Error during home redirect:", error);
+        if (!cancelled) setLoading(false);
       }
-      redirectUser();
     }
-  }, [isSignedIn, getToken, router]);
+      redirectUser();
+      return () => {
+        cancelled = true;
+      };
+  }, [isLoaded, isSignedIn, getToken, router]);
 
   if (loading) {
     return (

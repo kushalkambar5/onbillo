@@ -61,6 +61,14 @@ export class AuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
+      // Preserve specific HTTP errors (e.g. 'User not found in database',
+      // premium/banned rejections) so the client sees the real cause.
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
       console.error('AuthGuard error:', error);
       throw new UnauthorizedException('Invalid token');
     }
