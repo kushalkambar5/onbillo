@@ -61,6 +61,21 @@
   --color-warning-deep: #f59e0b;
 }
 
+/* AnimatedThemeToggler (Magic UI) — View Transitions API.
+   The toggler sets --magicui-theme-toggle-vt-duration and
+   data-magicui-theme-vt="active" on <html> only while a toggle is in
+   flight, so this stays scoped and won't affect other view transitions
+   (e.g. Next.js navigation transitions). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-magicui-theme-vt="active"]::view-transition-group(root) {
+  animation-duration: var(--magicui-theme-toggle-vt-duration);
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
