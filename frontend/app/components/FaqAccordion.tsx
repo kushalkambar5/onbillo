@@ -43,34 +43,38 @@ export default function FaqAccordion() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-3xl mx-auto rounded-2xl border border-black/10 bg-white overflow-hidden dark:border-white/10 dark:bg-[#121212]">
       {FAQ_DATA.map((faq, index) => {
         const isOpen = openIndex === index;
         return (
           <div
             key={index}
-            className="rounded-xl border border-hairline bg-canvas transition-colors duration-200"
+            className="border-b border-black/10 last:border-b-0 dark:border-white/10"
           >
             <button
               onClick={() => toggleFaq(index)}
-              className="w-full flex items-center justify-between p-5 text-left font-medium text-foreground text-sm hover:text-brand-primary outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 rounded-xl cursor-pointer"
+              className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 py-5 text-left outline-none focus-visible:bg-black/[0.03] dark:focus-visible:bg-white/[0.04] cursor-pointer"
               aria-expanded={isOpen}
             >
-              <span>{faq.question}</span>
+              <span className="text-[14px] sm:text-[15px] font-bold text-foreground dark:text-white leading-snug">
+                {faq.question}
+              </span>
               <ChevronDown
-                className={`w-4 h-4 text-mute transition-transform duration-200 ${
-                  isOpen ? "transform rotate-180 text-brand-primary" : ""
+                className={`w-4 h-4 shrink-0 text-mute dark:text-white/70 transition-transform duration-200 ${
+                  isOpen ? "transform rotate-180" : ""
                 }`}
               />
             </button>
             <div
-              className={`overflow-hidden transition-all duration-300 ${
-                isOpen ? "max-h-40 border-t border-hairline" : "max-h-0"
+              className={`grid transition-all duration-300 ease-in-out ${
+                isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
               }`}
             >
-              <p className="p-5 text-xs text-body leading-relaxed bg-canvas-soft">
-                {faq.answer}
-              </p>
+              <div className="overflow-hidden">
+                <p className="px-5 sm:px-6 pb-5 text-sm text-body dark:text-white/60 leading-relaxed">
+                  {faq.answer}
+                </p>
+              </div>
             </div>
           </div>
         );

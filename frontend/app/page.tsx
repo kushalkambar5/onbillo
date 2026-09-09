@@ -263,7 +263,7 @@ export default function Home() {
             {/* Section Header */}
             <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
               <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
-                Everything you need to run your store.
+                Everything you need to run your store
               </h2>
               <p className="text-body text-sm md:text-base leading-relaxed">
                 Onbillo is loaded with retail-focused features that simplify your day-to-day operations, reduce mistakes, and help your retail store grow.
@@ -311,9 +311,6 @@ export default function Home() {
               <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground font-sans">
                 Frequently Asked Questions.
               </h2>
-              <p className="text-body text-sm">
-                Everything you need to know about setting up and running your shop with Onbillo.
-              </p>
             </div>
 
             <FaqAccordion />

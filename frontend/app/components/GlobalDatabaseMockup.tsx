@@ -83,13 +83,8 @@ export default function GlobalDatabaseMockup() {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
       {/* Left Content */}
       <div className="lg:col-span-6 space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-soft border border-brand-light/30 text-brand-primary text-xs font-mono">
-          <Database className="w-3.5 h-3.5" />
-          <span>OUR STRONGEST FEATURE</span>
-        </div>
-        
         <h3 className="text-3xl font-semibold tracking-tight font-sans text-foreground leading-tight">
-          Scan once. Everyone benefits.
+          Scan once. Everyone benefits
         </h3>
         
         <p className="text-body text-base max-w-lg leading-relaxed">

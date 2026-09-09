@@ -23,6 +23,8 @@ export interface OptionWheelProps {
   inset?: number;
   loop?: boolean;
   draggable?: boolean;
+  /** When false, wheel/touchpad scrolling over the wheel scrolls the page instead of the wheel. */
+  enableWheel?: boolean;
   soundUrl?: string;
   soundVolume?: number;
   className?: string;
@@ -88,6 +90,7 @@ export default function OptionWheel({
   inset = 80,
   loop = false,
   draggable = true,
+  enableWheel = true,
   soundUrl = "",
   soundVolume = 0.5,
   className = ""
@@ -263,7 +266,10 @@ export default function OptionWheel({
   }, [selected]);
 
   // Wheel / touchpad scrolling, registered manually so it can be non-passive.
+  // Skipped when enableWheel is false so a pinned scroll section can drive
+  // the wheel from page scroll instead (prevents scroll-trapping).
   useEffect(() => {
+    if (!enableWheel) return;
     const el = rootRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
@@ -282,7 +288,7 @@ export default function OptionWheel({
       el.removeEventListener("wheel", onWheel);
       if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
     };
-  }, [applyTarget]);
+  }, [applyTarget, enableWheel]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!cfgRef.current.draggable) return;
@@ -375,7 +381,9 @@ export default function OptionWheel({
           "--ow-text-color": textColor,
           "--ow-active-color": activeColor,
           "--ow-font-size": `${fontSize}rem`,
-          "--ow-inset": `${inset}px`
+          "--ow-inset": `${inset}px`,
+          // Let page scroll pass through when the section is scroll-driven.
+          ...(enableWheel ? {} : { touchAction: "pan-y", cursor: "default" }),
         } as CSSProperties
       }
       onPointerDown={handlePointerDown}
