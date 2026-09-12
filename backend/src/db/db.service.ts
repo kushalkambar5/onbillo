@@ -7,7 +7,7 @@ import 'dotenv/config';
 @Injectable()
 export class DbService implements OnModuleInit, OnModuleDestroy {
   public db: PostgresJsDatabase<typeof schema>;
-  private client: postgres.Sql;
+  public client: postgres.Sql;
 
   constructor() {
     this.client = postgres(process.env.DATABASE_URL as string);

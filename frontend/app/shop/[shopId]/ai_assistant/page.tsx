@@ -18,7 +18,7 @@ export default function AiAssistantPage({
     {
       role: "assistant",
       content:
-        "Hello! I'm your **Onbillo AI Shop Assistant** powered by Groq. I can help you with:\n\n- 📦 Inventory & stock levels\n- 🧾 Recent bills & sales history\n- 📊 Sales analytics & revenue\n- 👥 Staff management\n- ⚙️ Shop settings\n\nAsk me anything about your shop!",
+        "Hello! I'm your **Onbillo AI Shop Assistant** powered by Groq. I can help you with:\n\n- **Shop details** – get the shop's name, address, tax settings, etc.\n- **Inventory** – view product list, prices, stock levels, and low-stock alerts.\n- **Bills** – fetch recent sales bills and their totals.\n- **Analytics summary** – quick overview of revenue, bills, product count, and low-stock status.\n- **Staff** – list staff members and pending join requests.\n- **Custom SQL** – run read-only queries for more advanced reports (e.g., date ranges, top-N items).\n\nAsk me anything about your shop!",
       timestamp: new Date().toISOString(),
     },
   ]);
