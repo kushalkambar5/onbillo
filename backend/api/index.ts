@@ -10,6 +10,48 @@ import { AppModule } from '../src/app.module';
 const expressApp = express();
 let initialized = false;
 
+// TEMPORARY DIAGNOSTICS: capture process-level deaths (uncaughtException /
+// unhandledRejection escape try/catch and surface on Vercel as a bare
+// FUNCTION_INVOCATION_FAILED with no CORS headers). We stash the active
+// response and answer from the fatal handler so curl shows the real error.
+function reportFatal(kind: string, err: unknown) {
+  try {
+    const res = (globalThis as any).__fatalRes;
+    const detail = String(
+      (err as any)?.stack ?? (err as any)?.message ?? err ?? 'unknown',
+    ).slice(0, 1500);
+    // eslint-disable-next-line no-console
+    console.error(`[fatal:${kind}]`, detail);
+    if (res && !res.headersSent) {
+      try {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', 'application/json');
+      } catch {
+        /* ignore */
+      }
+      try {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+      } catch {
+        /* ignore */
+      }
+      try {
+        res.end(JSON.stringify({ fatal: kind, detail }));
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+}
+if (!(globalThis as any).__fatalArmed) {
+  (globalThis as any).__fatalArmed = true;
+  process.once('uncaughtException', (e) => reportFatal('uncaughtException', e));
+  process.once('unhandledRejection', (e) =>
+    reportFatal('unhandledRejection', e),
+  );
+}
+
 // Vercel must NOT pre-parse the body: Nest needs the raw bytes
 // (rawBody:true) for Clerk/Svix webhook signature verification.
 export const config = {
@@ -93,6 +135,7 @@ async function bootstrap() {
 }
 
 export default async function handler(req: any, res: any) {
+  (globalThis as any).__fatalRes = res;
   try {
     // Always answer CORS preflight, even if Nest/DB init is broken —
     // otherwise browsers mask the real 500 as an opaque CORS error.
