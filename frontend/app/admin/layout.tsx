@@ -118,16 +118,16 @@ export default function AdminWorkspaceLayout({
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-zinc-950 p-6 text-zinc-100">
-        <div className="w-full max-w-md bg-zinc-900 border border-red-900/30 rounded-2xl p-8 text-center shadow-lg">
-          <div className="w-12 h-12 rounded-full bg-red-950/50 border border-red-800/30 flex items-center justify-center mx-auto mb-4 text-red-400">
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-canvas-soft p-6 text-foreground">
+        <div className="w-full max-w-md bg-canvas border border-error/20 rounded-2xl p-8 text-center shadow-lg">
+          <div className="w-12 h-12 rounded-full bg-error-soft border border-error/20 flex items-center justify-center mx-auto mb-4 text-error-deep">
             <ShieldAlert className="w-6 h-6" />
           </div>
           <h1 className="text-lg font-bold">Admin Privileges Required</h1>
-          <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+          <p className="text-xs text-body mt-2 leading-relaxed">
             This workspace section is restricted to Platform Administrators. Your account is not authorized.
           </p>
-          <p className="text-[10px] text-zinc-500 mt-4 animate-pulse">
+          <p className="text-[10px] text-mute mt-4 animate-pulse">
             Redirecting you to the landing page...
           </p>
         </div>
@@ -136,17 +136,17 @@ export default function AdminWorkspaceLayout({
   }
 
   return (
-    <div className="min-h-screen flex bg-zinc-950 text-zinc-100 antialiased font-sans">
+    <div className="min-h-screen flex bg-canvas-soft text-foreground antialiased font-sans">
       {/* 1. Admin Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-zinc-800 bg-zinc-900 shrink-0 h-screen sticky top-0">
+      <aside className="hidden md:flex flex-col w-64 border-r border-hairline bg-canvas shrink-0 h-screen sticky top-0">
         {/* Header: Admin Branding */}
-        <div className="p-5 border-b border-zinc-800/60">
+        <div className="p-5 border-b border-hairline/60">
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 bg-brand-primary rounded-lg flex items-center justify-center shrink-0 shadow shadow-brand-primary/40">
               🛡️
             </div>
             <div>
-              <span className="text-xs font-bold tracking-tight text-white block">
+              <span className="text-xs font-bold tracking-tight text-foreground block">
                 Onbillo Admin
               </span>
               <span className="text-[9px] font-mono font-bold text-brand-primary uppercase tracking-wide">
@@ -168,11 +168,11 @@ export default function AdminWorkspaceLayout({
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200 outline-none ${
                   active
-                    ? "bg-zinc-800 text-white border border-zinc-700/50"
-                    : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                    ? "bg-canvas-soft-2 text-foreground border border-hairline-strong/50"
+                    : "text-body hover:text-foreground hover:bg-canvas"
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${active ? "text-brand-primary" : "text-zinc-500"}`} />
+                <Icon className={`w-4 h-4 shrink-0 ${active ? "text-brand-primary" : "text-mute"}`} />
                 {item.name}
               </Link>
             );
@@ -181,14 +181,14 @@ export default function AdminWorkspaceLayout({
 
 
         {/* Sidebar Footer */}
-        <div className="p-5 border-t border-zinc-800/60 flex items-center justify-between gap-3">
+        <div className="p-5 border-t border-hairline/60 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 overflow-hidden">
             <UserButton />
             <div className="overflow-hidden">
-              <p className="text-[10px] font-bold text-white truncate">
+              <p className="text-[10px] font-bold text-foreground truncate">
                 {currentUser?.name}
               </p>
-              <span className="text-[8px] font-mono text-zinc-500 block uppercase font-bold tracking-wider">
+              <span className="text-[8px] font-mono text-mute block uppercase font-bold tracking-wider">
                 System Admin
               </span>
             </div>
@@ -207,18 +207,18 @@ export default function AdminWorkspaceLayout({
           />
 
           {/* Drawer content panel */}
-          <div className="relative flex flex-col w-full max-w-[280px] bg-zinc-900 border-r border-zinc-800 h-full p-4 animate-in slide-in-from-left duration-200 text-zinc-100">
+          <div className="relative flex flex-col w-full max-w-[280px] bg-canvas border-r border-hairline h-full p-4 animate-in slide-in-from-left duration-200 text-foreground">
             {/* Drawer Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-800 mb-4">
+            <div className="flex items-center justify-between pb-4 border-b border-hairline mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-brand-primary rounded-lg flex items-center justify-center shrink-0 shadow shadow-brand-primary/40">
                   🛡️
                 </div>
-                <span className="font-bold tracking-tight text-white text-sm">Onbillo Admin</span>
+                <span className="font-bold tracking-tight text-foreground text-sm">Onbillo Admin</span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1 rounded-md border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer"
+                className="p-1 rounded-md border border-hairline text-body hover:text-foreground hover:bg-canvas-soft-2 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -237,11 +237,11 @@ export default function AdminWorkspaceLayout({
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200 outline-none ${
                       active
-                        ? "bg-zinc-800 text-white border border-zinc-700/50"
-                        : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                        ? "bg-canvas-soft-2 text-foreground border border-hairline-strong/50"
+                        : "text-body hover:text-foreground hover:bg-canvas"
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${active ? "text-brand-primary" : "text-zinc-500"}`} />
+                    <Icon className={`w-4 h-4 shrink-0 ${active ? "text-brand-primary" : "text-mute"}`} />
                     {item.name}
                   </Link>
                 );
@@ -251,14 +251,14 @@ export default function AdminWorkspaceLayout({
 
 
             {/* Drawer Footer */}
-            <div className="pt-4 border-t border-zinc-800 flex items-center justify-between gap-3 mt-auto">
+            <div className="pt-4 border-t border-hairline flex items-center justify-between gap-3 mt-auto">
               <div className="flex items-center gap-2 overflow-hidden">
                 <UserButton />
                 <div className="overflow-hidden">
-                  <p className="text-[10px] font-bold text-white truncate">
+                  <p className="text-[10px] font-bold text-foreground truncate">
                     {currentUser?.name}
                   </p>
-                  <span className="text-[8px] font-mono text-zinc-500 block uppercase font-bold tracking-wider">
+                  <span className="text-[8px] font-mono text-mute block uppercase font-bold tracking-wider">
                     System Admin
                   </span>
                 </div>
@@ -272,16 +272,16 @@ export default function AdminWorkspaceLayout({
       {/* 2. Main Page Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Header */}
-        <header className="h-14 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between px-6 sticky top-0 z-40">
+        <header className="h-14 border-b border-hairline bg-canvas flex items-center justify-between px-6 sticky top-0 z-40">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white md:hidden outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer"
+              className="p-1.5 rounded-lg border border-hairline bg-canvas text-body hover:text-foreground md:hidden outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer"
               aria-label="Open administration menu"
             >
               <Menu className="w-4 h-4" />
             </button>
-            <span className="text-[10px] sm:text-xs font-bold text-white font-mono uppercase tracking-widest truncate max-w-[200px] sm:max-w-none">
+            <span className="text-[10px] sm:text-xs font-bold text-foreground font-mono uppercase tracking-widest truncate max-w-[200px] sm:max-w-none">
               Platform Administration Console
             </span>
           </div>
@@ -291,7 +291,7 @@ export default function AdminWorkspaceLayout({
         </header>
 
         {/* Dynamic Content */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-zinc-950">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-canvas-soft">
           {children}
         </main>
       </div>

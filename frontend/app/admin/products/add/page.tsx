@@ -132,34 +132,34 @@ export default function AdminAddProduct() {
       <div className="flex flex-col gap-3">
         <Link
           href="/admin/products"
-          className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 text-xs font-semibold text-body hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Products Catalog
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-white font-sans">Add Global Product</h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <h1 className="text-xl font-bold text-foreground font-sans">Add Global Product</h1>
+          <p className="text-xs text-body mt-1">
             Create a new verified product directly in the platform catalog.
           </p>
         </div>
       </div>
 
       {success && (
-        <div className="p-3.5 rounded-lg bg-zinc-900 border border-brand-primary/20 text-xs font-semibold text-brand-primary">
+        <div className="p-3.5 rounded-lg bg-canvas border border-brand-primary/20 text-xs font-semibold text-brand-primary">
           ✓ {success}
         </div>
       )}
 
       {error && (
-        <div className="p-3.5 rounded-lg bg-red-950/20 border border-red-900/30 text-xs font-semibold text-red-400">
+        <div className="p-3.5 rounded-lg bg-error-soft border border-error/20 text-xs font-semibold text-error-deep">
           ⚠️ {error}
         </div>
       )}
 
       {/* Product Form */}
-      <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-6 space-y-4 shadow-md">
+      <form onSubmit={handleSubmit} className="bg-canvas border border-hairline/80 rounded-2xl p-6 space-y-4 shadow-md">
         <div>
-          <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1.5 font-mono">
             UPC Barcode Value
           </label>
           <div className="relative">
@@ -167,36 +167,36 @@ export default function AdminAddProduct() {
               type="text"
               value={form.barcode}
               onChange={(e) => setForm({ ...form, barcode: e.target.value })}
-              className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-10 pl-3 pr-10 text-white transition-all duration-200 outline-none"
+              className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-10 pl-3 pr-10 text-foreground transition-all duration-200 outline-none"
               placeholder="e.g. 8901030818279"
             />
             <button
               type="button"
               onClick={() => setScannerOpen(true)}
-              className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-white transition-all duration-150 flex items-center justify-center cursor-pointer"
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary hover:text-foreground transition-all duration-150 flex items-center justify-center cursor-pointer"
               title="Scan barcode with camera"
             >
               <ScanBarcode className="w-4 h-4" />
             </button>
           </div>
-          <span className="text-[9px] text-zinc-500 mt-1 block leading-normal">
+          <span className="text-[9px] text-mute mt-1 block leading-normal">
             Optional. Leaving this empty makes it a non-barcoded catalog item.
           </span>
         </div>
 
         {/* Product Image Option */}
         <div>
-          <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 font-mono">
+          <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1.5 font-mono">
             Product Image
           </label>
           <div className="flex items-center gap-4">
             {imagePreview ? (
-              <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-zinc-800 shrink-0">
+              <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-hairline shrink-0">
                 <img src={imagePreview} className="w-full h-full object-cover" />
                 <button
                   type="button"
                   onClick={clearSelectedImage}
-                  className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors cursor-pointer"
+                  className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/60 text-foreground hover:bg-black/80 transition-colors cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -205,7 +205,7 @@ export default function AdminAddProduct() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-16 h-16 rounded-lg border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-950 flex flex-col items-center justify-center text-zinc-500 hover:text-zinc-400 transition-colors cursor-pointer"
+                className="w-16 h-16 rounded-lg border border-dashed border-hairline hover:border-hairline-strong bg-canvas-soft flex flex-col items-center justify-center text-mute hover:text-body transition-colors cursor-pointer"
               >
                 <Upload className="w-4 h-4 mb-1" />
                 <span className="text-[8px] font-bold uppercase tracking-wider">Upload</span>
@@ -218,7 +218,7 @@ export default function AdminAddProduct() {
               accept="image/*"
               className="hidden"
             />
-            <div className="text-[9px] text-zinc-500 leading-normal">
+            <div className="text-[9px] text-mute leading-normal">
               Optional. PNG, JPG or WEBP format. Max size 5MB.
             </div>
           </div>
@@ -226,48 +226,48 @@ export default function AdminAddProduct() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 font-mono">
+            <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1.5 font-mono">
               Brand Name
             </label>
             <input
               type="text"
               value={form.brand}
               onChange={(e) => setForm({ ...form, brand: e.target.value })}
-              className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-white transition-all duration-200 outline-none"
+              className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground transition-all duration-200 outline-none"
               placeholder="e.g. Brooke Bond"
             />
           </div>
           <div>
-            <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 font-mono">
+            <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1.5 font-mono">
               Category
             </label>
             <input
               type="text"
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-white transition-all duration-200 outline-none"
+              className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground transition-all duration-200 outline-none"
               placeholder="e.g. Beverages"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 font-mono">
-            Product Name <span className="text-red-500">*</span>
+          <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1.5 font-mono">
+            Product Name <span className="text-error-deep">*</span>
           </label>
           <input
             type="text"
             required
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-white transition-all duration-200 outline-none"
+            className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground transition-all duration-200 outline-none"
             placeholder="e.g. Red Label Tea 500g"
           />
         </div>
 
         <div>
-          <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 font-mono">
-            Maximum Retail Price (MRP in ₹) <span className="text-red-500">*</span>
+          <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1.5 font-mono">
+            Maximum Retail Price (MRP in ₹) <span className="text-error-deep">*</span>
           </label>
           <input
             type="number"
@@ -276,7 +276,7 @@ export default function AdminAddProduct() {
             min="0.01"
             value={form.mrp}
             onChange={(e) => setForm({ ...form, mrp: e.target.value })}
-            className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-white font-mono transition-all duration-200 outline-none"
+            className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground font-mono transition-all duration-200 outline-none"
             placeholder="e.g. 195.00"
           />
         </div>
@@ -284,23 +284,23 @@ export default function AdminAddProduct() {
         {/* Note on Auto-approval */}
         <div className="p-3.5 bg-brand-primary/5 border border-brand-primary/10 rounded-xl flex items-start gap-2.5">
           <Info className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
-          <p className="text-[10px] text-zinc-400 leading-normal">
+          <p className="text-[10px] text-body leading-normal">
             As a Platform Administrator, any product you create is automatically set to <strong>Approved</strong> and published immediately to the platform database.
           </p>
         </div>
 
         {/* Form Actions */}
-        <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-end gap-3">
+        <div className="pt-4 border-t border-hairline/80 flex items-center justify-end gap-3">
           <Link
             href="/admin/products"
-            className="px-5 h-10 border border-zinc-800 hover:bg-zinc-850 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+            className="px-5 h-10 border border-hairline hover:bg-canvas-soft-2 text-foreground font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className="px-5 h-10 bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            className="px-5 h-10 bg-brand-primary hover:bg-brand-secondary text-foreground font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             {loading ? "Adding Product..." : "Create Product"}
           </button>

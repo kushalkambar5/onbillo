@@ -145,9 +145,9 @@ export default function AdminSettings() {
     <Skeleton name="admin-settings" loading={loading}>
       <div className="space-y-6 max-w-xl select-none">
         {/* Header */}
-        <div className="border-b border-zinc-800/80 pb-6">
-          <h1 className="text-xl font-bold text-white font-sans">Account Settings</h1>
-          <p className="text-xs text-zinc-400 mt-1">
+        <div className="border-b border-hairline/80 pb-6">
+          <h1 className="text-xl font-bold text-foreground font-sans">Account Settings</h1>
+          <p className="text-xs text-body mt-1">
             Manage your administrator profile details.
           </p>
         </div>
@@ -156,8 +156,8 @@ export default function AdminSettings() {
           <div
             className={`p-4 rounded-lg text-xs font-medium border flex items-center gap-2.5 ${
               message.type === "success"
-                ? "bg-zinc-900 border-brand-primary/15 text-brand-primary"
-                : "bg-red-950/20 border-red-900/30 text-red-400"
+                ? "bg-canvas border-brand-primary/15 text-brand-primary"
+                : "bg-error-soft border-error/20 text-error-deep"
             }`}
           >
             <span>{message.type === "success" ? "✓" : "⚠️"}</span>
@@ -165,7 +165,7 @@ export default function AdminSettings() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-6 space-y-5 shadow-md">
+        <form onSubmit={handleSubmit} className="bg-canvas border border-hairline/80 rounded-2xl p-6 space-y-5 shadow-md">
           {/* Admin Tag */}
           <div className="flex items-center gap-3 p-3 bg-purple-950/20 border border-purple-900/30 rounded-xl">
             <Shield className="w-5 h-5 text-purple-400 shrink-0" />
@@ -173,7 +173,7 @@ export default function AdminSettings() {
               <span className="text-[10px] font-bold text-purple-400 block font-mono uppercase tracking-wider">
                 Authorized Role
               </span>
-              <span className="text-xs text-white font-medium">
+              <span className="text-xs text-foreground font-medium">
                 Platform Administrator
               </span>
             </div>
@@ -181,10 +181,10 @@ export default function AdminSettings() {
 
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-xs font-semibold text-zinc-400">
+              <label className="block text-xs font-semibold text-body">
                 Full Name
               </label>
-              <span className="text-[9px] text-zinc-500 font-mono">
+              <span className="text-[9px] text-mute font-mono">
                 {formData.name.length}/255 chars
               </span>
             </div>
@@ -195,21 +195,21 @@ export default function AdminSettings() {
               value={formData.name}
               onChange={(e) => handleFieldChange("name", e.target.value)}
               onBlur={(e) => handleFieldBlur("name", e.target.value)}
-              className={`w-full border bg-zinc-950 hover:border-zinc-700 focus:border-brand-primary rounded-lg text-xs transition-all duration-200 h-10 px-3 text-white outline-none ${
-                touched.name && errors.name ? "border-red-500" : "border-zinc-800"
+              className={`w-full border bg-canvas-soft hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs transition-all duration-200 h-10 px-3 text-foreground outline-none ${
+                touched.name && errors.name ? "border-error/60" : "border-hairline"
               }`}
             />
             {touched.name && errors.name && (
-              <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+              <p className="text-xs text-error-deep mt-1">{errors.name}</p>
             )}
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-xs font-semibold text-zinc-400">
+              <label className="block text-xs font-semibold text-body">
                 Phone Number
               </label>
-              <span className="text-[9px] text-zinc-500 font-mono">
+              <span className="text-[9px] text-mute font-mono">
                 {Math.max(0, formData.phone.length - 3)}/10 digits
               </span>
             </div>
@@ -220,25 +220,25 @@ export default function AdminSettings() {
               value={formData.phone}
               onChange={(e) => handleFieldChange("phone", e.target.value)}
               onBlur={(e) => handleFieldBlur("phone", e.target.value)}
-              className={`w-full border bg-zinc-950 hover:border-zinc-700 focus:border-brand-primary rounded-lg text-xs transition-all duration-200 h-10 px-3 text-white outline-none font-mono ${
-                touched.phone && errors.phone ? "border-red-500" : "border-zinc-800"
+              className={`w-full border bg-canvas-soft hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs transition-all duration-200 h-10 px-3 text-foreground outline-none font-mono ${
+                touched.phone && errors.phone ? "border-error/60" : "border-hairline"
               }`}
               placeholder="+91 XXXXX XXXXX"
             />
             {touched.phone && errors.phone && (
-              <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+              <p className="text-xs text-error-deep mt-1">{errors.phone}</p>
             )}
           </div>
 
           {/* Sync explain */}
-          <div className="p-3.5 bg-zinc-950 border border-zinc-800/80 rounded-xl flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-zinc-500 leading-normal">
+          <div className="p-3.5 bg-canvas-soft border border-hairline/80 rounded-xl flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-body shrink-0 mt-0.5" />
+            <p className="text-[10px] text-mute leading-normal">
               Authentication and credential syncing are managed securely via Clerk. Custom metadata like contact details update locally.
             </p>
           </div>
 
-          <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-end">
+          <div className="pt-4 border-t border-hairline/80 flex items-center justify-end">
             <button
               type="submit"
               disabled={saving || !isFormValid}

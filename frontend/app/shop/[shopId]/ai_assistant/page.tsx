@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, use } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { aiAssistantApi, AiChatMessage } from "../../../utils/api/aiAssistant";
-import { Bot, Send, Trash2, Sparkles, Loader2 } from "lucide-react";
+import { Send, Trash2, Sparkles, Loader2 } from "lucide-react";
 
 export default function AiAssistantPage({
   params: paramsPromise,
@@ -153,7 +153,7 @@ export default function AiAssistantPage({
       <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center">
-            <Bot className="w-5 h-5 text-brand-primary" />
+            <img src="/onbillo_ai_icon.png" alt="Onbillo AI" className="w-5 h-5 object-contain" />
           </div>
           <div>
             <h1 className="text-base font-bold text-foreground">AI Shop Assistant</h1>
@@ -190,7 +190,7 @@ export default function AiAssistantPage({
               }`}
             >
               {msg.role === "assistant" ? (
-                <Bot className="w-3.5 h-3.5" />
+                <img src="/onbillo_ai_icon.png" alt="Onbillo AI" className="w-3.5 h-3.5 object-contain" />
               ) : (
                 "U"
               )}
@@ -213,7 +213,7 @@ export default function AiAssistantPage({
         {isLoading && (
           <div className="flex items-start gap-3">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary">
-              <Bot className="w-3.5 h-3.5" />
+              <img src="/onbillo_ai_icon.png" alt="Onbillo AI" className="w-3.5 h-3.5 object-contain" />
             </div>
             <div className="bg-canvas border border-hairline rounded-2xl rounded-tl-sm px-4 py-3">
               <div className="flex items-center gap-1.5">

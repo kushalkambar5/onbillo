@@ -237,37 +237,37 @@ export default function AdminRejectedProducts() {
     <Skeleton name="admin-rejected-products" loading={loading}>
       <div className="space-y-8 select-none">
         {/* Header */}
-        <div className="border-b border-zinc-800/80 pb-6">
-          <h1 className="text-xl font-bold text-white font-sans">
+        <div className="border-b border-hairline/80 pb-6">
+          <h1 className="text-xl font-bold text-foreground font-sans">
             Rejected Product Queue
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-body mt-1">
             Browse global product requests that were previously rejected. You
             can edit details and either approve or reset their statuses.
           </p>
         </div>
 
         {success && (
-          <div className="p-3.5 rounded-lg bg-zinc-900 border border-brand-primary/20 text-xs font-semibold text-brand-primary">
+          <div className="p-3.5 rounded-lg bg-canvas border border-brand-primary/20 text-xs font-semibold text-brand-primary">
             ✓ {success}
           </div>
         )}
 
         {error && (
-          <div className="p-3.5 rounded-lg bg-red-950/20 border border-red-900/30 text-xs font-semibold text-red-400">
+          <div className="p-3.5 rounded-lg bg-error-soft border border-error/20 text-xs font-semibold text-error-deep">
             ⚠️ {error}
           </div>
         )}
 
         {/* Catalog Table */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-md">
+        <div className="bg-canvas border border-hairline/80 rounded-2xl overflow-hidden shadow-md">
           {products.length === 0 ? (
-            <div className="p-12 text-center text-zinc-500">
-              <FileX className="w-10 h-10 mx-auto text-zinc-600 mb-3" />
-              <h4 className="text-xs font-bold text-white">
+            <div className="p-12 text-center text-mute">
+              <FileX className="w-10 h-10 mx-auto text-mute mb-3" />
+              <h4 className="text-xs font-bold text-foreground">
                 No rejected products
               </h4>
-              <p className="text-[10px] text-zinc-500 mt-1">
+              <p className="text-[10px] text-mute mt-1">
                 There are no rejected product requests on the platform.
               </p>
             </div>
@@ -275,7 +275,7 @@ export default function AdminRejectedProducts() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-zinc-950 border-b border-zinc-800 text-[9px] font-bold text-zinc-500 uppercase tracking-wider font-mono">
+                  <tr className="bg-canvas-soft border-b border-hairline text-[9px] font-bold text-mute uppercase tracking-wider font-mono">
                     <th className="py-3.5 px-5">UPC Barcode</th>
                     <th className="py-3.5 px-5">Brand / Name</th>
                     <th className="py-3.5 px-5">Submitted By</th>
@@ -285,13 +285,13 @@ export default function AdminRejectedProducts() {
                     <th className="py-3.5 px-5 text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800 text-xs">
+                <tbody className="divide-y divide-hairline text-xs">
                   {products.map((p) => (
                     <tr
                       key={p.id}
-                      className="hover:bg-zinc-950/40 transition-colors"
+                      className="hover:bg-canvas-soft/40 transition-colors"
                     >
-                      <td className="py-3.5 px-5 font-mono font-bold text-zinc-500 truncate max-w-[120px]">
+                      <td className="py-3.5 px-5 font-mono font-bold text-mute truncate max-w-[120px]">
                         {p.barcode || "N/A"}
                       </td>
                       <td className="py-3.5 px-5 truncate max-w-[220px]">
@@ -302,34 +302,34 @@ export default function AdminRejectedProducts() {
                           {p.imageUrl ? (
                             <img
                               src={p.imageUrl}
-                              className="w-8 h-8 rounded object-cover border border-zinc-850 shrink-0"
+                              className="w-8 h-8 rounded object-cover border border-hairline shrink-0"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded bg-zinc-950 border border-zinc-850 flex items-center justify-center text-[9px] text-zinc-600 font-bold shrink-0">
+                            <div className="w-8 h-8 rounded bg-canvas-soft border border-hairline flex items-center justify-center text-[9px] text-mute font-bold shrink-0">
                               —
                             </div>
                           )}
-                          <span className="font-bold text-white truncate">
+                          <span className="font-bold text-foreground truncate">
                             {p.name}
                           </span>
                         </div>
                       </td>
                       <td className="py-3.5 px-5 truncate max-w-[160px]">
-                        <span className="text-white font-medium block">
+                        <span className="text-foreground font-medium block">
                           {p.creatorName || "Anonymous"}
                         </span>
-                        <span className="text-[10px] text-zinc-500 font-mono block">
+                        <span className="text-[10px] text-mute font-mono block">
                           {p.creatorShopName || "Admin Console"}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 font-semibold text-white text-right font-mono">
+                      <td className="py-3.5 px-5 font-semibold text-foreground text-right font-mono">
                         ₹{(p.mrp / 100).toFixed(2)}
                       </td>
-                      <td className="py-3.5 px-5 text-zinc-400 font-medium">
+                      <td className="py-3.5 px-5 text-body font-medium">
                         {p.category || "—"}
                       </td>
                       <td
-                        className="py-3.5 px-5 text-red-400 font-medium max-w-[220px] truncate"
+                        className="py-3.5 px-5 text-error-deep font-medium max-w-[220px] truncate"
                         title={p.rejectionReason || ""}
                       >
                         {p.rejectionReason || "No reason provided"}
@@ -342,7 +342,7 @@ export default function AdminRejectedProducts() {
                           <button
                             disabled={actioningId !== null}
                             onClick={() => triggerEditDialog(p)}
-                            className="h-8 px-2 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
+                            className="h-8 px-2 border border-hairline text-body hover:bg-canvas-soft-2 hover:text-foreground font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
                             title="Edit Details"
                           >
                             <Edit3 className="w-3.5 h-3.5" /> Edit
@@ -351,7 +351,7 @@ export default function AdminRejectedProducts() {
                           <button
                             disabled={actioningId !== null}
                             onClick={() => handleMakePending(p.id, p.name)}
-                            className="h-8 px-2 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
+                            className="h-8 px-2 border border-hairline text-body hover:bg-canvas-soft-2 hover:text-foreground font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
                             title="Make Pending"
                           >
                             <RotateCcw className="w-3.5 h-3.5 text-amber-500" />{" "}
@@ -361,7 +361,7 @@ export default function AdminRejectedProducts() {
                           <button
                             disabled={actioningId !== null}
                             onClick={() => handleApprove(p.id, p.name)}
-                            className="h-8 px-2 bg-emerald-950/20 border border-emerald-900/30 text-emerald-400 hover:bg-emerald-800 hover:text-white font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
+                            className="h-8 px-2 bg-emerald-950/20 border border-emerald-900/30 text-emerald-400 hover:bg-emerald-800 hover:text-foreground font-bold text-xs rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-1"
                             title="Approve Directly"
                           >
                             <Check className="w-3.5 h-3.5" /> Approve
@@ -381,13 +381,13 @@ export default function AdminRejectedProducts() {
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
             <form
               onSubmit={handleEditSubmit}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg max-w-md w-full p-6 space-y-4 text-white"
+              className="bg-canvas border border-hairline rounded-2xl shadow-lg max-w-md w-full p-6 space-y-4 text-foreground"
             >
               <div>
                 <h3 className="text-sm font-bold font-sans">
                   Edit Rejected Product
                 </h3>
-                <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
+                <p className="text-[10px] text-body mt-1 leading-snug">
                   Modify details for this rejected request before choosing to
                   approve or move it back to the pending queue.
                 </p>
@@ -395,7 +395,7 @@ export default function AdminRejectedProducts() {
 
               <div className="space-y-3.5">
                 <div>
-                  <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1 font-mono">
+                  <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1 font-mono">
                     UPC Barcode
                   </label>
                   <input
@@ -404,14 +404,14 @@ export default function AdminRejectedProducts() {
                     onChange={(e) =>
                       setEditForm({ ...editForm, barcode: e.target.value })
                     }
-                    className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
+                    className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-foreground"
                     placeholder="e.g. 8901030818279"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1 font-mono">
+                    <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1 font-mono">
                       Brand Name
                     </label>
                     <input
@@ -420,12 +420,12 @@ export default function AdminRejectedProducts() {
                       onChange={(e) =>
                         setEditForm({ ...editForm, brand: e.target.value })
                       }
-                      className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
+                      className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-foreground"
                       placeholder="e.g. Brooke Bond"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1 font-mono">
+                    <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1 font-mono">
                       Category
                     </label>
                     <input
@@ -434,15 +434,15 @@ export default function AdminRejectedProducts() {
                       onChange={(e) =>
                         setEditForm({ ...editForm, category: e.target.value })
                       }
-                      className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
+                      className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-foreground"
                       placeholder="e.g. Beverages"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1 font-mono">
-                    Product Name <span className="text-red-500">*</span>
+                  <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1 font-mono">
+                    Product Name <span className="text-error-deep">*</span>
                   </label>
                   <input
                     type="text"
@@ -451,14 +451,14 @@ export default function AdminRejectedProducts() {
                     onChange={(e) =>
                       setEditForm({ ...editForm, name: e.target.value })
                     }
-                    className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white"
+                    className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-foreground"
                     placeholder="e.g. Red Label Tea 500g"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-bold text-zinc-500 uppercase tracking-wider mb-1 font-mono">
-                    MRP (₹ Rupees) <span className="text-red-500">*</span>
+                  <label className="block text-[9px] font-bold text-mute uppercase tracking-wider mb-1 font-mono">
+                    MRP (₹ Rupees) <span className="text-error-deep">*</span>
                   </label>
                   <input
                     type="number"
@@ -469,7 +469,7 @@ export default function AdminRejectedProducts() {
                     onChange={(e) =>
                       setEditForm({ ...editForm, mrp: e.target.value })
                     }
-                    className="w-full border border-zinc-800 bg-zinc-950 focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-white font-mono"
+                    className="w-full border border-hairline bg-canvas-soft focus:border-brand-primary rounded-lg text-xs h-9 px-3 text-foreground font-mono"
                     placeholder="e.g. 195.00"
                   />
                 </div>
@@ -479,14 +479,14 @@ export default function AdminRejectedProducts() {
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="flex-1 h-9.5 border border-zinc-800 hover:bg-zinc-850 text-white text-xs font-bold rounded-lg cursor-pointer"
+                  className="flex-1 h-9.5 border border-hairline hover:bg-canvas-soft-2 text-foreground text-xs font-bold rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saveLoading}
-                  className="flex-1 h-9.5 bg-brand-primary hover:bg-brand-secondary text-white text-xs font-bold rounded-lg cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 h-9.5 bg-brand-primary hover:bg-brand-secondary text-foreground text-xs font-bold rounded-lg cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   {saveLoading ? "Saving..." : "Save Changes"}
                 </button>
