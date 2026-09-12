@@ -1,8 +1,23 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
+import { Controller, Get, Module } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 import { AppModule } from '../src/app.module';
+import { DbService } from '../src/db/db.service';
+import { UploadService } from '../src/upload/upload.service';
+
+// TEMPORARY DIAGNOSTICS: dependency-free Nest module to test whether Nest
+// core itself boots on Vercel (no src providers involved).
+@Controller('probe')
+class ProbeController {
+  @Get()
+  hi() {
+    return { ok: true };
+  }
+}
+@Module({ controllers: [ProbeController] })
+class ProbeModule {}
 
 // Vercel serverless entrypoint. Vercel does NOT support long-running
 // `app.listen()` — every request hits this cached Express instance instead.
@@ -148,10 +163,41 @@ export default async function handler(req: any, res: any) {
     ) {
       // ?stage=create|init — boot a THROWAWAY Nest app (separate Express
       // instance, cached app untouched) to bisect the startup crash.
-      const stageMatch = /[?&]stage=(create|init)/.exec(req.url);
+      // ?stage=nest-min — minimal Nest module (no src providers).
+      // ?stage=svc-db — DbService constructor only (postgres client).
+      // ?stage=svc-upload — UploadService constructor only (S3 client).
+      const stageMatch = /[?&]stage=(create|init|nest-min|svc-db|svc-upload)/.exec(
+        req.url,
+      );
       if (stageMatch) {
         const stage = stageMatch[1];
         try {
+          if (stage === 'svc-db') {
+            const svc = new DbService();
+            return res.status(200).json({
+              probe: true,
+              v: 4,
+              stage: 'svc-db-ok',
+              hasClient: !!(svc as any).client,
+            });
+          }
+          if (stage === 'svc-upload') {
+            const svc = new UploadService();
+            return res.status(200).json({ probe: true, v: 4, stage: 'svc-upload-ok' });
+          }
+          if (stage === 'nest-min') {
+            const probeExpress = express();
+            const probeApp = await NestFactory.create(
+              ProbeModule,
+              new ExpressAdapter(probeExpress),
+              { rawBody: true },
+            );
+            await probeApp.init();
+            await probeApp.close();
+            return res
+              .status(200)
+              .json({ probe: true, v: 4, stage: 'nest-min-ok' });
+          }
           const probeExpress = express();
           const probeApp = await NestFactory.create(
             AppModule,
