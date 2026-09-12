@@ -97,6 +97,19 @@ export default async function handler(req: any, res: any) {
     // Always answer CORS preflight, even if Nest/DB init is broken —
     // otherwise browsers mask the real 500 as an opaque CORS error.
     setCorsHeaders(req, res);
+    // TEMPORARY PROBE: confirm rewritten requests reach this function and
+    // reveal the exact url Vercel delivers (remove after diagnosis).
+    if (
+      typeof req?.url === 'string' &&
+      req.url.includes('echo-probe')
+    ) {
+      return res.status(200).json({
+        probe: true,
+        url: req.url,
+        method: req.method,
+        hasBodyParserConfig: true,
+      });
+    }
     if (req?.method === 'OPTIONS') {
       try {
         return res.status(204).end();
