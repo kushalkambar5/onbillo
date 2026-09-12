@@ -103,6 +103,36 @@ export default async function handler(req: any, res: any) {
       typeof req?.url === 'string' &&
       req.url.includes('echo-probe')
     ) {
+      // ?stage=create|init — boot a THROWAWAY Nest app (separate Express
+      // instance, cached app untouched) to bisect the startup crash.
+      const stageMatch = /[?&]stage=(create|init)/.exec(req.url);
+      if (stageMatch) {
+        const stage = stageMatch[1];
+        try {
+          const probeExpress = express();
+          const probeApp = await NestFactory.create(
+            AppModule,
+            new ExpressAdapter(probeExpress),
+            { rawBody: true },
+          );
+          if (stage === 'create') {
+            return res
+              .status(200)
+              .json({ probe: true, stage: 'create-ok' });
+          }
+          probeApp.enableCors({ origin: true, credentials: true });
+          await probeApp.init();
+          await probeApp.close();
+          return res.status(200).json({ probe: true, stage: 'init-ok' });
+        } catch (e: any) {
+          return res.status(200).json({
+            probe: true,
+            stage,
+            failedAt: stage,
+            detail: String(e?.message ?? e).slice(0, 1000),
+          });
+        }
+      }
       return res.status(200).json({
         probe: true,
         url: req.url,
