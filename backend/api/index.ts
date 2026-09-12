@@ -10,6 +10,24 @@ import { AppModule } from '../src/app.module';
 const expressApp = express();
 let initialized = false;
 
+function setCorsHeaders(req: any, res: any) {
+  const origin = req?.headers?.origin as string | undefined;
+  // Reflect the request origin so credentialed frontend calls pass.
+  // Tighten to https://onbillo.vercel.app once stable.
+  res.setHeader('Access-Control-Allow-Origin', origin ?? '*');
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+  );
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    (req?.headers?.['access-control-request-headers'] as string) ??
+      'Content-Type, Authorization, svix-id, svix-timestamp, svix-signature',
+  );
+}
+
 async function bootstrap() {
   if (initialized) return expressApp;
   const app = await NestFactory.create(
@@ -17,19 +35,9 @@ async function bootstrap() {
     new ExpressAdapter(expressApp),
     { rawBody: true },
   );
+  // origin:true reflects the caller — required when credentials:true (* is rejected by browsers).
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      if (!origin) return callback(null, true);
-      if (
-        origin === 'https://onbillo.vercel.app' ||
-        /\.vercel\.app$/.test(origin) ||
-        /^http:\/\/localhost:\d+$/.test(origin) ||
-        (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL)
-      ) {
-        return callback(null, true);
-      }
-      return callback(null, true);
-    },
+    origin: true,
     credentials: true,
   });
   await app.init();
@@ -38,6 +46,23 @@ async function bootstrap() {
 }
 
 export default async function handler(req: any, res: any) {
-  const server = await bootstrap();
-  return (server as any)(req, res);
+  // Always answer CORS preflight, even if Nest/DB init is broken —
+  // otherwise browsers mask the real 500 as an opaque CORS error.
+  setCorsHeaders(req, res);
+  if (req?.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  try {
+    const server = await bootstrap();
+    return (server as any)(req, res);
+  } catch (err) {
+    console.error('Vercel function init failed:', err);
+    if (!res.headersSent) {
+      return res.status(500).json({
+        statusCode: 500,
+        message:
+          'Backend init failed. Check Vercel env vars (DATABASE_URL, CLERK_SECRET_KEY, CLERK_WEBHOOK_SECRET).',
+      });
+    }
+  }
 }

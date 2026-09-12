@@ -10,7 +10,24 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
   public client: postgres.Sql;
 
   constructor() {
-    this.client = postgres(process.env.DATABASE_URL as string, {
+    const url = process.env.DATABASE_URL;
+    if (!url) {
+      // Don't crash Nest bootstrap when the env var is missing (e.g. Vercel
+      // project without env vars configured). Health checks and CORS
+      // preflights still work; DB-backed routes throw a clear error instead
+      // of FUNCTION_INVOCATION_FAILED with no CORS headers.
+      console.error(
+        'DATABASE_URL is not set — DB queries will fail. Set it in Vercel Project Settings > Environment Variables and redeploy.',
+      );
+      this.client = null as any;
+      this.db = new Proxy({} as any, {
+        get() {
+          throw new Error('DATABASE_URL is not set');
+        },
+      });
+      return;
+    }
+    this.client = postgres(url, {
       ssl: 'require',
     });
     this.db = drizzle(this.client, { schema });
@@ -21,6 +38,8 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.client.end();
+    if (this.client) {
+      await this.client.end();
+    }
   }
 }
