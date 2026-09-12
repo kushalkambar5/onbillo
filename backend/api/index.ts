@@ -41,7 +41,9 @@ function setCorsHeaders(req: any, res: any) {
 
 // Last-resort 500 that always carries CORS headers, even if the
 // Vercel-style res helpers (.status/.json) are unavailable.
-function sendInitError(req: any, res: any) {
+// TEMPORARY DIAGNOSTICS: echoes the bootstrap error message + request url so
+// we can see the real crash reason in the browser/curl (remove detail later).
+function sendInitError(req: any, res: any, err?: unknown) {
   try {
     setCorsHeaders(req, res);
   } catch {
@@ -51,6 +53,9 @@ function sendInitError(req: any, res: any) {
     statusCode: 500,
     message:
       'Backend init failed. Check Vercel env vars (DATABASE_URL, CLERK_SECRET_KEY, CLERK_WEBHOOK_SECRET).',
+    detail: String((err as any)?.message ?? err ?? 'unknown').slice(0, 500),
+    seenUrl: String(req?.url ?? 'n/a').slice(0, 200),
+    seenMethod: String(req?.method ?? 'n/a'),
   });
   try {
     if (!res.headersSent && typeof res.status === 'function') {
@@ -105,10 +110,10 @@ export default async function handler(req: any, res: any) {
       return (server as any)(req, res);
     } catch (err) {
       console.error('Vercel function init failed:', err);
-      return sendInitError(req, res);
+      return sendInitError(req, res, err);
     }
   } catch (err) {
     console.error('Vercel handler failed before bootstrap:', err);
-    return sendInitError(req, res);
+    return sendInitError(req, res, err);
   }
 }
