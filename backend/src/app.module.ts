@@ -13,6 +13,7 @@ import { AdminModule } from './admin/admin.module';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 import { DbModule } from './db/db.module';
+import { AiAssistantModule } from './ai-assistant/ai-assistant.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 @Module({
@@ -28,6 +29,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     AdminModule,
     UploadModule,
     UsersModule,
+    AiAssistantModule,
   ],
   controllers: [AppController],
   providers: [

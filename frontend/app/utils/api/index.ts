@@ -6,3 +6,5 @@ export { productsApi } from "./products";
 export { billsApi } from "./bills";
 export { staffApi } from "./staff";
 export { adminApi } from "./admin";
+export { aiAssistantApi } from "./aiAssistant";
+

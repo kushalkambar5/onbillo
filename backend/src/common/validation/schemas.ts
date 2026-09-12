@@ -246,3 +246,17 @@ export const RejectProductSchema = z.object({
       'Reason contains invalid characters',
     ),
 });
+
+// AiAssistantController
+export const AiAssistantPromptSchema = z.object({
+  prompt: z.string().min(1, 'Prompt is required').max(2000, 'Prompt too long'),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string(),
+      })
+    )
+    .optional(),
+});
+

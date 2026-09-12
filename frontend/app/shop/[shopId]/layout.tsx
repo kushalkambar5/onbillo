@@ -19,8 +19,10 @@ import {
   Store,
   AlertTriangle,
   Menu,
-  X
+  X,
+  Bot
 } from "lucide-react";
+
 
 export default function ShopWorkspaceLayout({
   children,
@@ -147,6 +149,12 @@ export default function ShopWorkspaceLayout({
       href: `/shop/${shopId}/settings`,
       icon: Settings,
       ownerOnly: true,
+    },
+    {
+      name: "AI Assistant",
+      href: `/shop/${shopId}/ai_assistant`,
+      icon: Bot,
+      ownerOnly: false,
     },
   ];
 
