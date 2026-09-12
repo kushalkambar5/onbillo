@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -18,6 +19,7 @@ import {
   IdParamSchema,
   BarcodeSchema,
   CreateCustomProductSchema,
+  AddStockSchema,
 } from '../common/validation/schemas';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -71,6 +73,16 @@ export class ShopProductsController {
     @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
   ) {
     return this.productsService.deleteShopProduct(shopId, id);
+  }
+
+  @Patch(':id/stock')
+  @ShopRoles('owner', 'shop_worker')
+  addStock(
+    @Param('shopId', new ZodValidationPipe(IdParamSchema)) shopId: string,
+    @Param('id', new ZodValidationPipe(IdParamSchema)) id: string,
+    @Body(new ZodValidationPipe(AddStockSchema)) body: any,
+  ) {
+    return this.productsService.addStock(shopId, id, body.quantity);
   }
 
   @Get('barcode/:code')

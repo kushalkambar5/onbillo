@@ -266,6 +266,7 @@ export const mockShopProducts: Record<string, ShopProduct[]> = {
       productId: "1",
       unitPrice: 2800,
       isActive: true,
+      quantity: 24,
       product: mockGlobalProducts[0],
     },
     {
@@ -274,6 +275,7 @@ export const mockShopProducts: Record<string, ShopProduct[]> = {
       productId: "2",
       unitPrice: 3800,
       isActive: true,
+      quantity: 0,
       product: mockGlobalProducts[1],
     },
     {
@@ -282,6 +284,7 @@ export const mockShopProducts: Record<string, ShopProduct[]> = {
       productId: "3",
       unitPrice: 2700,
       isActive: true,
+      quantity: 50,
       product: mockGlobalProducts[2],
     },
     {
@@ -290,6 +293,7 @@ export const mockShopProducts: Record<string, ShopProduct[]> = {
       productId: "5",
       unitPrice: 5400,
       isActive: true,
+      quantity: 12,
       product: mockGlobalProducts[4],
     },
     {
@@ -298,6 +302,7 @@ export const mockShopProducts: Record<string, ShopProduct[]> = {
       productId: "8",
       unitPrice: 25000,
       isActive: true,
+      quantity: 5,
       product: mockGlobalProducts[7],
     },
     {
@@ -306,6 +311,7 @@ export const mockShopProducts: Record<string, ShopProduct[]> = {
       productId: "10",
       unitPrice: 7800,
       isActive: false,
+      quantity: 0,
       product: mockGlobalProducts[9],
     },
   ],
@@ -316,6 +322,7 @@ export const mockShopProducts: Record<string, ShopProduct[]> = {
       productId: "2",
       unitPrice: 4500,
       isActive: true,
+      quantity: 8,
       product: mockGlobalProducts[1],
     },
     {
@@ -324,6 +331,7 @@ export const mockShopProducts: Record<string, ShopProduct[]> = {
       productId: "5",
       unitPrice: 6000,
       isActive: true,
+      quantity: 3,
       product: mockGlobalProducts[4],
     },
   ],

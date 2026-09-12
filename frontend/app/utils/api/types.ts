@@ -66,6 +66,7 @@ export interface ShopProduct {
   productId: string;
   unitPrice: number; // in paise
   isActive: boolean;
+  quantity: number; // stock count
   product: Product;
 }
 

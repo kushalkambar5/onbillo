@@ -17,18 +17,25 @@ export const productsApi = {
       method: "GET"
     }, token);
   },
-  addGlobalProductToShop: async (token: string | null, shopId: string, productId: string, unitPrice: number): Promise<ShopProduct> => {
+  addGlobalProductToShop: async (token: string | null, shopId: string, productId: string, unitPrice: number, quantity?: number): Promise<ShopProduct> => {
     return await apiCall<ShopProduct>({
       url: `/api/shops/${shopId}/products`,
       method: "POST",
-      data: { productId, unitPrice }
+      data: { productId, unitPrice, quantity }
     }, token);
   },
-  updateShopProduct: async (token: string | null, shopId: string, shopProductId: string, data: { unitPrice?: number; isActive?: boolean }): Promise<ShopProduct> => {
+  updateShopProduct: async (token: string | null, shopId: string, shopProductId: string, data: { unitPrice?: number; isActive?: boolean; quantity?: number }): Promise<ShopProduct> => {
     return await apiCall<ShopProduct>({
       url: `/api/shops/${shopId}/products/${shopProductId}`,
       method: "PUT",
       data
+    }, token);
+  },
+  addShopProductStock: async (token: string | null, shopId: string, shopProductId: string, quantity: number): Promise<ShopProduct> => {
+    return await apiCall<ShopProduct>({
+      url: `/api/shops/${shopId}/products/${shopProductId}/stock`,
+      method: "PATCH",
+      data: { quantity }
     }, token);
   },
   updateGlobalProduct: async (
@@ -76,6 +83,7 @@ export const productsApi = {
       category?: string | null;
       mrp: number;
       unitPrice: number;
+      quantity?: number;
       imageUrl?: string | null;
     }
   ): Promise<ShopProduct> => {

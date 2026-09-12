@@ -43,6 +43,7 @@ export default function AddProducts({
   // Add-to-shop price dialog state
   const [addingProduct, setAddingProduct] = useState<Product | null>(null);
   const [sellingPrice, setSellingPrice] = useState("");
+  const [initialQuantity, setInitialQuantity] = useState("0");
   const [addLoading, setAddLoading] = useState(false);
 
   // Request new product form state
@@ -52,7 +53,8 @@ export default function AddProducts({
     brand: "",
     category: "",
     mrp: "",
-    sellingPrice: ""
+    sellingPrice: "",
+    quantity: "0"
   });
   const [requestLoading, setRequestLoading] = useState(false);
 
@@ -250,6 +252,12 @@ export default function AddProducts({
       if (!/^[a-zA-Z0-9\s.,\-\/()#&'+:@!_]+$/.test(value)) return "Category name contains invalid characters";
       return "";
     }
+    if (name === "quantity") {
+      if (!value.trim()) return "";
+      const parsed = parseInt(value, 10);
+      if (isNaN(parsed) || parsed < 0) return "Quantity must be a non-negative whole number";
+      return "";
+    }
     return "";
   };
 
@@ -371,6 +379,7 @@ export default function AddProducts({
   const triggerAddToShop = (prod: Product) => {
     setAddingProduct(prod);
     setSellingPrice((prod.mrp / 100).toFixed(2));
+    setInitialQuantity("0");
     setMessage({ text: "", type: "" });
   };
 
@@ -382,11 +391,14 @@ export default function AddProducts({
       return;
     }
 
+    const qtyParsed = parseInt(initialQuantity, 10);
+    const qty = isNaN(qtyParsed) || qtyParsed < 0 ? 0 : qtyParsed;
+
     setAddLoading(true);
     try {
       const token = await getToken();
       const pricePaise = Math.round(priceFloat * 100);
-      await productsApi.addGlobalProductToShop(token, shopId, addingProduct.id, pricePaise);
+      await productsApi.addGlobalProductToShop(token, shopId, addingProduct.id, pricePaise, qty);
       if (typeof window !== "undefined") {
         localStorage.removeItem(`shop_products_${shopId}`);
       }
@@ -396,6 +408,7 @@ export default function AddProducts({
         type: "success" 
       });
       setAddingProduct(null);
+      setInitialQuantity("0");
     } catch (err: any) {
       setMessage({ text: err.message || "Failed to add product to shop.", type: "error" });
     } finally {
@@ -415,8 +428,10 @@ export default function AddProducts({
 
     const mrpFloat = parseFloat(requestForm.mrp);
     const sellingPriceFloat = parseFloat(requestForm.sellingPrice);
+    const quantityInt = parseInt(requestForm.quantity, 10);
     const mrpPaise = isNaN(mrpFloat) ? undefined : Math.round(mrpFloat * 100);
     const unitPricePaise = isNaN(sellingPriceFloat) ? undefined : Math.round(sellingPriceFloat * 100);
+    const qty = isNaN(quantityInt) || quantityInt < 0 ? 0 : quantityInt;
 
     const validationPayload = {
       barcode: requestForm.barcode,
@@ -424,7 +439,8 @@ export default function AddProducts({
       brand: requestForm.brand,
       category: requestForm.category,
       mrp: mrpPaise,
-      unitPrice: unitPricePaise
+      unitPrice: unitPricePaise,
+      quantity: qty,
     };
 
     const validation = validateSchema(CreateCustomProductSchema, validationPayload);
@@ -454,6 +470,7 @@ export default function AddProducts({
         category: cleanedData.category,
         mrp: cleanedData.mrp,
         unitPrice: cleanedData.unitPrice,
+        quantity: cleanedData.quantity ?? qty,
         imageUrl: uploadedImageUrl
       });
 
@@ -473,7 +490,8 @@ export default function AddProducts({
         brand: "",
         category: "",
         mrp: "",
-        sellingPrice: ""
+        sellingPrice: "",
+        quantity: "0"
       });
       clearSelectedImage();
     } catch (err: any) {
@@ -779,7 +797,7 @@ export default function AddProducts({
               )}
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <div className="flex justify-between items-center mb-1.5">
                 <label className="block text-xs font-semibold text-foreground">
                   Your Shop Price (₹) <span className="text-yellow-600 dark:text-yellow-400 font-normal text-[10px]">(*required)</span>
@@ -799,6 +817,29 @@ export default function AddProducts({
               />
               {requestTouched.sellingPrice && requestErrors.sellingPrice && (
                 <p className="text-xs text-red-500 mt-1">{requestErrors.sellingPrice}</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  Initial Quantity / Stock
+                </label>
+              </div>
+              <input
+                type="number"
+                name="quantity"
+                min="0"
+                placeholder="e.g. 10"
+                value={requestForm.quantity}
+                onChange={(e) => handleRequestFieldChange("quantity", e.target.value)}
+                onBlur={(e) => handleRequestBlur("quantity", e.target.value)}
+                className={`w-full border bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground font-mono font-bold ${
+                  requestTouched.quantity && requestErrors.quantity ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-hairline"
+                }`}
+              />
+              {requestTouched.quantity && requestErrors.quantity && (
+                <p className="text-xs text-red-500 mt-1">{requestErrors.quantity}</p>
               )}
             </div>
 
@@ -919,6 +960,20 @@ export default function AddProducts({
                 {sellingPriceTouched && sellingPriceError && (
                   <p className="text-xs text-red-500 mt-1">{sellingPriceError}</p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
+                  Initial Quantity / Stock
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={initialQuantity}
+                  onChange={(e) => setInitialQuantity(e.target.value)}
+                  placeholder="e.g. 10"
+                  className="w-full border border-hairline bg-canvas hover:border-hairline-strong focus:border-brand-primary rounded-lg text-xs h-10 px-3 text-foreground font-mono font-bold"
+                />
               </div>
             </div>
 

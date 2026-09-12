@@ -167,6 +167,7 @@ export const UpdateProductSchema = CreateProductSchema.partial();
 
 export const CreateCustomProductSchema = CreateProductSchema.extend({
   unitPrice: z.number().int().positive('Unit price must be positive'),
+  quantity: z.number().int().min(0, 'Quantity cannot be negative').optional(),
 });
 
 
@@ -175,11 +176,19 @@ export const CreateShopProductSchema = z.object({
   productId: z.string().uuid('Product ID must be a valid UUID'),
   unitPrice: z.number().int().positive('Unit price must be positive'),
   isActive: z.boolean().optional(),
+  quantity: z.number().int().min(0, 'Quantity cannot be negative').optional(),
 });
 
 export const UpdateShopProductSchema = CreateShopProductSchema.omit({
   productId: true,
 }).partial();
+
+export const AddStockSchema = z.object({
+  quantity: z
+    .number()
+    .int('Quantity must be a whole number')
+    .positive('Quantity to add must be positive'),
+});
 
 // BillsController
 export const CreateBillSchema = z.object({

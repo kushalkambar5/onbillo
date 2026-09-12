@@ -136,6 +136,8 @@ export const shopProducts = pgTable(
     // Stored in paise/cents
     unitPrice: integer('unit_price').notNull(),
     isActive: boolean('is_active').default(true).notNull(),
+    // Quantity of stock available in the shop
+    quantity: integer('quantity').default(0).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

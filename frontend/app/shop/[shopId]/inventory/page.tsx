@@ -13,7 +13,10 @@ import {
   X, 
   AlertCircle,
   FileSpreadsheet,
-  Trash2
+  Trash2,
+  Plus,
+  Minus,
+  PackagePlus,
 } from "lucide-react";
  
 export default function ShopInventory({
@@ -30,12 +33,18 @@ export default function ShopInventory({
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const [isOwner, setIsOwner] = useState(false);
+  const [canRefill, setCanRefill] = useState(false);
   const [isAppAdmin, setIsAppAdmin] = useState(false);
   
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+
+  // Quantity edit state
+  const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
+  const [editQtyValue, setEditQtyValue] = useState("");
+  const [savingQtyId, setSavingQtyId] = useState<string | null>(null);
 
   // CSV Export state
   const [exporting, setExporting] = useState(false);
@@ -49,6 +58,7 @@ export default function ShopInventory({
       if (isBoneyard) {
         setProducts(mockShopProducts[shopId] || mockShopProducts["1"] || []);
         setIsOwner(true);
+        setCanRefill(true);
         setIsAppAdmin(mockUser.role === "app_admin");
         setLoading(false);
         return;
@@ -65,6 +75,7 @@ export default function ShopInventory({
       
       const membership = shopsList.find(m => m.shop.id === shopId);
       setIsOwner(membership?.role === "owner");
+      setCanRefill(!!membership);
       setIsAppAdmin(me?.role === "app_admin");
 
       setProducts(list);
@@ -153,6 +164,53 @@ export default function ShopInventory({
     }
   };
  
+  const startEditingQty = (sp: ShopProduct) => {
+    setEditingQtyId(sp.id);
+    setEditQtyValue(String(sp.quantity));
+    setEditingId(null);
+  };
+
+  const saveQuantity = async (shopProductId: string, targetQty?: number) => {
+    const newQty = targetQty !== undefined ? targetQty : parseInt(editQtyValue, 10);
+    if (isNaN(newQty) || newQty < 0) {
+      setError("Please enter a valid non-negative number for quantity.");
+      return;
+    }
+    setError("");
+    setSavingQtyId(shopProductId);
+    const originalProducts = [...products];
+
+    // Optimistic update
+    setProducts(prev =>
+      prev.map(p =>
+        p.id === shopProductId ? { ...p, quantity: newQty } : p
+      )
+    );
+
+    try {
+      const token = await getToken();
+      const updated = await productsApi.updateShopProduct(token, shopId, shopProductId, {
+        quantity: newQty
+      });
+      setProducts(prev => prev.map(p => p.id === shopProductId ? updated : p));
+      setEditingQtyId(null);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`shop_products_${shopId}`);
+      }
+    } catch (err: any) {
+      setProducts(originalProducts);
+      setError(err.message || "Failed to update quantity.");
+    } finally {
+      setSavingQtyId(null);
+    }
+  };
+
+  const adjustQuantityStep = async (sp: ShopProduct, delta: number) => {
+    const newQty = Math.max(0, sp.quantity + delta);
+    if (newQty === sp.quantity) return;
+    await saveQuantity(sp.id, newQty);
+  };
+
   const handleExport = () => {
     setExporting(true);
     setExportProgress(0);
@@ -162,7 +220,7 @@ export default function ShopInventory({
           clearInterval(interval);
           setTimeout(() => {
             // Compile record data into CSV and trigger download
-            const headers = ["Barcode", "Product Name", "Brand", "Category", "MRP", "Selling Price", "Status"];
+            const headers = ["Barcode", "Product Name", "Brand", "Category", "MRP", "Selling Price", "Quantity", "Status"];
             const rows = products.map(p => [
               p.product.barcode || "N/A",
               p.product.name,
@@ -170,6 +228,7 @@ export default function ShopInventory({
               p.product.category || "—",
               (p.product.mrp / 100).toFixed(2),
               (p.unitPrice / 100).toFixed(2),
+              p.quantity,
               p.isActive ? "Enabled" : "Disabled"
             ]);
             const csvContent = "data:text/csv;charset=utf-8," 
@@ -265,6 +324,7 @@ export default function ShopInventory({
                   <th className="py-3.5 px-4">Product Name</th>
                   <th className="py-3.5 px-4">Brand</th>
                   <th className="py-3.5 px-4">Category</th>
+                  <th className="py-3.5 px-4 text-center">Quantity</th>
                   <th className="py-3.5 px-4 text-right">MRP (₹)</th>
                   <th className="py-3.5 px-4 text-right">Selling Price (₹)</th>
                   <th className="py-3.5 px-4 text-center">POS Status</th>
@@ -298,6 +358,126 @@ export default function ShopInventory({
                     </td>
                     <td className="py-3.5 px-4 text-mute font-medium truncate max-w-[100px]">
                       {sp.product.category || "—"}
+                    </td>
+                    {/* Quantity cell */}
+                    <td className="py-3.5 px-4 text-center">
+                      {canRefill ? (
+                        editingQtyId === sp.id ? (
+                          <div className="flex items-center justify-center gap-1 animate-fade-in">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = parseInt(editQtyValue, 10);
+                                if (!isNaN(current) && current > 0) {
+                                  setEditQtyValue(String(current - 1));
+                                }
+                              }}
+                              disabled={savingQtyId === sp.id}
+                              className="p-1 bg-canvas-soft border border-hairline text-mute hover:text-foreground rounded disabled:opacity-50 cursor-pointer"
+                              title="Decrease quantity"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <input
+                              type="number"
+                              min="0"
+                              disabled={savingQtyId === sp.id}
+                              value={editQtyValue}
+                              onChange={(e) => setEditQtyValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveQuantity(sp.id);
+                                if (e.key === "Escape") setEditingQtyId(null);
+                              }}
+                              className="w-16 h-7 text-center text-xs border border-hairline rounded bg-canvas px-1 focus:border-brand-primary outline-none text-foreground font-bold font-mono disabled:opacity-50"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = parseInt(editQtyValue, 10);
+                                setEditQtyValue(String((isNaN(current) ? 0 : current) + 1));
+                              }}
+                              disabled={savingQtyId === sp.id}
+                              className="p-1 bg-canvas-soft border border-hairline text-mute hover:text-foreground rounded disabled:opacity-50 cursor-pointer"
+                              title="Increase quantity"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => saveQuantity(sp.id)}
+                              disabled={savingQtyId === sp.id}
+                              className="p-1 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary rounded hover:bg-brand-primary/20 disabled:opacity-50 flex items-center justify-center min-w-7 h-7 cursor-pointer"
+                              title="Save quantity"
+                            >
+                              {savingQtyId === sp.id ? (
+                                <svg className="animate-spin h-3.5 w-3.5 text-brand-primary" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                              ) : (
+                                <Check className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingQtyId(null)}
+                              disabled={savingQtyId === sp.id}
+                              className="p-1 bg-canvas-soft border border-hairline text-mute rounded hover:bg-canvas-soft-2 disabled:opacity-50 cursor-pointer"
+                              title="Cancel"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-1 group/qty">
+                            <button
+                              type="button"
+                              onClick={() => adjustQuantityStep(sp, -1)}
+                              disabled={sp.quantity <= 0 || savingQtyId === sp.id}
+                              className="opacity-0 group-hover/qty:opacity-100 p-1 text-mute hover:text-foreground hover:bg-canvas-soft border border-transparent hover:border-hairline rounded transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                              title="Decrease quantity by 1"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+
+                            <span
+                              onClick={() => startEditingQty(sp)}
+                              className={`font-mono font-bold text-xs cursor-pointer px-1.5 py-0.5 rounded hover:bg-canvas-soft transition-colors ${
+                                sp.quantity === 0 ? "text-red-500" : "text-foreground"
+                              }`}
+                              title="Click to edit quantity"
+                            >
+                              {sp.quantity === 0 && <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400 mr-1 align-middle" />}
+                              {sp.quantity}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => adjustQuantityStep(sp, 1)}
+                              disabled={savingQtyId === sp.id}
+                              className="opacity-0 group-hover/qty:opacity-100 p-1 text-mute hover:text-brand-primary hover:bg-brand-primary/10 border border-transparent hover:border-brand-primary/20 rounded transition-all duration-150 cursor-pointer"
+                              title="Increase quantity by 1"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => startEditingQty(sp)}
+                              className="opacity-0 group-hover/qty:opacity-100 p-1 text-mute hover:text-foreground hover:bg-canvas-soft rounded transition-all duration-150 cursor-pointer"
+                              title="Set exact quantity"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )
+                      ) : (
+                        <span className={`font-mono font-bold text-xs ${sp.quantity === 0 ? "text-red-500" : "text-foreground"}`}>
+                          {sp.quantity === 0 && <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400 mr-1 align-middle" />}
+                          {sp.quantity}
+                        </span>
+                      )}
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-mute text-right font-mono">
                       ₹{(sp.product.mrp / 100).toFixed(2)}

@@ -114,6 +114,11 @@ export const CreateCustomProductSchema = z.object({
     .number({ message: "Unit price must be a valid positive number" })
     .int()
     .positive("Unit price must be positive"),
+  quantity: z
+    .number({ message: "Quantity must be a valid number" })
+    .int("Quantity must be a whole number")
+    .min(0, "Quantity cannot be negative")
+    .optional(),
 });
 
 // --- HELPER VALIDATION FUNCTION ---

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { products, shopProducts, users, billItems } from '../db/schema';
-import { eq, and, or, ilike, inArray, notInArray } from 'drizzle-orm';
+import { eq, and, or, ilike, inArray, notInArray, sql } from 'drizzle-orm';
 
 
 @Injectable()
@@ -22,6 +22,7 @@ export class ProductsService {
         productId: shopProducts.productId,
         unitPrice: shopProducts.unitPrice,
         isActive: shopProducts.isActive,
+        quantity: shopProducts.quantity,
         createdAt: shopProducts.createdAt,
         updatedAt: shopProducts.updatedAt,
         product: products,
@@ -86,6 +87,7 @@ export class ProductsService {
         productId: data.productId,
         unitPrice: data.unitPrice,
         isActive: data.isActive ?? true,
+        quantity: data.quantity ?? 0,
       })
       .returning();
 
@@ -94,13 +96,16 @@ export class ProductsService {
 
 
   async updateShopProduct(shopId: string, id: string, data: any) {
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
+    if (data.unitPrice !== undefined) updateData.unitPrice = data.unitPrice;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.quantity !== undefined) updateData.quantity = data.quantity;
+
     const [shopProduct] = await this.dbService.db
       .update(shopProducts)
-      .set({
-        unitPrice: data.unitPrice,
-        isActive: data.isActive,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(and(eq(shopProducts.id, id), eq(shopProducts.shopId, shopId)))
       .returning();
 
@@ -350,6 +355,7 @@ export class ProductsService {
             productId: existing.id,
             unitPrice: data.unitPrice,
             isActive: true,
+            quantity: data.quantity ?? 0,
           })
           .returning();
 
@@ -378,8 +384,30 @@ export class ProductsService {
         productId: product.id,
         unitPrice: data.unitPrice,
         isActive: true,
+        quantity: data.quantity ?? 0,
       })
       .returning();
+
+    return { ...shopProduct, product };
+  }
+
+  async addStock(shopId: string, id: string, amount: number) {
+    const [shopProduct] = await this.dbService.db
+      .update(shopProducts)
+      .set({
+        quantity: sql`${shopProducts.quantity} + ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(shopProducts.id, id), eq(shopProducts.shopId, shopId)))
+      .returning();
+
+    if (!shopProduct) throw new NotFoundException('Shop product not found');
+
+    const [product] = await this.dbService.db
+      .select()
+      .from(products)
+      .where(eq(products.id, shopProduct.productId))
+      .limit(1);
 
     return { ...shopProduct, product };
   }

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { bills, billItems, shops, shopProducts, products } from '../db/schema';
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { eq, and, desc, inArray, sql } from 'drizzle-orm';
 
 @Injectable()
 export class BillsService {
@@ -64,6 +64,17 @@ export class BillsService {
           quantity: item.quantity,
         }));
         await tx.insert(billItems).values(itemsToInsert);
+
+        // 6b. Decrement stock for each item atomically
+        for (const item of data.items) {
+          await tx
+            .update(shopProducts)
+            .set({
+              quantity: sql`${shopProducts.quantity} - ${item.quantity}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(shopProducts.id, item.shopProductId));
+        }
       }
 
       // 7. Fetch the items with product details for this bill
@@ -163,7 +174,7 @@ export class BillsService {
 
     if (!bill) throw new NotFoundException('Bill not found');
 
-    // Fetch the cancelled bill with items
+    // Fetch the cancelled bill items
     const items = await this.dbService.db
       .select({
         id: billItems.id,
@@ -178,6 +189,17 @@ export class BillsService {
       .innerJoin(shopProducts, eq(shopProducts.id, billItems.shopProductId))
       .innerJoin(products, eq(products.id, shopProducts.productId))
       .where(eq(billItems.billId, id));
+
+    // Restore stock for each item atomically
+    for (const item of items) {
+      await this.dbService.db
+        .update(shopProducts)
+        .set({
+          quantity: sql`${shopProducts.quantity} + ${item.quantity}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(shopProducts.id, item.shopProductId));
+    }
 
     return { ...bill, items };
   }
