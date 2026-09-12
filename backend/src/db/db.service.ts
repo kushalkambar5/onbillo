@@ -10,7 +10,9 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
   public client: postgres.Sql;
 
   constructor() {
-    this.client = postgres(process.env.DATABASE_URL as string);
+    this.client = postgres(process.env.DATABASE_URL as string, {
+      ssl: 'require',
+    });
     this.db = drizzle(this.client, { schema });
   }
 
