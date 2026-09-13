@@ -29,6 +29,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
+    const origin = (request.headers?.origin as string) || '*';
+    if (!response.headersSent) {
+      try {
+        if (request.headers?.origin) {
+          response.setHeader('Access-Control-Allow-Origin', request.headers.origin);
+          response.setHeader('Access-Control-Allow-Credentials', 'true');
+        } else {
+          response.setHeader('Access-Control-Allow-Origin', '*');
+        }
+        response.setHeader('Vary', 'Origin');
+      } catch {
+        /* ignore */
+      }
+    }
+
     const timestamp = new Date().toISOString();
     const route = `${request.method} ${request.url}`;
     const userId = request.user?.id || request.user?.clerkId || 'anonymous';

@@ -76,19 +76,21 @@ export const config = {
 function setCorsHeaders(req: any, res: any) {
   try {
     const origin = req?.headers?.origin as string | undefined;
-    // Reflect the request origin so credentialed frontend calls pass.
-    // Tighten to https://onbillo.vercel.app once stable.
-    res.setHeader('Access-Control-Allow-Origin', origin ?? '*');
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
     res.setHeader('Vary', 'Origin');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader(
       'Access-Control-Allow-Methods',
-      'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+      'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     );
     res.setHeader(
       'Access-Control-Allow-Headers',
       (req?.headers?.['access-control-request-headers'] as string) ??
-        'Content-Type, Authorization, svix-id, svix-timestamp, svix-signature',
+        'Content-Type, Authorization, X-Requested-With, Accept, Origin, svix-id, svix-timestamp, svix-signature, ngrok-skip-browser-warning',
     );
   } catch {
     // res may be a raw Node response in some runtimes — headers are
@@ -139,10 +141,24 @@ async function bootstrap() {
     new ExpressAdapter(expressApp),
     { rawBody: true },
   );
-  // origin:true reflects the caller — required when credentials:true (* is rejected by browsers).
   app.enableCors({
-    origin: true,
+    origin: (origin, callback) => {
+      callback(null, true);
+    },
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'svix-id',
+      'svix-timestamp',
+      'svix-signature',
+      'ngrok-skip-browser-warning',
+    ],
+    exposedHeaders: ['*'],
   });
   await app.init();
   initialized = true;
