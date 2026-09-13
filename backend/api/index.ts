@@ -203,6 +203,9 @@ export default async function handler(req: any, res: any) {
             try {
               const svc = new DbService();
               clientOk = !!svc.client;
+              if (svc.initError) {
+                dbError = `initError: ${svc.initError}`;
+              }
               if (svc.client) {
                 const countRes = await svc.client`SELECT count(*) FROM users`;
                 userCount = countRes[0]?.count;

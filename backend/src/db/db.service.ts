@@ -8,14 +8,12 @@ import 'dotenv/config';
 export class DbService implements OnModuleInit, OnModuleDestroy {
   public db: PostgresJsDatabase<typeof schema>;
   public client: postgres.Sql;
+  public initError: string | null = null;
 
   constructor() {
     let url = process.env.DATABASE_URL;
     if (!url) {
-      // Don't crash Nest bootstrap when the env var is missing (e.g. Vercel
-      // project without env vars configured). Health checks and CORS
-      // preflights still work; DB-backed routes throw a clear error instead
-      // of FUNCTION_INVOCATION_FAILED with no CORS headers.
+      this.initError = 'DATABASE_URL env var is missing or empty';
       console.error(
         'DATABASE_URL is not set — DB queries will fail. Set it in Vercel Project Settings > Environment Variables and redeploy.',
       );
@@ -39,6 +37,7 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
       });
       this.db = drizzle(this.client, { schema });
     } catch (err: any) {
+      this.initError = err?.message || String(err);
       console.error(
         'DATABASE_URL initialization failed (invalid URL or config):',
         err?.message || err,
