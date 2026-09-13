@@ -32,7 +32,10 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
 
     try {
       this.client = postgres(url, {
-        ssl: 'require',
+        ssl: { rejectUnauthorized: false },
+        max: 3, // Limit connection pool for serverless — each invocation shares max 3 connections
+        idle_timeout: 20,
+        connect_timeout: 10,
       });
       this.db = drizzle(this.client, { schema });
     } catch (err: any) {
