@@ -111,8 +111,13 @@ export class AuthGuard implements CanActivate {
       request.clerkId = clerkId;
 
       // Allow fetching profile details even if not premium or banned
-      const urlPath = request.url.split('?')[0];
-      const isGetMe = (urlPath === '/api/users/me' || urlPath === '/api/users/me/') && request.method === 'GET';
+      const rawUrl = request.originalUrl || request.url || '';
+      const urlPath = rawUrl.split('?')[0];
+      const isGetMe =
+        (urlPath === '/api/users/me' ||
+          urlPath === '/api/users/me/' ||
+          urlPath.endsWith('/users/me')) &&
+        request.method === 'GET';
 
       if (user.isBanned && !isGetMe) {
         throw new ForbiddenException('Your account has been banned. Please contact support.');
