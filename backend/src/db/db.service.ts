@@ -10,7 +10,7 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
   public client: postgres.Sql;
 
   constructor() {
-    const url = process.env.DATABASE_URL;
+    let url = process.env.DATABASE_URL;
     if (!url) {
       // Don't crash Nest bootstrap when the env var is missing (e.g. Vercel
       // project without env vars configured). Health checks and CORS
@@ -27,10 +27,28 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
       });
       return;
     }
-    this.client = postgres(url, {
-      ssl: 'require',
-    });
-    this.db = drizzle(this.client, { schema });
+
+    url = url.trim().replace(/^["']|["']$/g, '');
+
+    try {
+      this.client = postgres(url, {
+        ssl: 'require',
+      });
+      this.db = drizzle(this.client, { schema });
+    } catch (err: any) {
+      console.error(
+        'DATABASE_URL initialization failed (invalid URL or config):',
+        err?.message || err,
+      );
+      this.client = null as any;
+      this.db = new Proxy({} as any, {
+        get() {
+          throw new Error(
+            `DATABASE_URL connection setup failed: ${err?.message || err}`,
+          );
+        },
+      });
+    }
   }
 
   onModuleInit() {

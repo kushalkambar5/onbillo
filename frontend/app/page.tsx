@@ -228,7 +228,7 @@ export default function Home() {
       <main className="flex-1">
         
         {/* 2. Hero Section */}
-        <section id="home" className="relative overflow-hidden mesh-gradient-bg border-b border-hairline pt-36 pb-20 lg:pt-48 lg:pb-32 scroll-mt-16">
+        <section id="home" className="relative overflow-hidden mesh-gradient-bg border-b border-hairline min-h-svh flex flex-col justify-center pt-36 pb-20 lg:pt-48 lg:pb-32 scroll-mt-16">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
             
             

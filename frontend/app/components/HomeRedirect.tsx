@@ -36,23 +36,25 @@ export default function HomeRedirect() {
           return;
         }
         const me = await usersApi.getMe(token);
-        if (me.role === "app_admin") {
+        if (me?.role === "app_admin") {
           router.push("/admin/dashboard");
           return;
         }
 
         const list = await shopsApi.getUserShops(token);
-        if (list && list.length > 0) {
+        if (Array.isArray(list) && list.length > 0) {
           // Check if there is an owner role
-          const ownerShop = list.find(s => s.role === "owner");
-          if (ownerShop) {
+          const ownerShop = list.find(s => s && s.role === "owner" && s.shop);
+          if (ownerShop?.shop?.id) {
             router.push(`/shop/${ownerShop.shop.id}/dashboard`);
-          } else {
+          } else if (list[0]?.shop?.id) {
             router.push(`/shop/${list[0].shop.id}/billing`);
+          } else {
+            router.push("/onboarding");
           }
         } else {
           // If user has no shops, check onboarding status
-          if (me.phone) {
+          if (me?.phone) {
             router.push("/invites");
           } else {
             router.push("/onboarding");
