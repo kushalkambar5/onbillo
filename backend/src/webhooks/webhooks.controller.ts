@@ -28,11 +28,12 @@ export class WebhooksController {
     @Req() req: RawBodyRequest<Request>,
     @Headers() headers: Record<string, string>,
   ) {
-    const secret = process.env.CLERK_WEBHOOK_SECRET;
-    if (!secret) {
+    const rawSecret = process.env.CLERK_WEBHOOK_SECRET;
+    if (!rawSecret) {
       console.error('CLERK_WEBHOOK_SECRET is not set');
       throw new InternalServerErrorException('Webhook secret not configured');
     }
+    const secret = rawSecret.trim().replace(/^["']|["']$/g, '');
 
     // Express lowercases incoming headers; be tolerant of both cases.
     const svix_id =
@@ -72,9 +73,9 @@ export class WebhooksController {
           ? svix_signature[0]
           : (svix_signature as string),
       });
-    } catch (err) {
-      console.error('Error verifying webhook:', err);
-      throw new BadRequestException('Error occured');
+    } catch (err: any) {
+      console.error('Error verifying webhook:', err?.message || err);
+      throw new BadRequestException(`Webhook verification failed: ${err?.message || err}`);
     }
 
     const { id } = evt.data;
