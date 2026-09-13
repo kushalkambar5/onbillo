@@ -17,6 +17,37 @@ It combines:
 
 ---
 
+## Live Deployment — what is hosted where
+
+Onbillo is fully deployed on managed cloud services — no self-hosted servers. Production traffic uses:
+
+| What | Where hosted | Link / identifier | Purpose |
+|---|---|---|---|
+| **Frontend** (Next.js 16 App Router) | **Vercel** | https://onbillo.vercel.app/profile (app root: https://onbillo.vercel.app/) | Public landing page, Clerk sign-in/sign-up, shop POS/billing, dashboard, admin console |
+| **Backend** (NestJS 11 API) | **Vercel** (serverless) | https://onbillobackend.vercel.app/ | All REST APIs under `/api/*` — shops, products, bills, staff, analytics, upload, AI assistant, Clerk webhooks |
+| **Postgres database** | **Aiven** (managed Postgres) | connection via backend `DATABASE_URL` (Aiven console → Onbillo project → connection string, `sslmode=require`) | Source of truth for all data — `users`, `shops`, `products`, `shop_products`, `bills`, `bill_items`, `staff_requests` (Drizzle ORM) |
+| **Images** (shop logos, product photos) | **Cloudflare R2** (S3-compatible object storage) | bucket `onbillo-uploads`, served via `R2_PUBLIC_URL` (e.g. `https://pub-xxxx.r2.dev/...`) | Uploaded via backend `POST /api/upload` (5 MB, png/jpg/gif/webp), stored as R2 object key, URL saved in DB |
+
+### How it fits together (production)
+
+```
+User browser
+  → https://onbillo.vercel.app/            (frontend on Vercel)
+  → NEXT_PUBLIC_API_URL=https://onbillobackend.vercel.app  (Axios → backend on Vercel)
+  → NestJS → Drizzle → Aiven Postgres      (DATABASE_URL with sslmode=require)
+  → NestJS /api/upload → Cloudflare R2     (R2_ENDPOINT / R2_BUCKET / R2_PUBLIC_URL)
+  → Clerk (auth) + Groq (AI assistant LLM)
+```
+
+Notes:
+
+- **Frontend → backend wiring:** in production the frontend env `NEXT_PUBLIC_API_URL` is set to `https://onbillobackend.vercel.app` (locally it falls back to `http://localhost:5000`, see `frontend/app/utils/api/client.ts`). Backend CORS (`backend/src/main.ts`) must allow `https://onbillo.vercel.app`.
+- **Backend on Vercel:** deployed from `backend/` as a serverless NestJS app (`api/index.ts` / vercel build). All controllers keep their `api/...` prefixes, so e.g. health/auth/bills are reachable at `https://onbillobackend.vercel.app/api/...`. Clerk webhook is registered in the Clerk Dashboard as `https://onbillobackend.vercel.app/api/webhooks/clerk`.
+- **DB on Aiven:** managed Postgres — backups, TLS, and connection pooling handled by Aiven. Both local dev and Vercel backend talk to it through the same `DATABASE_URL`. Migrations via `npx drizzle-kit push` from `backend/`.
+- **Images on Cloudflare R2:** S3-compatible bucket (`R2_BUCKET=onbillo-uploads`). Backend uploads with `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_ENDPOINT` and returns the public `R2_PUBLIC_URL/...` URL, which the frontend stores/displays. No images live on Vercel — Vercel hosts only code.
+
+---
+
 ## 1. Architecture
 
 Monorepo with two apps (no shared package):
