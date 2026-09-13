@@ -197,17 +197,22 @@ export default async function handler(req: any, res: any) {
             const dbHost = dbUrl.split('@')[1]?.split('/')[0] ?? 'unknown';
 
             let userCount = 'error';
+            let dbError: string | null = null;
             let sampleUsers: any[] = [];
+            let clientOk = false;
             try {
               const svc = new DbService();
+              clientOk = !!svc.client;
               if (svc.client) {
                 const countRes = await svc.client`SELECT count(*) FROM users`;
                 userCount = countRes[0]?.count;
                 const rows = await svc.client`SELECT id, clerk_id, email, role FROM users LIMIT 5`;
                 sampleUsers = rows.map((r: any) => ({ clerkId: r.clerk_id, email: r.email, role: r.role }));
+                await svc.client.end();
               }
             } catch (dberr: any) {
-              userCount = `db-error: ${dberr?.message || dberr}`;
+              userCount = 'error';
+              dbError = String(dberr?.message || dberr).slice(0, 500);
             }
 
             return res.status(200).json({
@@ -215,7 +220,9 @@ export default async function handler(req: any, res: any) {
               stage: 'auth-debug',
               clerkKey: { prefix: keyPrefix, suffix: keySuffix, len: keyLen },
               dbHost,
+              clientOk,
               userCount,
+              dbError,
               sampleUsers,
             });
           }
