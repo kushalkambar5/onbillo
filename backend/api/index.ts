@@ -182,12 +182,43 @@ export default async function handler(req: any, res: any) {
       // ?stage=nest-min — minimal Nest module (no src providers).
       // ?stage=svc-db — DbService constructor only (postgres client).
       // ?stage=svc-upload — UploadService constructor only (S3 client).
-      const stageMatch = /[?&]stage=(create|init|nest-min|svc-db|svc-upload)/.exec(
+      const stageMatch = /[?&]stage=(create|init|nest-min|svc-db|svc-upload|auth-debug)/.exec(
         req.url,
       );
       if (stageMatch) {
         const stage = stageMatch[1];
         try {
+          if (stage === 'auth-debug') {
+            const key = (process.env.CLERK_SECRET_KEY || '').trim().replace(/^["']|["']$/g, '');
+            const keyPrefix = key.slice(0, 10);
+            const keySuffix = key.slice(-4);
+            const keyLen = key.length;
+            const dbUrl = (process.env.DATABASE_URL || '').trim();
+            const dbHost = dbUrl.split('@')[1]?.split('/')[0] ?? 'unknown';
+
+            let userCount = 'error';
+            let sampleUsers: any[] = [];
+            try {
+              const svc = new DbService();
+              if (svc.client) {
+                const countRes = await svc.client`SELECT count(*) FROM users`;
+                userCount = countRes[0]?.count;
+                const rows = await svc.client`SELECT id, clerk_id, email, role FROM users LIMIT 5`;
+                sampleUsers = rows.map((r: any) => ({ clerkId: r.clerk_id, email: r.email, role: r.role }));
+              }
+            } catch (dberr: any) {
+              userCount = `db-error: ${dberr?.message || dberr}`;
+            }
+
+            return res.status(200).json({
+              probe: true,
+              stage: 'auth-debug',
+              clerkKey: { prefix: keyPrefix, suffix: keySuffix, len: keyLen },
+              dbHost,
+              userCount,
+              sampleUsers,
+            });
+          }
           if (stage === 'svc-db') {
             const svc = new DbService();
             return res.status(200).json({

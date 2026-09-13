@@ -65,6 +65,8 @@ export default function HomeRedirect() {
         // (webhook sync lag or misconfigured CLERK_WEBHOOK_SECRET). Stay on
         // the landing page quietly instead of spamming the console.
         const status = error?.response?.status ?? error?.status;
+        const serverDetail = error?.response?.data;
+        console.warn("[Onbillo Auth] getMe returned error:", status, serverDetail || error?.message);
         if (status === 401) {
           if (!cancelled) setLoading(false);
           return;
