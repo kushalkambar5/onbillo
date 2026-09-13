@@ -5,14 +5,22 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
-import { verifyToken } from '@clerk/backend';
+import { verifyToken, createClerkClient } from '@clerk/backend';
 import { DbService } from '../db/db.service';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private dbService: DbService) {}
+  private clerkClient: ReturnType<typeof createClerkClient> | null = null;
+
+  constructor(private dbService: DbService) {
+    if (process.env.CLERK_SECRET_KEY) {
+      this.clerkClient = createClerkClient({
+        secretKey: process.env.CLERK_SECRET_KEY,
+      });
+    }
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -33,11 +41,62 @@ export class AuthGuard implements CanActivate {
       const clerkId = verifiedToken.sub;
 
       // Lookup internal user in the database
-      const [user] = await this.dbService.db
+      let [user] = await this.dbService.db
         .select()
         .from(users)
         .where(eq(users.clerkId, clerkId))
         .limit(1);
+
+      // Fallback JIT provisioning if user isn't in DB yet (e.g. before webhook or sync lag)
+      if (!user && this.clerkClient) {
+        try {
+          const clerkUser = await this.clerkClient.users.getUser(clerkId);
+          if (clerkUser) {
+            const email =
+              clerkUser.emailAddresses?.find(
+                (e: any) => e.id === clerkUser.primaryEmailAddressId,
+              )?.emailAddress ??
+              clerkUser.emailAddresses?.[0]?.emailAddress ??
+              `no-email-${clerkId}@placeholder.local`;
+
+            const name =
+              `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() ||
+              clerkUser.username ||
+              'No Name';
+
+            const phone = clerkUser.phoneNumbers?.[0]?.phoneNumber || null;
+            const role =
+              (clerkUser.publicMetadata as any)?.role === 'app_admin'
+                ? ('app_admin' as const)
+                : null;
+
+            const [created] = await this.dbService.db
+              .insert(users)
+              .values({
+                clerkId,
+                email,
+                name,
+                phone,
+                role,
+              })
+              .onConflictDoUpdate({
+                target: users.clerkId,
+                set: {
+                  email,
+                  name,
+                  phone,
+                  updatedAt: new Date(),
+                  ...(role === 'app_admin' ? { role } : {}),
+                },
+              })
+              .returning();
+
+            user = created;
+          }
+        } catch (jitErr) {
+          console.error('JIT user provisioning fallback error:', jitErr);
+        }
+      }
 
       if (!user) {
         throw new UnauthorizedException('User not found in database');
