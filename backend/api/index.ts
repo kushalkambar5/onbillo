@@ -193,8 +193,10 @@ export default async function handler(req: any, res: any) {
             const keyPrefix = key.slice(0, 10);
             const keySuffix = key.slice(-4);
             const keyLen = key.length;
-            const dbUrl = cleanDatabaseUrl(process.env.DATABASE_URL);
+            const rawDbUrl = process.env.DATABASE_URL || '';
+            const dbUrl = cleanDatabaseUrl(rawDbUrl);
             const dbHost = dbUrl.split('@')[1]?.split('/')[0] ?? 'unknown';
+            const dbScheme = dbUrl.split('://')[0] || 'unknown';
 
             let userCount = 'error';
             let dbError: string | null = null;
@@ -220,10 +222,13 @@ export default async function handler(req: any, res: any) {
 
             return res.status(200).json({
               probe: true,
-              probeVersion: 'v2026-09-13-SSL-V3',
+              probeVersion: 'v2026-09-13-CLEAN-URL-V1',
               stage: 'auth-debug',
               clerkKey: { prefix: keyPrefix, suffix: keySuffix, len: keyLen },
               dbHost,
+              dbScheme,
+              rawDbUrlLen: rawDbUrl.length,
+              cleanDbUrlLen: dbUrl.length,
               clientOk,
               userCount,
               dbError,
