@@ -220,6 +220,7 @@ export default async function handler(req: any, res: any) {
 
             return res.status(200).json({
               probe: true,
+              probeVersion: 'v2026-09-13-SSL-V3',
               stage: 'auth-debug',
               clerkKey: { prefix: keyPrefix, suffix: keySuffix, len: keyLen },
               dbHost,
