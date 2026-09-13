@@ -4,7 +4,7 @@ import { Controller, Get, Module } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 import { AppModule } from '../src/app.module';
-import { DbService } from '../src/db/db.service';
+import { DbService, cleanDatabaseUrl } from '../src/db/db.service';
 import { UploadService } from '../src/upload/upload.service';
 
 // TEMPORARY DIAGNOSTICS: dependency-free Nest module to test whether Nest
@@ -193,7 +193,7 @@ export default async function handler(req: any, res: any) {
             const keyPrefix = key.slice(0, 10);
             const keySuffix = key.slice(-4);
             const keyLen = key.length;
-            const dbUrl = (process.env.DATABASE_URL || '').trim();
+            const dbUrl = cleanDatabaseUrl(process.env.DATABASE_URL);
             const dbHost = dbUrl.split('@')[1]?.split('/')[0] ?? 'unknown';
 
             let userCount = 'error';
