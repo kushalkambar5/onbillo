@@ -13,11 +13,15 @@ import { eq } from 'drizzle-orm';
 @Injectable()
 export class AuthGuard implements CanActivate {
   private clerkClient: ReturnType<typeof createClerkClient> | null = null;
+  private secretKey: string;
 
   constructor(private dbService: DbService) {
-    if (process.env.CLERK_SECRET_KEY) {
+    this.secretKey = (process.env.CLERK_SECRET_KEY || '')
+      .trim()
+      .replace(/^["']|["']$/g, '');
+    if (this.secretKey) {
       this.clerkClient = createClerkClient({
-        secretKey: process.env.CLERK_SECRET_KEY,
+        secretKey: this.secretKey,
       });
     }
   }
@@ -27,7 +31,7 @@ export class AuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid token');
+      throw new UnauthorizedException('Missing or invalid Authorization header');
     }
 
     const token = authHeader.split(' ')[1];
@@ -35,7 +39,7 @@ export class AuthGuard implements CanActivate {
     try {
       // Verify the token with Clerk
       const verifiedToken = await verifyToken(token, {
-        secretKey: process.env.CLERK_SECRET_KEY,
+        secretKey: this.secretKey,
       });
 
       const clerkId = verifiedToken.sub;
@@ -119,7 +123,7 @@ export class AuthGuard implements CanActivate {
       }
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       // Preserve specific HTTP errors (e.g. 'User not found in database',
       // premium/banned rejections) so the client sees the real cause.
       if (
@@ -128,8 +132,10 @@ export class AuthGuard implements CanActivate {
       ) {
         throw error;
       }
-      console.error('AuthGuard error:', error);
-      throw new UnauthorizedException('Invalid token');
+      console.error('AuthGuard error:', error?.message || error);
+      throw new UnauthorizedException(
+        error?.message ? `Invalid token: ${error.message}` : 'Invalid token',
+      );
     }
   }
 }
